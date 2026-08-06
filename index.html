@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Felleskalender - Skole</title>
+
+  <!-- FullCalendar CSS & JS -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { margin: 20px; background-color: #f8f9fa; color: #333; }
+    
+    .header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-bottom: 20px; 
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .header h1 { margin: 0; }
+
+    .calendar-card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    /* Filter i toppen */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 18px;
+      background: #fff;
+      padding: 12px 18px;
+      border-radius: 6px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .filter-item { display: flex; align-items: center; font-size: 0.85em; }
+    .filter-item input { margin-right: 5px; cursor: pointer; }
+    .color-box { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+
+    /* Smale helgedager */
+    .fc .fc-day-sat,
+    .fc .fc-day-sun {
+      width: 6% !important;
+    }
+    
+    /* STYLING FOR RØDE DAGER OG FRIDAGER */
+    /* Søndager og offentlige røddager */
+    .fc .fc-day-sun,
+    .fc .day-red-day {
+      background-color: #ffe6e6 !important;
+    }
+    .fc .fc-day-sun .fc-daygrid-day-number,
+    .fc .day-red-day .fc-daygrid-day-number {
+      color: #d32f2f !important;
+      font-weight: bold;
+    }
+
+    /* Skoleferier, planleggingsdager og fridager */
+    .fc .day-off-day {
+      background-color: #ebebeb !important;
+    }
+
+    /* Rader i ukesvisning */
+    .fc-timegrid-slot { height: 30px !important; }
+    .fc-school-hours { height: 60px !important; background-color: #ffffff; }
+    .fc-event { cursor: pointer; }
+
+    /* EGEN HØYREKLIKK-MENY (CONTEXT MENU) */
+    .custom-context-menu {
+      display: none;
+      position: absolute;
+      z-index: 10000;
+      background: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 6px 0;
+      min-width: 190px;
+    }
+
+    .custom-context-menu ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .custom-context-menu li {
+      padding: 8px 16px;
+      font-size: 0.9em;
+      cursor: pointer;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .custom-context-menu li:hover {
+      background-color: #2b78e4;
+      color: #ffffff;
+    }
+
+    /* POPUP / MODAL */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 8px;
+      max-width: 520px;
+      width: 90%;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+
+    .modal-header h3 { margin: 0; color: #2c3e50; font-size: 1.25em; }
+    .close-btn { background: none; border: none; font-size: 1.2em; cursor: pointer; color: #777; width: auto; padding: 0; }
+
+    .form-group { margin-bottom: 12px; }
+    .form-row { display: flex; gap: 10px; }
+    .form-row .form-group { flex: 1; }
+
+    label { display: block; font-weight: 600; font-size: 0.85em; margin-bottom: 4px; color: #444; }
+    input, select, textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #2b78e4;
+    }
+
+    .description-display {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      border-left: 4px solid #2b78e4;
+      margin-top: 5px;
+      white-space: pre-wrap;
+      font-size: 0.9em;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+      border-top: 1px solid #eee;
+      padding-top: 15px;
+    }
+
+    .delete-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .delete-options button {
+      text-align: left;
+      width: 100%;
+    }
+
+    button { cursor: pointer; font-weight: bold; padding: 8px 16px; border-radius: 4px; border: none; font-size: 0.9em; }
+    .btn-primary { background-color: #2b78e4; color: white; }
+    .btn-primary:hover { background-color: #1a5bb8; }
+    .btn-secondary { background-color: #e4e6eb; color: #4b4f56; }
+    .btn-secondary:hover { background-color: #d8dadf; }
+    .btn-danger { background-color: #dc3545; color: white; }
+    .btn-danger:hover { background-color: #bd2130; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Felleskalender for Lærere</h1>
+    <div class="filter-bar" id="filterList"></div>
+  </div>
+
+  <div class="calendar-card" id="calendarCard">
+    <div id="calendar"></div>
+
+    <div id="contextMenu" class="custom-context-menu">
+      <ul>
+        <li id="menuNewEvent">➕ Ny hendelse</li>
+        <li id="menuNewRecurringEvent">🔁 Ny regelmessig hendelse</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="eventModal" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalHeaderTitle">Ny avtale</h3>
+        <button class="close-btn" id="modalCloseX">&times;</button>
+      </div>
+
+      <div id="viewMode" style="display: none;">
+        <h3 id="viewTitle" style="color: #2b78e4; margin-bottom: 10px;"></h3>
+        <p style="margin: 5px 0;"><strong>Gruppe:</strong> <span id="viewGroup"></span></p>
+        <p style="margin: 5px 0;"><strong>Tidspunkt:</strong> <span id="viewTime"></span></p>
+        <p style="margin: 5px 0;" id="viewRecurringRow"><strong>Gjentakelse:</strong> <span id="viewRecurring"></span></p>
+        <label style="margin-top: 12px;">Beskrivelse:</label>
+        <div id="viewDescription" class="description-display"></div>
+
+        <div id="normalFooter" class="modal-footer">
+          <button id="viewCancelBtn" class="btn-secondary">Lukk</button>
+          <button id="viewEditBtn" class="btn-primary">Endre</button>
+          <button id="viewDeleteBtn" class="btn-danger">Slett</button>
+        </div>
+
+        <div id="deleteConfirmMode" style="display: none;" class="delete-options">
+          <p style="margin: 5px 0; font-weight: bold; color: #dc3545;">Hvordan vil du slette hendelsen?</p>
+          <button id="deleteSingleBtn" class="btn-secondary">Kun denne hendelsen</button>
+          <button id="deleteFutureBtn" class="btn-secondary">Denne og alle fremtidige hendelser</button>
+          <button id="deleteAllSeriesBtn" class="btn-danger">Hele serien (alle hendelser)</button>
+          <button id="cancelDeleteModeBtn" class="btn-secondary" style="margin-top: 5px; text-align: center;">Avbryt</button>
+        </div>
+      </div>
+
+      <form id="eventForm" style="display: block;">
+        <input type="hidden" id="eventId">
+        <input type="hidden" id="isRecurringMode" value="false">
+
+        <div class="form-group">
+          <label for="title">Tittel *</label>
+          <input type="text" id="title" required placeholder="Legg til tittel">
+        </div>
+
+        <div class="form-group">
+          <label for="group">Gruppe / Kategori *</label>
+          <select id="group" required></select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="startDate">Startdato *</label>
+            <input type="date" id="startDate" required>
+          </div>
+          <div class="form-group">
+            <label for="startTime">Starttid (valgfri)</label>
+            <input type="time" id="startTime">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="endDate">Sluttdato *</label>
+            <input type="date" id="endDate" required>
+          </div>
+          <div class="form-group">
+            <label for="endTime">Sluttid (valgfri)</label>
+            <input type="time" id="endTime">
+          </div>
+        </div>
+
+        <div class="form-group" id="recurringGroup" style="display: none;">
+          <label for="repeatPattern">Gjentas</label>
+          <select id="repeatPattern">
+            <option value="weekly">Hver uke</option>
+            <option value="biweekly">Annenhver uke</option>
+            <option value="monthly">Hver måned</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Beskrivelse</label>
+          <textarea id="description" rows="3" placeholder="Legg til detaljer..."></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="formCancelBtn" class="btn-secondary">Avbryt</button>
+          <button type="submit" id="submitBtn" class="btn-primary">Lagre</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Firebase & Fridager JavaScript Moduler -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { 
+      getFirestore, 
+      collection, 
+      addDoc, 
+      updateDoc,
+      deleteDoc,
+      doc,
+      getDocs,
+      query,
+      where,
+      onSnapshot 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // Importer skoleruten / fridagene
+    import { schoolYearsData } from "./fridager.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBFIOEfe6g7QfJppfOHTvhnNpd1XWMFpv0",
+      authDomain: "aarshjul-b4a2a.firebaseapp.com",
+      databaseURL: "https://aarshjul-b4a2a-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "aarshjul-b4a2a",
+      storageBucket: "aarshjul-b4a2a.firebasestorage.app",
+      messagingSenderId: "186927305986",
+      appId: "1:186927305986:web:c8534d5733dcfd2f2c9e1b",
+      measurementId: "G-M02DFGGH3R"
+    };
+
+    const categoryColors = {
+      "1. trinn": "#2ecc71",
+      "2. trinn": "#27ae60",
+      "3. trinn": "#3498db",
+      "4. trinn": "#2980b9",
+      "5. trinn": "#9b59b6",
+      "6. trinn": "#8e44ad",
+      "7. trinn": "#34495e",
+      "Alle på Heståsen": "#e74c3c",
+      "Alle på Brattbakken": "#c0392b",
+      "SFO": "#e67e22",
+      "Kartlegginger": "#f1c40f",
+      "Frister": "#d35400",
+      "UiA": "#1abc9c",
+      "Sosialt": "#e84393"
+    };
+
+    const repeatLabels = {
+      "weekly": "Hver uke",
+      "biweekly": "Annenhver uke",
+      "monthly": "Hver måned"
+    };
+
+    // Bygg opp liste over rød-dager og fri-dager fra fridager.js
+    const redDateSet = new Set();
+    const offDateSet = new Set();
+    const schoolEventsFromJs = [];
+
+    function parseSchoolYearsData() {
+      Object.values(schoolYearsData).flat().forEach(item => {
+        let cur = new Date(item.startDate + "T00:00:00");
+        const last = new Date(item.endDate + "T00:00:00");
+
+        while (cur <= last) {
+          const yyyy = cur.getFullYear();
+          const mm = String(cur.getMonth() + 1).padStart(2, '0');
+          const dd = String(cur.getDate()).padStart(2, '0');
+          const dateStr = `${yyyy}-${mm}-${dd}`;
+
+          if (item.type === 'roddag') {
+            redDateSet.add(dateStr);
+          } else if (item.type === 'ferie' || item.type.startsWith('planlegging')) {
+            offDateSet.add(dateStr);
+          }
+          cur.setDate(cur.getDate() + 1);
+        }
+
+        // Legg til hendelsen i selve kalendervisningen
+        let endAdjusted = new Date(item.endDate + "T00:00:00");
+        endAdjusted.setDate(endAdjusted.getDate() + 1);
+        const endStr = endAdjusted.toISOString().split('T')[0];
+
+        let bgColor = '#95a5a6';
+        if (item.type === 'roddag') bgColor = '#e74c3c';
+        else if (item.type === 'ferie') bgColor = '#7f8c8d';
+
+        schoolEventsFromJs.push({
+          id: 'school_route_' + Math.random().toString(36).substring(2, 7),
+          title: `📌 ${item.title}`,
+          start: item.startDate,
+          end: endStr,
+          allDay: true,
+          backgroundColor: bgColor,
+          borderColor: bgColor,
+          isSchoolRoute: true,
+          extendedProps: {
+            group: 'Skolerute',
+            rawTitle: item.title,
+            description: `Skolerute/Fridag (${item.type})`,
+            isSchoolRoute: true
+          }
+        });
+      });
+    }
+
+    parseSchoolYearsData();
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const eventsRef = collection(db, "school_events");
+
+    let rawEvents = [];
+    let selectedCategories = Object.keys(categoryColors);
+    let calendar;
+    let activeEvent = null;
+
+    let currentSelection = null;
+    const contextMenu = document.getElementById('contextMenu');
+
+    function populateGroupDropdown() {
+      const groupSelect = document.getElementById('group');
+      groupSelect.innerHTML = '';
+      Object.keys(categoryColors).forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        groupSelect.appendChild(option);
+      });
+    }
+
+    function hideContextMenu() {
+      contextMenu.style.display = 'none';
+    }
+
+    function closeModal() {
+      document.getElementById('eventModal').style.display = 'none';
+      document.getElementById('deleteConfirmMode').style.display = 'none';
+      document.getElementById('normalFooter').style.display = 'flex';
+      activeEvent = null;
+      hideContextMenu();
+      if (calendar) calendar.unselect();
+    }
+
+    function showFormMode(title = "Ny avtale", isRecurring = false) {
+      hideContextMenu();
+      document.getElementById('modalHeaderTitle').textContent = title;
+      document.getElementById('viewMode').style.display = 'none';
+      document.getElementById('eventForm').style.display = 'block';
+      document.getElementById('isRecurringMode').value = isRecurring ? "true" : "false";
+
+      const recurringGroup = document.getElementById('recurringGroup');
+      recurringGroup.style.display = isRecurring ? 'block' : 'none';
+
+      document.getElementById('eventModal').style.display = 'flex';
+      setTimeout(() => document.getElementById('title').focus(), 50);
+    }
+
+    function showViewMode() {
+      hideContextMenu();
+      document.getElementById('modalHeaderTitle').textContent = "Avtaledetaljer";
+      document.getElementById('eventForm').style.display = 'none';
+      document.getElementById('viewMode').style.display = 'block';
+      document.getElementById('deleteConfirmMode').style.display = 'none';
+      document.getElementById('normalFooter').style.display = 'flex';
+
+      const isRoute = activeEvent && activeEvent.isSchoolRoute;
+      document.getElementById('viewEditBtn').style.display = isRoute ? 'none' : 'inline-block';
+      document.getElementById('viewDeleteBtn').style.display = isRoute ? 'none' : 'inline-block';
+
+      document.getElementById('eventModal').style.display = 'flex';
+    }
+
+    function formatDate(dateObj) {
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function formatTime(dateObj) {
+      const hours = String(dateObj.getHours()).padStart(2, '0');
+      const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes}`;
+    }
+
+    function populateFormFromSelection() {
+      if (!currentSelection) return;
+
+      document.getElementById('eventId').value = '';
+      document.getElementById('eventForm').reset();
+
+      let startDate = currentSelection.start;
+      let endDate = currentSelection.end;
+
+      if (currentSelection.allDay) {
+        endDate = new Date(endDate.getTime() - 1);
+      }
+
+      document.getElementById('startDate').value = formatDate(startDate);
+      document.getElementById('endDate').value = formatDate(endDate);
+
+      if (!currentSelection.allDay) {
+        document.getElementById('startTime').value = formatTime(startDate);
+        document.getElementById('endTime').value = formatTime(endDate);
+      } else {
+        document.getElementById('startTime').value = '';
+        document.getElementById('endTime').value = '';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      populateGroupDropdown();
+
+      const calendarEl = document.getElementById('calendar');
+
+      calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        selectable: true,
+        selectMirror: true,
+        unselectAuto: false,
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,listMonth'
+        },
+        buttonText: { today: 'I dag', month: 'Måned', week: 'Uke', list: 'Liste' },
+        locale: 'no',
+        firstDay: 1,
+        scrollTime: '08:00:00',
+        slotDuration: '00:30:00',
+
+        // FARGELEGGING AV DATOER (RØDE DAGER & FRIDAGER)
+        dayCellClassNames: function(arg) {
+          const yyyy = arg.date.getFullYear();
+          const mm = String(arg.date.getMonth() + 1).padStart(2, '0');
+          const dd = String(arg.date.getDate()).padStart(2, '0');
+          const dateStr = `${yyyy}-${mm}-${dd}`;
+
+          if (redDateSet.has(dateStr)) {
+            return ['day-red-day'];
+          }
+          if (offDateSet.has(dateStr)) {
+            return ['day-off-day'];
+          }
+          return [];
+        },
+
+        slotLaneClassNames: function(arg) {
+          const timeStr = arg.date.toTimeString().substring(0, 5);
+          if (timeStr >= "08:30" && timeStr < "14:30") return ['fc-school-hours'];
+          return [];
+        },
+
+        select: function(info) {
+          currentSelection = info;
+          hideContextMenu();
+        },
+
+        eventClick: function(info) {
+          hideContextMenu();
+          activeEvent = {
+            id: info.event.id,
+            title: info.event.extendedProps.rawTitle || info.event.title,
+            group: info.event.extendedProps.group,
+            startDate: info.event.extendedProps.startDate || info.event.startStr,
+            startTime: info.event.extendedProps.startTime || '',
+            endDate: info.event.extendedProps.endDate || info.event.endStr,
+            endTime: info.event.extendedProps.endTime || '',
+            description: info.event.extendedProps.description,
+            repeatPattern: info.event.extendedProps.repeatPattern,
+            recurringSeriesId: info.event.extendedProps.recurringSeriesId,
+            isSchoolRoute: info.event.extendedProps.isSchoolRoute || false
+          };
+
+          document.getElementById('viewTitle').textContent = activeEvent.title;
+          document.getElementById('viewGroup').textContent = activeEvent.group;
+          
+          let timeText = activeEvent.startDate;
+          if (activeEvent.startTime) timeText += ` kl. ${activeEvent.startTime}`;
+          if (activeEvent.endTime) timeText += ` - ${activeEvent.endTime}`;
+          if (activeEvent.endDate && activeEvent.endDate !== activeEvent.startDate) timeText += ` (${activeEvent.endDate})`;
+          document.getElementById('viewTime').textContent = timeText;
+
+          const recurringRow = document.getElementById('viewRecurringRow');
+          if (activeEvent.repeatPattern && repeatLabels[activeEvent.repeatPattern]) {
+            document.getElementById('viewRecurring').textContent = `🔁 ${repeatLabels[activeEvent.repeatPattern]}`;
+            recurringRow.style.display = 'block';
+          } else {
+            recurringRow.style.display = 'none';
+          }
+
+          document.getElementById('viewDescription').textContent = activeEvent.description || "Ingen beskrivelse oppgitt.";
+
+          showViewMode();
+        },
+
+        events: []
+      });
+
+      calendar.render();
+      renderFilters();
+
+      calendarEl.addEventListener('contextmenu', (e) => {
+        if (currentSelection) {
+          e.preventDefault();
+          
+          const rect = calendarEl.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+
+          contextMenu.style.left = `${x}px`;
+          contextMenu.style.top = `${y}px`;
+          contextMenu.style.display = 'block';
+        }
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!contextMenu.contains(e.target)) {
+          hideContextMenu();
+        }
+      });
+
+      document.getElementById('menuNewEvent').addEventListener('click', () => {
+        populateFormFromSelection();
+        showFormMode("Ny avtale", false);
+      });
+
+      document.getElementById('menuNewRecurringEvent').addEventListener('click', () => {
+        populateFormFromSelection();
+        showFormMode("Ny regelmessig avtale", true);
+      });
+    });
+
+    onSnapshot(eventsRef, (snapshot) => {
+      rawEvents = snapshot.docs.map(doc => {
+        const data = doc.data();
+        
+        let startIso = data.startDate;
+        if (data.startTime) startIso += `T${data.startTime}`;
+
+        let endIso = data.endDate || data.startDate;
+        if (data.endTime) endIso += `T${data.endTime}`;
+
+        const isRecurring = Boolean(data.repeatPattern || data.recurringSeriesId);
+        const iconPrefix = isRecurring ? "🔁 " : "";
+
+        return {
+          id: doc.id,
+          title: `${iconPrefix}[${data.group}] ${data.title}`,
+          start: startIso,
+          end: endIso,
+          backgroundColor: categoryColors[data.group] || '#3788d8',
+          borderColor: categoryColors[data.group] || '#3788d8',
+          extendedProps: { 
+            group: data.group,
+            rawTitle: data.title,
+            startDate: data.startDate,
+            startTime: data.startTime || '',
+            endDate: data.endDate || data.startDate,
+            endTime: data.endTime || '',
+            description: data.description || '',
+            repeatPattern: data.repeatPattern || null,
+            recurringSeriesId: data.recurringSeriesId || null
+          }
+        };
+      });
+      updateCalendarEvents();
+    });
+
+    function updateCalendarEvents() {
+      const filteredUserEvents = rawEvents.filter(event => 
+        selectedCategories.includes(event.extendedProps.group)
+      );
+      
+      const allEvents = [...schoolEventsFromJs, ...filteredUserEvents];
+      calendar.removeAllEvents();
+      calendar.addEventSource(allEvents);
+    }
+
+    document.getElementById('modalCloseX').addEventListener('click', closeModal);
+    document.getElementById('formCancelBtn').addEventListener('click', closeModal);
+    document.getElementById('viewCancelBtn').addEventListener('click', closeModal);
+
+    document.getElementById('viewEditBtn').addEventListener('click', () => {
+      if (activeEvent && !activeEvent.isSchoolRoute) {
+        document.getElementById('eventId').value = activeEvent.id;
+        document.getElementById('title').value = activeEvent.title;
+        document.getElementById('group').value = activeEvent.group;
+        document.getElementById('startDate').value = activeEvent.startDate;
+        document.getElementById('startTime').value = activeEvent.startTime;
+        document.getElementById('endDate').value = activeEvent.endDate;
+        document.getElementById('endTime').value = activeEvent.endTime;
+        document.getElementById('description').value = activeEvent.description;
+
+        showFormMode("Rediger avtale", false);
+      }
+    });
+
+    document.getElementById('viewDeleteBtn').addEventListener('click', async () => {
+      if (!activeEvent || activeEvent.isSchoolRoute) return;
+
+      if (activeEvent.recurringSeriesId) {
+        document.getElementById('normalFooter').style.display = 'none';
+        document.getElementById('deleteConfirmMode').style.display = 'flex';
+      } else {
+        if (confirm(`Er du sikker på at du vil slette "${activeEvent.title}"?`)) {
+          const targetId = activeEvent.id;
+          closeModal();
+          await deleteDoc(doc(db, "school_events", targetId));
+        }
+      }
+    });
+
+    document.getElementById('cancelDeleteModeBtn').addEventListener('click', () => {
+      document.getElementById('deleteConfirmMode').style.display = 'none';
+      document.getElementById('normalFooter').style.display = 'flex';
+    });
+
+    document.getElementById('deleteSingleBtn').addEventListener('click', async () => {
+      if (!activeEvent) return;
+      const targetId = activeEvent.id;
+      closeModal();
+      await deleteDoc(doc(db, "school_events", targetId));
+    });
+
+    document.getElementById('deleteFutureBtn').addEventListener('click', async () => {
+      if (!activeEvent || !activeEvent.recurringSeriesId) return;
+      const seriesId = activeEvent.recurringSeriesId;
+      const currentDate = activeEvent.startDate;
+
+      closeModal();
+
+      const q = query(
+        eventsRef, 
+        where("recurringSeriesId", "==", seriesId),
+        where("startDate", ">=", currentDate)
+      );
+      const querySnapshot = await getDocs(q);
+      const deletePromises = querySnapshot.docs.map(d => deleteDoc(doc(db, "school_events", d.id)));
+      await Promise.all(deletePromises);
+    });
+
+    document.getElementById('deleteAllSeriesBtn').addEventListener('click', async () => {
+      if (!activeEvent || !activeEvent.recurringSeriesId) return;
+      const seriesId = activeEvent.recurringSeriesId;
+
+      closeModal();
+
+      const q = query(eventsRef, where("recurringSeriesId", "==", seriesId));
+      const querySnapshot = await getDocs(q);
+      const deletePromises = querySnapshot.docs.map(d => deleteDoc(doc(db, "school_events", d.id)));
+      await Promise.all(deletePromises);
+    });
+
+    document.getElementById('eventForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const eventId = document.getElementById('eventId').value;
+      const isRecurring = document.getElementById('isRecurringMode').value === "true";
+      const repeatPattern = document.getElementById('repeatPattern').value;
+      
+      const title = document.getElementById('title').value;
+      const group = document.getElementById('group').value;
+      const startDateStr = document.getElementById('startDate').value;
+      const startTime = document.getElementById('startTime').value;
+      const endDateStr = document.getElementById('endDate').value;
+      const endTime = document.getElementById('endTime').value;
+      const description = document.getElementById('description').value;
+
+      closeModal();
+
+      try {
+        if (eventId) {
+          const singleData = {
+            title, group, startDate: startDateStr, startTime: startTime || null,
+            endDate: endDateStr || startDateStr, endTime: endTime || null,
+            description: description || '', updatedAt: new Date().toISOString()
+          };
+          await updateDoc(doc(db, "school_events", eventId), singleData);
+        } else if (isRecurring) {
+          const eventsToCreate = [];
+          let currentStart = new Date(startDateStr + "T00:00:00");
+          let currentEnd = new Date((endDateStr || startDateStr) + "T00:00:00");
+
+          const daySpan = Math.round((currentEnd - currentStart) / (1000 * 60 * 60 * 24));
+          const iterations = (repeatPattern === 'monthly') ? 10 : (repeatPattern === 'biweekly' ? 20 : 40);
+          const seriesId = 'series_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+
+          for (let i = 0; i < iterations; i++) {
+            const nextStart = new Date(currentStart);
+            const nextEnd = new Date(currentEnd);
+
+            if (repeatPattern === 'weekly') {
+              nextStart.setDate(currentStart.getDate() + (i * 7));
+              nextEnd.setDate(currentStart.getDate() + (i * 7) + daySpan);
+            } else if (repeatPattern === 'biweekly') {
+              nextStart.setDate(currentStart.getDate() + (i * 14));
+              nextEnd.setDate(currentStart.getDate() + (i * 14) + daySpan);
+            } else if (repeatPattern === 'monthly') {
+              nextStart.setMonth(currentStart.getMonth() + i);
+              nextEnd.setMonth(currentStart.getMonth() + i);
+              nextEnd.setDate(nextStart.getDate() + daySpan);
+            }
+
+            eventsToCreate.push({
+              title: title,
+              group: group,
+              startDate: formatDate(nextStart),
+              startTime: startTime || null,
+              endDate: formatDate(nextEnd),
+              endTime: endTime || null,
+              description: description || '',
+              repeatPattern: repeatPattern,
+              recurringSeriesId: seriesId,
+              createdAt: new Date().toISOString()
+            });
+          }
+
+          await Promise.all(eventsToCreate.map(evt => addDoc(eventsRef, evt)));
+
+        } else {
+          const singleData = {
+            title, group, startDate: startDateStr, startTime: startTime || null,
+            endDate: endDateStr || startDateStr, endTime: endTime || null,
+            description: description || '', createdAt: new Date().toISOString()
+          };
+          await addDoc(eventsRef, singleData);
+        }
+      } catch (error) {
+        console.error("Feil ved lagring: ", error);
+        alert("Feil ved lagring til databasen.");
+      }
+    });
+
+    function renderFilters() {
+      const filterContainer = document.getElementById('filterList');
+      filterContainer.innerHTML = '';
+
+      Object.keys(categoryColors).forEach(cat => {
+        const item = document.createElement('div');
+        item.className = 'filter-item';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = true;
+        checkbox.value = cat;
+        checkbox.addEventListener('change', (e) => {
+          if (e.target.checked) selectedCategories.push(cat);
+          else selectedCategories = selectedCategories.filter(c => c !== cat);
+          updateCalendarEvents();
+        });
+
+        const colorDot = document.createElement('span');
+        colorDot.className = 'color-box';
+        colorDot.style.backgroundColor = categoryColors[cat];
+
+        const label = document.createElement('span');
+        label.textContent = cat;
+
+        item.appendChild(checkbox);
+        item.appendChild(colorDot);
+        item.appendChild(label);
+        filterContainer.appendChild(item);
+      });
+    }
+  </script>
+</body>
+</html>
