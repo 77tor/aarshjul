@@ -614,9 +614,34 @@ function renderMiniCalendar() {
           return [];
         },
 
-        select: function(info) {
+select: function(info) {
           currentSelection = info;
           hideContextMenu();
+        },
+
+        dateClick: function(info) {
+          const currentTime = new Date().getTime();
+          const timeDiff = currentTime - lastClickTime;
+          const clickDateStr = info.dateStr;
+
+          // Sjekker om det er et dobbeltslikk (under 300 ms) på samme tidsluke/dato
+          if (timeDiff < 300 && timeDiff > 0 && lastClickDate === clickDateStr) {
+            const startDate = info.date;
+            // Setter slutttid til 30 minutter etter start som standard
+            const endDate = new Date(startDate.getTime() + (30 * 60 * 1000));
+
+            currentSelection = {
+              start: startDate,
+              end: endDate,
+              allDay: info.allDay
+            };
+
+            populateFormFromSelection();
+            showFormMode("Ny avtale", false);
+          }
+
+          lastClickTime = currentTime;
+          lastClickDate = clickDateStr;
         },
 
         eventClick: function(info) {
@@ -665,18 +690,6 @@ function renderMiniCalendar() {
       calendar.render();
       renderFilters();
       renderMiniCalendar();
-
-      // --- DIREKTE DOBBELTKLIKK-LYTTER PÅ KALENDER-ELEMENTET ---
-      calendarEl.addEventListener('dblclick', (e) => {
-        // Hvis man dobbelklikker på en eksisterende hendelse eller en knapp, skal det ikke åpne ny avtale
-        if (e.target.closest('.fc-event') || e.target.closest('button')) return;
-
-        // Dersom vi har markert et tidsrom med select, fylles dette inn
-        if (currentSelection) {
-          populateFormFromSelection();
-          showFormMode("Ny avtale", false);
-        }
-      });
 
       calendarEl.addEventListener('contextmenu', (e) => {
         if (currentSelection) {
