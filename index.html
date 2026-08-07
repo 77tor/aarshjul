@@ -11,39 +11,123 @@
 
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { margin: 20px; background-color: #f8f9fa; color: #333; }
+    body { margin: 0; padding: 20px; background-color: #f3f4f6; color: #333; }
     
-    .header { 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center; 
-      margin-bottom: 20px; 
-      flex-wrap: wrap;
+    .app-header {
+      margin-bottom: 15px;
+    }
+    .app-header h1 { margin: 0; font-size: 1.6em; color: #1f2937; }
+
+    /* LAYOUT: SIDEBAR + HOVEDKALENDER (Outlook style) */
+    .app-container {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    /* VENSTREMENY */
+    .sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
       gap: 15px;
     }
-    .header h1 { margin: 0; }
 
-    .calendar-card {
+    .sidebar-card {
       background: #ffffff;
-      padding: 20px;
+      padding: 15px;
       border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      position: relative;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      border: 1px solid #e5e7eb;
     }
 
-    /* Filter i toppen */
-    .filter-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px 18px;
-      background: #fff;
-      padding: 12px 18px;
-      border-radius: 6px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    .sidebar-card-title {
+      font-size: 0.9em;
+      font-weight: 700;
+      color: #4b5563;
+      margin: 0 0 10px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    .filter-item { display: flex; align-items: center; font-size: 0.85em; }
-    .filter-item input { margin-right: 5px; cursor: pointer; }
-    .color-box { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+
+    /* MINI-KALENDER */
+    .mini-cal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-weight: bold;
+      font-size: 0.9em;
+    }
+    .mini-cal-nav {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.1em;
+      padding: 2px 6px;
+      color: #6b7280;
+      border-radius: 4px;
+    }
+    .mini-cal-nav:hover { background-color: #f3f4f6; color: #111827; }
+
+    .mini-calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-size: 0.8em;
+      gap: 2px;
+    }
+    .mini-day-name {
+      font-weight: 600;
+      color: #9ca3af;
+      padding-bottom: 4px;
+    }
+    .mini-day-cell {
+      padding: 6px 0;
+      border-radius: 50%;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s;
+    }
+    .mini-day-cell:hover { background-color: #e5e7eb; }
+    .mini-day-cell.other-month { color: #d1d5db; }
+    .mini-day-cell.today { font-weight: bold; color: #2563eb; }
+    .mini-day-cell.selected-day { background-color: #2563eb !important; color: #ffffff !important; font-weight: bold; }
+    .mini-day-cell.red-day { color: #dc2626; font-weight: 600; }
+    .mini-day-cell.off-day { background-color: #f3f4f6; }
+
+    /* CATEGORY FILTER LIST (Vertical) */
+    .filter-list-vertical {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 420px;
+      overflow-y: auto;
+    }
+    .filter-item-vert {
+      display: flex;
+      align-items: center;
+      font-size: 0.88em;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 4px;
+      transition: background-color 0.15s;
+    }
+    .filter-item-vert:hover { background-color: #f9fafb; }
+    .filter-item-vert input { margin-right: 8px; cursor: pointer; }
+    .color-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; flex-shrink: 0; }
+
+    /* HOVEDKALENDER */
+    .main-calendar-card {
+      flex-grow: 1;
+      background: #ffffff;
+      padding: 18px;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      border: 1px solid #e5e7eb;
+      min-width: 0; /* Hindrer at flexboksen blir ødelagt ved smal skjerm */
+    }
 
     /* Smale helgedager */
     .fc .fc-day-sat,
@@ -52,7 +136,6 @@
     }
     
     /* STYLING FOR RØDE DAGER OG FRIDAGER */
-    /* Søndager og offentlige røddager */
     .fc .fc-day-sun,
     .fc .day-red-day {
       background-color: #ffe6e6 !important;
@@ -63,9 +146,8 @@
       font-weight: bold;
     }
 
-    /* Skoleferier, planleggingsdager og fridager */
     .fc .day-off-day {
-      background-color: #ebebeb !important;
+      background-color: #f3f4f6 !important;
     }
 
     /* Rader i ukesvisning */
@@ -73,7 +155,7 @@
     .fc-school-hours { height: 60px !important; background-color: #ffffff; }
     .fc-event { cursor: pointer; }
 
-    /* EGEN HØYREKLIKK-MENY (CONTEXT MENU) */
+    /* CONTEXT MENU */
     .custom-context-menu {
       display: none;
       position: absolute;
@@ -85,13 +167,7 @@
       padding: 6px 0;
       min-width: 190px;
     }
-
-    .custom-context-menu ul {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-
+    .custom-context-menu ul { list-style: none; margin: 0; padding: 0; }
     .custom-context-menu li {
       padding: 8px 16px;
       font-size: 0.9em;
@@ -101,11 +177,7 @@
       align-items: center;
       gap: 8px;
     }
-
-    .custom-context-menu li:hover {
-      background-color: #2b78e4;
-      color: #ffffff;
-    }
+    .custom-context-menu li:hover { background-color: #2b78e4; color: #ffffff; }
 
     /* POPUP / MODAL */
     .modal-backdrop {
@@ -117,7 +189,6 @@
       justify-content: center;
       align-items: center;
     }
-
     .modal {
       background: #ffffff;
       padding: 24px;
@@ -126,7 +197,6 @@
       width: 90%;
       box-shadow: 0 8px 24px rgba(0,0,0,0.15);
     }
-
     .modal-header {
       display: flex;
       justify-content: space-between;
@@ -135,7 +205,6 @@
       border-bottom: 1px solid #eee;
       padding-bottom: 10px;
     }
-
     .modal-header h3 { margin: 0; color: #2c3e50; font-size: 1.25em; }
     .close-btn { background: none; border: none; font-size: 1.2em; cursor: pointer; color: #777; width: auto; padding: 0; }
 
@@ -151,10 +220,7 @@
       border-radius: 4px;
       font-size: 0.9em;
     }
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: #2b78e4;
-    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #2b78e4; }
 
     .description-display {
       background: #f8f9fa;
@@ -181,11 +247,7 @@
       gap: 8px;
       margin-top: 15px;
     }
-
-    .delete-options button {
-      text-align: left;
-      width: 100%;
-    }
+    .delete-options button { text-align: left; width: 100%; }
 
     button { cursor: pointer; font-weight: bold; padding: 8px 16px; border-radius: 4px; border: none; font-size: 0.9em; }
     .btn-primary { background-color: #2b78e4; color: white; }
@@ -198,22 +260,46 @@
 </head>
 <body>
 
-  <div class="header">
+  <div class="app-header">
     <h1>Felleskalender for Lærere</h1>
-    <div class="filter-bar" id="filterList"></div>
   </div>
 
-  <div class="calendar-card" id="calendarCard">
-    <div id="calendar"></div>
+  <div class="app-container">
+    <!-- VENSTRE SIDEBAR (Minikalender + Filtre) -->
+    <div class="sidebar">
+      
+      <!-- Minikalender -->
+      <div class="sidebar-card">
+        <div class="mini-cal-header">
+          <button id="miniPrevBtn" class="mini-cal-nav">&lt;</button>
+          <span id="miniCalTitle">Måned År</span>
+          <button id="miniNextBtn" class="mini-cal-nav">&gt;</button>
+        </div>
+        <div class="mini-calendar-grid" id="miniCalGrid"></div>
+      </div>
 
-    <div id="contextMenu" class="custom-context-menu">
-      <ul>
-        <li id="menuNewEvent">➕ Ny hendelse</li>
-        <li id="menuNewRecurringEvent">🔁 Ny regelmessig hendelse</li>
-      </ul>
+      <!-- Kategori- og Trinnfiltre -->
+      <div class="sidebar-card">
+        <h3 class="sidebar-card-title">Kategorier</h3>
+        <div class="filter-list-vertical" id="filterList"></div>
+      </div>
+
+    </div>
+
+    <!-- HOVEDKALENDER -->
+    <div class="main-calendar-card" id="calendarCard">
+      <div id="calendar"></div>
+
+      <div id="contextMenu" class="custom-context-menu">
+        <ul>
+          <li id="menuNewEvent">➕ Ny hendelse</li>
+          <li id="menuNewRecurringEvent">🔁 Ny regelmessig hendelse</li>
+        </ul>
+      </div>
     </div>
   </div>
 
+  <!-- MODAL / POPUP -->
   <div id="eventModal" class="modal-backdrop">
     <div class="modal">
       <div class="modal-header">
@@ -302,7 +388,7 @@
     </div>
   </div>
 
-  <!-- Firebase & Fridager JavaScript Moduler -->
+  <!-- Firebase & JavaScript Moduler -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { 
@@ -318,7 +404,6 @@
       onSnapshot 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // Importer skoleruten / fridagene
     import { schoolYearsData } from "./fridager.js";
 
     const firebaseConfig = {
@@ -355,65 +440,61 @@
       "monthly": "Hver måned"
     };
 
-    // Bygg opp liste over rød-dager og fri-dager fra fridager.js
     const redDateSet = new Set();
     const offDateSet = new Set();
     const schoolEventsFromJs = [];
 
-function parseSchoolYearsData() {
-  Object.values(schoolYearsData).flat().forEach(item => {
-    let cur = new Date(item.startDate + "T00:00:00");
-    const last = new Date(item.endDate + "T00:00:00");
+    function parseSchoolYearsData() {
+      Object.values(schoolYearsData).flat().forEach(item => {
+        let cur = new Date(item.startDate + "T00:00:00");
+        const last = new Date(item.endDate + "T00:00:00");
 
-    // Legg til alle dager fra startDate til OG MED endDate i bakgrunnssettet
-    while (cur <= last) {
-      const yyyy = cur.getFullYear();
-      const mm = String(cur.getMonth() + 1).padStart(2, '0');
-      const dd = String(cur.getDate()).padStart(2, '0');
-      const dateStr = `${yyyy}-${mm}-${dd}`;
+        while (cur <= last) {
+          const yyyy = cur.getFullYear();
+          const mm = String(cur.getMonth() + 1).padStart(2, '0');
+          const dd = String(cur.getDate()).padStart(2, '0');
+          const dateStr = `${yyyy}-${mm}-${dd}`;
 
-      if (item.type === 'roddag') {
-        redDateSet.add(dateStr);
-      } else if (item.type === 'ferie' || item.type.startsWith('planlegging')) {
-        offDateSet.add(dateStr);
-      }
-      cur.setDate(cur.getDate() + 1);
+          if (item.type === 'roddag') {
+            redDateSet.add(dateStr);
+          } else if (item.type === 'ferie' || item.type.startsWith('planlegging')) {
+            offDateSet.add(dateStr);
+          }
+          cur.setDate(cur.getDate() + 1);
+        }
+
+        let endAdjusted = new Date(item.endDate + "T00:00:00");
+        endAdjusted.setDate(endAdjusted.getDate() + 1);
+        
+        const yyyy = endAdjusted.getFullYear();
+        const mm = String(endAdjusted.getMonth() + 1).padStart(2, '0');
+        const dd = String(endAdjusted.getDate()).padStart(2, '0');
+        const endStr = `${yyyy}-${mm}-${dd}`;
+
+        let bgColor = '#95a5a6';
+        if (item.type === 'roddag') bgColor = '#e74c3c';
+        else if (item.type === 'ferie') bgColor = '#7f8c8d';
+
+        schoolEventsFromJs.push({
+          id: 'school_route_' + Math.random().toString(36).substring(2, 7),
+          title: `📌 ${item.title}`,
+          start: item.startDate,
+          end: endStr,
+          allDay: true,
+          backgroundColor: bgColor,
+          borderColor: bgColor,
+          isSchoolRoute: true,
+          extendedProps: {
+            group: 'Skolerute',
+            rawTitle: item.title,
+            startDate: item.startDate,
+            endDate: item.endDate,
+            description: `Skolerute/Fridag (${item.type})`,
+            isSchoolRoute: true
+          }
+        });
+      });
     }
-
-    // FullCalendar krever at sluttdato for hele dager settes til DAGEN ETTER (exclusive end date)
-    // slik at bjelken dekker hele den siste dagen.
-    let endAdjusted = new Date(item.endDate + "T00:00:00");
-    endAdjusted.setDate(endAdjusted.getDate() + 1);
-    
-    const yyyy = endAdjusted.getFullYear();
-    const mm = String(endAdjusted.getMonth() + 1).padStart(2, '0');
-    const dd = String(endAdjusted.getDate()).padStart(2, '0');
-    const endStr = `${yyyy}-${mm}-${dd}`;
-
-    let bgColor = '#95a5a6';
-    if (item.type === 'roddag') bgColor = '#e74c3c';
-    else if (item.type === 'ferie') bgColor = '#7f8c8d';
-
-    schoolEventsFromJs.push({
-      id: 'school_route_' + Math.random().toString(36).substring(2, 7),
-      title: `📌 ${item.title}`,
-      start: item.startDate,
-      end: endStr, // Nå settes denne til lørdag 03.10.2026 så bjelken dekker hele fredag 02.10.2026
-      allDay: true,
-      backgroundColor: bgColor,
-      borderColor: bgColor,
-      isSchoolRoute: true,
-      extendedProps: {
-        group: 'Skolerute',
-        rawTitle: item.title,
-        startDate: item.startDate,
-        endDate: item.endDate, // Beholder opprinnelig sluttdato for visning i popup
-        description: `Skolerute/Fridag (${item.type})`,
-        isSchoolRoute: true
-      }
-    });
-  });
-}
 
     parseSchoolYearsData();
 
@@ -425,9 +506,11 @@ function parseSchoolYearsData() {
     let selectedCategories = Object.keys(categoryColors);
     let calendar;
     let activeEvent = null;
-
     let currentSelection = null;
     const contextMenu = document.getElementById('contextMenu');
+
+    // Månedstilstand for mini-kalenderen
+    let miniCalCurrentDate = new Date();
 
     function populateGroupDropdown() {
       const groupSelect = document.getElementById('group');
@@ -495,7 +578,7 @@ function parseSchoolYearsData() {
       return `${hours}:${minutes}`;
     }
 
-   function formatNorwegianDate(dateStr) {
+    function formatNorwegianDate(dateStr) {
       if (!dateStr) return '';
       const [year, month, day] = dateStr.split('-');
       if (!year || !month || !day) return dateStr;
@@ -527,20 +610,105 @@ function parseSchoolYearsData() {
       }
     }
 
+    // --- MINI-KALENDER LOGIKK ---
+    const monthNamesNorwegian = [
+      "Januar", "Februar", "Mars", "April", "Mai", "Juni", 
+      "Juli", "August", "September", "Oktober", "November", "Desember"
+    ];
+
+    function renderMiniCalendar() {
+      const grid = document.getElementById('miniCalGrid');
+      const title = document.getElementById('miniCalTitle');
+      grid.innerHTML = '';
+
+      const year = miniCalCurrentDate.getFullYear();
+      const month = miniCalCurrentDate.getMonth();
+
+      title.textContent = `${monthNamesNorwegian[month]} ${year}`;
+
+      // Overskrifter for dager (Man - Søn)
+      const dayHeaders = ['M', 'T', 'O', 'T', 'F', 'L', 'S'];
+      dayHeaders.forEach(dh => {
+        const div = document.createElement('div');
+        div.className = 'mini-day-name';
+        div.textContent = dh;
+        grid.appendChild(div);
+      });
+
+      // Finn første dag i måneden (Mandag som første dag)
+      const firstDayOfMonth = new Date(year, month, 1);
+      let startingDay = firstDayOfMonth.getDay() - 1;
+      if (startingDay === -1) startingDay = 6; // Søndag
+
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const prevMonthDays = new Date(year, month, 0).getDate();
+
+      const todayStr = formatDate(new Date());
+      const selectedStr = calendar ? formatDate(calendar.getDate()) : todayStr;
+
+      // Forrige måneds dager
+      for (let i = startingDay - 1; i >= 0; i--) {
+        const dayNum = prevMonthDays - i;
+        const div = document.createElement('div');
+        div.className = 'mini-day-cell other-month';
+        div.textContent = dayNum;
+        grid.appendChild(div);
+      }
+
+      // Dager i denne måneden
+      for (let day = 1; day <= daysInMonth; day++) {
+        const div = document.createElement('div');
+        div.className = 'mini-day-cell';
+        div.textContent = day;
+
+        const dateObj = new Date(year, month, day);
+        const dateStr = formatDate(dateObj);
+
+        if (dateStr === todayStr) div.classList.add('today');
+        if (dateStr === selectedStr) div.classList.add('selected-day');
+
+        if (redDateSet.has(dateStr) || dateObj.getDay() === 0) {
+          div.classList.add('red-day');
+        } else if (offDateSet.has(dateStr)) {
+          div.classList.add('off-day');
+        }
+
+        div.addEventListener('click', () => {
+          if (calendar) {
+            calendar.gotoDate(dateObj);
+            renderMiniCalendar();
+          }
+        });
+
+        grid.appendChild(div);
+      }
+    }
+
+    document.getElementById('miniPrevBtn').addEventListener('click', () => {
+      miniCalCurrentDate.setMonth(miniCalCurrentDate.getMonth() - 1);
+      renderMiniCalendar();
+    });
+
+    document.getElementById('miniNextBtn').addEventListener('click', () => {
+      miniCalCurrentDate.setMonth(miniCalCurrentDate.getMonth() + 1);
+      renderMiniCalendar();
+    });
+
+    // STARTUP LOGIKK
     document.addEventListener('DOMContentLoaded', () => {
       populateGroupDropdown();
 
       const calendarEl = document.getElementById('calendar');
 
       calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
+        initialView: 'timeGridWeek', // UKESVISNING SOM STANDARD
         selectable: true,
         selectMirror: true,
         unselectAuto: false,
         headerToolbar: {
           left: 'prev,next today',
           center: 'title',
-          right: 'dayGridMonth,timeGridWeek,listMonth'
+          right: 'timeGridWeek,dayGridMonth,listMonth'
         },
         buttonText: { today: 'I dag', month: 'Måned', week: 'Uke', list: 'Liste' },
         locale: 'no',
@@ -548,19 +716,16 @@ function parseSchoolYearsData() {
         scrollTime: '08:00:00',
         slotDuration: '00:30:00',
 
-        // FARGELEGGING AV DATOER (RØDE DAGER & FRIDAGER)
-        dayCellClassNames: function(arg) {
-          const yyyy = arg.date.getFullYear();
-          const mm = String(arg.date.getMonth() + 1).padStart(2, '0');
-          const dd = String(arg.date.getDate()).padStart(2, '0');
-          const dateStr = `${yyyy}-${mm}-${dd}`;
+        datesSet: function(info) {
+          // Synkroniser minikalender med visningen i hovedkalenderen
+          miniCalCurrentDate = new Date(info.view.currentStart);
+          renderMiniCalendar();
+        },
 
-          if (redDateSet.has(dateStr)) {
-            return ['day-red-day'];
-          }
-          if (offDateSet.has(dateStr)) {
-            return ['day-off-day'];
-          }
+        dayCellClassNames: function(arg) {
+          const dateStr = formatDate(arg.date);
+          if (redDateSet.has(dateStr)) return ['day-red-day'];
+          if (offDateSet.has(dateStr)) return ['day-off-day'];
           return [];
         },
 
@@ -575,7 +740,7 @@ function parseSchoolYearsData() {
           hideContextMenu();
         },
 
-eventClick: function(info) {
+        eventClick: function(info) {
           hideContextMenu();
           activeEvent = {
             id: info.event.id,
@@ -594,7 +759,6 @@ eventClick: function(info) {
           document.getElementById('viewTitle').textContent = activeEvent.title;
           document.getElementById('viewGroup').textContent = activeEvent.group;
           
-          // ENDRET HER (Bruker formatNorwegianDate på datoene):
           let timeText = formatNorwegianDate(activeEvent.startDate);
           if (activeEvent.startTime) timeText += ` kl. ${activeEvent.startTime}`;
           if (activeEvent.endTime) timeText += ` - ${activeEvent.endTime}`;
@@ -621,6 +785,7 @@ eventClick: function(info) {
 
       calendar.render();
       renderFilters();
+      renderMiniCalendar();
 
       calendarEl.addEventListener('contextmenu', (e) => {
         if (currentSelection) {
@@ -859,8 +1024,8 @@ eventClick: function(info) {
       filterContainer.innerHTML = '';
 
       Object.keys(categoryColors).forEach(cat => {
-        const item = document.createElement('div');
-        item.className = 'filter-item';
+        const item = document.createElement('label');
+        item.className = 'filter-item-vert';
         
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
@@ -873,15 +1038,15 @@ eventClick: function(info) {
         });
 
         const colorDot = document.createElement('span');
-        colorDot.className = 'color-box';
+        colorDot.className = 'color-dot';
         colorDot.style.backgroundColor = categoryColors[cat];
 
-        const label = document.createElement('span');
-        label.textContent = cat;
+        const labelText = document.createElement('span');
+        labelText.textContent = cat;
 
         item.appendChild(checkbox);
         item.appendChild(colorDot);
-        item.appendChild(label);
+        item.appendChild(labelText);
         filterContainer.appendChild(item);
       });
     }
