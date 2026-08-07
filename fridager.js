@@ -17,9 +17,8 @@ export const schoolYearsData = {
     { startDate: "2026-07-28", endDate: "2026-07-28", title: "SFO åpner", type: "hendelse", schoolOpen: false, sfoOpen: true },
 
     // --- AUGUST 2026 ---
-    { startDate: "2026-08-10", endDate: "2026-08-11", title: "Planleggingsdag for skole", type: "planlegging_begge", schoolOpen: false, sfoOpen: false },
-    { startDate: "2026-08-11", endDate: "2026-08-11", title: "Planleggingsdag for skole", type: "planlegging_begge", schoolOpen: false, sfoOpen: false },
-    { startDate: "2026-08-12", endDate: "2026-08-12", title: "Planleggingsdag for skole og SFO", type: "planlegging_skole", schoolOpen: false, sfoOpen: true },
+    { startDate: "2026-08-10", endDate: "2026-08-11", title: "Planleggingsdag for skole", type: "planlegging_skole", schoolOpen: false, sfoOpen: true },
+    { startDate: "2026-08-12", endDate: "2026-08-12", title: "Planleggingsdag for skole og SFO", type: "planlegging_begge", schoolOpen: false, sfoOpen: false },
     { startDate: "2026-08-13", endDate: "2026-08-13", title: "Første skoledag", type: "hendelse", schoolOpen: true, sfoOpen: true },
 
     // --- SEPTEMBER / OKTOBER 2026 ---
@@ -29,7 +28,7 @@ export const schoolYearsData = {
     { startDate: "2026-11-06", endDate: "2026-11-06", title: "Planleggingsdag for skole og SFO", type: "planlegging_begge", schoolOpen: false, sfoOpen: false },
 
     // --- DESEMBER 2026 / JANUAR 2027 ---
-    { startDate: "2026-12-21", endDate: "2027-01-03", title: "Juleferie", type: "ferie", schoolOpen: false, sfoOpen: false },
+    { startDate: "2026-12-21", endDate: "2027-01-03", title: "Juleferie", type: "ferie", schoolOpen: false, sfoOpen: true },
     // Norske røddager i julen:
     { startDate: "2026-12-25", endDate: "2026-12-25", title: "1. juledag", type: "roddag", schoolOpen: false, sfoOpen: false },
     { startDate: "2026-12-26", endDate: "2026-12-26", title: "2. juledag", type: "roddag", schoolOpen: false, sfoOpen: false },
@@ -41,7 +40,7 @@ export const schoolYearsData = {
     { startDate: "2027-02-22", endDate: "2027-02-26", title: "Vinterferie (uke 8)", type: "ferie", schoolOpen: false, sfoOpen: true },
 
     // --- MARS 2027 (PÅSKE) ---
-    { startDate: "2027-03-22", endDate: "2027-03-30", title: "Påskeferie", type: "ferie", schoolOpen: false, sfoOpen: false },
+    { startDate: "2027-03-22", endDate: "2027-03-30", title: "Påskeferie", type: "ferie", schoolOpen: false, sfoOpen: true },
     // Norske røddager i påsken 2027:
     { startDate: "2027-03-25", endDate: "2027-03-25", title: "Skjærtorsdag", type: "roddag", schoolOpen: false, sfoOpen: false },
     { startDate: "2027-03-26", endDate: "2027-03-26", title: "Langfredag", type: "roddag", schoolOpen: false, sfoOpen: false },
