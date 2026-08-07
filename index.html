@@ -101,15 +101,14 @@
     #viewCancelBtn { background-color: #10b981 !important; color: #ffffff !important; border: none !important; font-size: 0.9em !important; font-weight: 600 !important; padding: 8px 18px !important; border-radius: 6px !important; cursor: pointer !important; transition: background-color 0.15s ease !important; margin-left: auto !important; }
     #viewCancelBtn:hover { background-color: #059669 !important; }
   
-/* --- UTSKRIFTSFORMATERING (A4 Liggende) --- */
+/* --- UTSKRIFTSFORMATERING FOR UKESLISTE --- */
 @media print {
-  /* Sett siden til A4 Liggende med minimale marginer */
   @page {
-    size: A4 landscape;
-    margin: 8mm;
+    size: A4 portrait; /* Stående format passer som regel best for lister */
+    margin: 12mm;
   }
 
-  /* Skjul elementer vi ikke vil ha på papir */
+  /* Skjul overflødige meny- og knappeelementer */
   header,
   nav,
   .sidebar,
@@ -117,15 +116,14 @@
   #contextMenu,
   .btn,
   button,
-  .fc-toolbar-chunk:nth-child(1), /* Skjuler navigasjonsknapper (forrige/neste) */
-  .fc-toolbar-chunk:nth-child(3)  /* Skjuler visningsvelger (måned/uke/dag) */ {
+  .fc-header-toolbar {
     display: none !important;
   }
 
-  /* Gjør kalenderbeholderen fullskjerm uten rulling */
+  /* Tilpass visningsområdet for liste */
   body, #calendar, .main-content {
     width: 100% !important;
-    height: 100% !important;
+    height: auto !important;
     margin: 0 !important;
     padding: 0 !important;
     overflow: visible !important;
@@ -133,21 +131,25 @@
     color: #000 !important;
   }
 
-  /* Sørg for at bakgrunnsfarger og rammer skrives ut tydelig */
+  /* Sørg for at listen og fargekodene vises tydelig på trykk */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  /* Gjør eventer og linjer mer lesbare på papir */
-  .fc-event {
-    border: 1px solid #000 !important;
-    box-shadow: none !important;
+  /* Styling av ukesliste for papir */
+  .fc-list-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
   }
 
-  .fc {
-    max-width: 100% !important;
-    height: 98vh !important; /* Tilpasser høyden slik at alt får plass på 1 side */
+  .fc-list-day-cushion {
+    background-color: #f0f0f0 !important;
+    font-weight: bold !important;
+  }
+
+  .fc-list-event:hover td {
+    background-color: transparent !important;
   }
 }
 
