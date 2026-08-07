@@ -390,6 +390,24 @@
       contextMenu.style.display = 'none';
     }
 
+function showSelectionPopover(jsEvent) {
+      const popover = document.getElementById('selectionPopover');
+      if (!popover || !jsEvent) return;
+
+      // Posisjonerer popoveren rett over musepekeren/fingeren
+      popover.style.position = 'fixed';
+      popover.style.left = `${jsEvent.clientX}px`;
+      popover.style.top = `${jsEvent.clientY - 45}px`;
+      popover.style.display = 'flex';
+    }
+
+    function hideSelectionPopover() {
+      const popover = document.getElementById('selectionPopover');
+      if (popover) {
+        popover.style.display = 'none';
+      }
+    }
+
     function closeModal() {
       document.getElementById('eventModal').style.display = 'none';
       document.getElementById('deleteConfirmMode').style.display = 'none';
@@ -703,9 +721,17 @@ select: function(info) {
         }
       });
 
-      document.addEventListener('click', (e) => {
+document.addEventListener('click', (e) => {
+        const popover = document.getElementById('selectionPopover');
+        
+        // Skjuler høyreklikk-menyen hvis man klikker utenfor den
         if (!contextMenu.contains(e.target)) {
           hideContextMenu();
+        }
+
+        // Skjuler popoveren hvis man klikker utenfor popoveren og kalender-flaten
+        if (popover && !popover.contains(e.target) && !e.target.closest('.fc')) {
+          hideSelectionPopover();
         }
       });
 
@@ -718,6 +744,22 @@ select: function(info) {
         populateFormFromSelection();
         showFormMode("Ny regelmessig avtale", true);
       });
+
+      // Knapper fra popover (knappene som spretter opp)
+      document.getElementById('btnQuickNewEvent').addEventListener('click', (e) => {
+        e.stopPropagation();
+        hideSelectionPopover();
+        populateFormFromSelection();
+        showFormMode("Ny avtale", false);
+      });
+
+      document.getElementById('btnQuickNewRecurring').addEventListener('click', (e) => {
+        e.stopPropagation();
+        hideSelectionPopover();
+        populateFormFromSelection();
+        showFormMode("Ny regelmessig avtale", true);
+      });
+
     });
 
     onSnapshot(eventsRef, (snapshot) => {
