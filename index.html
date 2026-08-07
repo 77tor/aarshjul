@@ -644,18 +644,21 @@ function renderMiniCalendar() {
           return [];
         },
 
-select: function(info) {
+        select: function(info) {
           currentSelection = info;
           hideContextMenu();
           showSelectionPopover(info.jsEvent);
         },
 
         dateClick: function(info) {
-          hideSelectionPopover();
+          // FJERN hideSelectionPopover() herfra! 
+          // Klikk på en dato skal la select() vise popoveren i fred.
         },
 
         unselect: function() {
-          hideSelectionPopover();
+          // FJERN hideSelectionPopover() herfra også!
+          // Vi lar document.addEventListener('click', ...) ta seg av å skjule popoveren.
+          hideContextMenu();
         },
 
         eventClick: function(info) {
