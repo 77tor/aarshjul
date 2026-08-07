@@ -100,7 +100,58 @@
     #viewDeleteBtn:hover { background-color: #fee2e2 !important; border-color: #fca5a5 !important; }
     #viewCancelBtn { background-color: #10b981 !important; color: #ffffff !important; border: none !important; font-size: 0.9em !important; font-weight: 600 !important; padding: 8px 18px !important; border-radius: 6px !important; cursor: pointer !important; transition: background-color 0.15s ease !important; margin-left: auto !important; }
     #viewCancelBtn:hover { background-color: #059669 !important; }
-  </style>
+  
+/* --- UTSKRIFTSFORMATERING (A4 Liggende) --- */
+@media print {
+  /* Sett siden til A4 Liggende med minimale marginer */
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
+  /* Skjul elementer vi ikke vil ha på papir */
+  header,
+  nav,
+  .sidebar,
+  #selectionPopover,
+  #contextMenu,
+  .btn,
+  button,
+  .fc-toolbar-chunk:nth-child(1), /* Skjuler navigasjonsknapper (forrige/neste) */
+  .fc-toolbar-chunk:nth-child(3)  /* Skjuler visningsvelger (måned/uke/dag) */ {
+    display: none !important;
+  }
+
+  /* Gjør kalenderbeholderen fullskjerm uten rulling */
+  body, #calendar, .main-content {
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* Sørg for at bakgrunnsfarger og rammer skrives ut tydelig */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Gjør eventer og linjer mer lesbare på papir */
+  .fc-event {
+    border: 1px solid #000 !important;
+    box-shadow: none !important;
+  }
+
+  .fc {
+    max-width: 100% !important;
+    height: 98vh !important; /* Tilpasser høyden slik at alt får plass på 1 side */
+  }
+}
+
+</style>
 
 </head>
 <body>
@@ -607,10 +658,26 @@ function renderMiniCalendar() {
         selectable: true,
         selectMirror: true,
         unselectAuto: false,
+
+// 1. Legg til den egendefinerte knappen her:
+    customButtons: {
+      printWeekBtn: {
+        text: '🖨️ Skriv ut uke',
+        click: function() {
+          calendar.changeView('timeGridWeek');
+          hideContextMenu();
+          hideSelectionPopover();
+          setTimeout(() => {
+            window.print();
+          }, 150);
+        }
+      }
+    },
+
         headerToolbar: {
           left: 'prev,next today',
           center: 'title',
-          right: 'timeGridWeek,dayGridMonth,listMonth'
+          right: 'printWeekBtn timeGridWeek,dayGridMonth,listMonth'
         },
         buttonText: { today: 'I dag', month: 'Måned', week: 'Uke', list: 'Liste' },
         locale: 'no',
