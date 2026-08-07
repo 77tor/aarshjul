@@ -357,6 +357,8 @@
     let activeEvent = null;
     let currentSelection = null;
     const contextMenu = document.getElementById('contextMenu');
+    let lastClickTime = 0;
+    let lastClickDate = null;
 
     // Månedstilstand for mini-kalenderen
     let miniCalCurrentDate = new Date();
@@ -615,6 +617,20 @@ function renderMiniCalendar() {
         select: function(info) {
           currentSelection = info;
           hideContextMenu();
+
+          // SJEKKER OM DET ER ET DOBBELTKLIKK (under 300 ms)
+          const currentTime = new Date().getTime();
+          const timeDiff = currentTime - lastClickTime;
+          const selectedStr = info.startStr;
+
+          if (timeDiff < 300 && timeDiff > 0 && lastClickDate === selectedStr) {
+            // Åpner skjemaet med den valgte datoen/tiden utfylt
+            populateFormFromSelection();
+            showFormMode("Ny avtale", false);
+          }
+
+          lastClickTime = currentTime;
+          lastClickDate = selectedStr;
         },
 
         eventClick: function(info) {
