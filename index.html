@@ -663,10 +663,15 @@ function renderMiniCalendar() {
     customButtons: {
       printWeekBtn: {
         text: '🖨️ Skriv ut uke',
-        click: function() {
-          calendar.changeView('timeGridWeek');
-          hideContextMenu();
-          hideSelectionPopover();
+click: function() {
+          // 1. Bytter til ukesliste
+          calendar.changeView('listWeek');
+
+          // 2. Skjuler eventuelle åpne menyer
+          if (typeof hideContextMenu === 'function') hideContextMenu();
+          if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
+
+          // 3. Vent litt så FullCalendar rekker å bygge opp ukeslisten, og åpne utskrift
           setTimeout(() => {
             window.print();
           }, 150);
