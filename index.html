@@ -360,52 +360,60 @@
     const offDateSet = new Set();
     const schoolEventsFromJs = [];
 
-    function parseSchoolYearsData() {
-      Object.values(schoolYearsData).flat().forEach(item => {
-        let cur = new Date(item.startDate + "T00:00:00");
-        const last = new Date(item.endDate + "T00:00:00");
+function parseSchoolYearsData() {
+  Object.values(schoolYearsData).flat().forEach(item => {
+    let cur = new Date(item.startDate + "T00:00:00");
+    const last = new Date(item.endDate + "T00:00:00");
 
-        while (cur <= last) {
-          const yyyy = cur.getFullYear();
-          const mm = String(cur.getMonth() + 1).padStart(2, '0');
-          const dd = String(cur.getDate()).padStart(2, '0');
-          const dateStr = `${yyyy}-${mm}-${dd}`;
+    // Legg til alle dager fra startDate til OG MED endDate i bakgrunnssettet
+    while (cur <= last) {
+      const yyyy = cur.getFullYear();
+      const mm = String(cur.getMonth() + 1).padStart(2, '0');
+      const dd = String(cur.getDate()).padStart(2, '0');
+      const dateStr = `${yyyy}-${mm}-${dd}`;
 
-          if (item.type === 'roddag') {
-            redDateSet.add(dateStr);
-          } else if (item.type === 'ferie' || item.type.startsWith('planlegging')) {
-            offDateSet.add(dateStr);
-          }
-          cur.setDate(cur.getDate() + 1);
-        }
-
-        // Legg til hendelsen i selve kalendervisningen
-        let endAdjusted = new Date(item.endDate + "T00:00:00");
-        endAdjusted.setDate(endAdjusted.getDate() + 1);
-        const endStr = endAdjusted.toISOString().split('T')[0];
-
-        let bgColor = '#95a5a6';
-        if (item.type === 'roddag') bgColor = '#e74c3c';
-        else if (item.type === 'ferie') bgColor = '#7f8c8d';
-
-        schoolEventsFromJs.push({
-          id: 'school_route_' + Math.random().toString(36).substring(2, 7),
-          title: `📌 ${item.title}`,
-          start: item.startDate,
-          end: endStr,
-          allDay: true,
-          backgroundColor: bgColor,
-          borderColor: bgColor,
-          isSchoolRoute: true,
-          extendedProps: {
-            group: 'Skolerute',
-            rawTitle: item.title,
-            description: `Skolerute/Fridag (${item.type})`,
-            isSchoolRoute: true
-          }
-        });
-      });
+      if (item.type === 'roddag') {
+        redDateSet.add(dateStr);
+      } else if (item.type === 'ferie' || item.type.startsWith('planlegging')) {
+        offDateSet.add(dateStr);
+      }
+      cur.setDate(cur.getDate() + 1);
     }
+
+    // FullCalendar krever at sluttdato for hele dager settes til DAGEN ETTER (exclusive end date)
+    // slik at bjelken dekker hele den siste dagen.
+    let endAdjusted = new Date(item.endDate + "T00:00:00");
+    endAdjusted.setDate(endAdjusted.getDate() + 1);
+    
+    const yyyy = endAdjusted.getFullYear();
+    const mm = String(endAdjusted.getMonth() + 1).padStart(2, '0');
+    const dd = String(endAdjusted.getDate()).padStart(2, '0');
+    const endStr = `${yyyy}-${mm}-${dd}`;
+
+    let bgColor = '#95a5a6';
+    if (item.type === 'roddag') bgColor = '#e74c3c';
+    else if (item.type === 'ferie') bgColor = '#7f8c8d';
+
+    schoolEventsFromJs.push({
+      id: 'school_route_' + Math.random().toString(36).substring(2, 7),
+      title: `📌 ${item.title}`,
+      start: item.startDate,
+      end: endStr, // Nå settes denne til lørdag 03.10.2026 så bjelken dekker hele fredag 02.10.2026
+      allDay: true,
+      backgroundColor: bgColor,
+      borderColor: bgColor,
+      isSchoolRoute: true,
+      extendedProps: {
+        group: 'Skolerute',
+        rawTitle: item.title,
+        startDate: item.startDate,
+        endDate: item.endDate, // Beholder opprinnelig sluttdato for visning i popup
+        description: `Skolerute/Fridag (${item.type})`,
+        isSchoolRoute: true
+      }
+    });
+  });
+}
 
     parseSchoolYearsData();
 
