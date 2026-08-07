@@ -97,26 +97,50 @@
     .mini-day-cell.red-day { color: #dc2626; font-weight: 600; }
     .mini-day-cell.off-day { background-color: #f3f4f6; }
 
-    /* CATEGORY FILTER LIST (Vertical) */
+
+/* CATEGORY FILTER LIST (Tett, oppryddet visning) */
     .filter-list-vertical {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      max-height: 420px;
-      overflow-y: auto;
+      gap: 3px; /* Mindre avstand mellom elementene */
     }
+
     .filter-item-vert {
       display: flex;
       align-items: center;
-      font-size: 0.88em;
+      font-size: 0.85em;
       cursor: pointer;
-      padding: 4px 6px;
-      border-radius: 4px;
+      padding: 5px 8px;
+      border-radius: 6px;
       transition: background-color 0.15s;
+      white-space: nowrap; /* Hindrer at teksten brekker over på ny linje */
+      user-select: none;
     }
-    .filter-item-vert:hover { background-color: #f9fafb; }
-    .filter-item-vert input { margin-right: 8px; cursor: pointer; }
-    .color-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; flex-shrink: 0; }
+
+    .filter-item-vert:hover {
+      background-color: #f3f4f6;
+    }
+
+    .filter-item-vert input {
+      margin: 0 8px 0 0;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+
+    .filter-item-vert span.filter-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
     /* HOVEDKALENDER */
     .main-calendar-card {
@@ -1019,7 +1043,7 @@
       }
     });
 
-    function renderFilters() {
+function renderFilters() {
       const filterContainer = document.getElementById('filterList');
       filterContainer.innerHTML = '';
 
@@ -1042,6 +1066,7 @@
         colorDot.style.backgroundColor = categoryColors[cat];
 
         const labelText = document.createElement('span');
+        labelText.className = 'filter-label';
         labelText.textContent = cat;
 
         item.appendChild(checkbox);
@@ -1050,6 +1075,7 @@
         filterContainer.appendChild(item);
       });
     }
+
   </script>
 </body>
 </html>
