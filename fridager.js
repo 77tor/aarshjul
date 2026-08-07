@@ -17,8 +17,9 @@ export const schoolYearsData = {
     { startDate: "2026-07-28", endDate: "2026-07-28", title: "SFO åpner", type: "hendelse", schoolOpen: false, sfoOpen: true },
 
     // --- AUGUST 2026 ---
-    { startDate: "2026-08-10", endDate: "2026-08-11", title: "Planleggingsdager for skole og SFO", type: "planlegging_begge", schoolOpen: false, sfoOpen: false },
-    { startDate: "2026-08-12", endDate: "2026-08-12", title: "Planleggingsdag for skole", type: "planlegging_skole", schoolOpen: false, sfoOpen: true },
+    { startDate: "2026-08-10", endDate: "2026-08-11", title: "Planleggingsdag for skole", type: "planlegging_begge", schoolOpen: false, sfoOpen: false },
+    { startDate: "2026-08-11", endDate: "2026-08-11", title: "Planleggingsdag for skole", type: "planlegging_begge", schoolOpen: false, sfoOpen: false },
+    { startDate: "2026-08-12", endDate: "2026-08-12", title: "Planleggingsdag for skole og SFO", type: "planlegging_skole", schoolOpen: false, sfoOpen: true },
     { startDate: "2026-08-13", endDate: "2026-08-13", title: "Første skoledag", type: "hendelse", schoolOpen: true, sfoOpen: true },
 
     // --- SEPTEMBER / OKTOBER 2026 ---

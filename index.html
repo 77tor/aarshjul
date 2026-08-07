@@ -487,6 +487,13 @@
       return `${hours}:${minutes}`;
     }
 
+   function formatNorwegianDate(dateStr) {
+      if (!dateStr) return '';
+      const [year, month, day] = dateStr.split('-');
+      if (!year || !month || !day) return dateStr;
+      return `${day}.${month}.${year}`;
+    }
+
     function populateFormFromSelection() {
       if (!currentSelection) return;
 
@@ -560,7 +567,7 @@
           hideContextMenu();
         },
 
-        eventClick: function(info) {
+eventClick: function(info) {
           hideContextMenu();
           activeEvent = {
             id: info.event.id,
@@ -579,10 +586,13 @@
           document.getElementById('viewTitle').textContent = activeEvent.title;
           document.getElementById('viewGroup').textContent = activeEvent.group;
           
-          let timeText = activeEvent.startDate;
+          // ENDRET HER (Bruker formatNorwegianDate på datoene):
+          let timeText = formatNorwegianDate(activeEvent.startDate);
           if (activeEvent.startTime) timeText += ` kl. ${activeEvent.startTime}`;
           if (activeEvent.endTime) timeText += ` - ${activeEvent.endTime}`;
-          if (activeEvent.endDate && activeEvent.endDate !== activeEvent.startDate) timeText += ` (${activeEvent.endDate})`;
+          if (activeEvent.endDate && activeEvent.endDate !== activeEvent.startDate) {
+            timeText += ` til ${formatNorwegianDate(activeEvent.endDate)}`;
+          }
           document.getElementById('viewTime').textContent = timeText;
 
           const recurringRow = document.getElementById('viewRecurringRow');
