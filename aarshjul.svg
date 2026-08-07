@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Bakgrunnsgradient for kalenderkortet -->
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f4f6f9" />
+    </linearGradient>
+
+    <!-- Hovedgradient for topplinje og ikon-detaljer -->
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="100%" stop-color="#7c3aed" />
+    </linearGradient>
+
+    <!-- Gradient for klokke / aksent -->
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+
+    <!-- Myk skygge for dybde -->
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#0f172a" flood-opacity="0.12" />
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.08" />
+    </filter>
+  </defs>
+
+  <!-- Bakgrunnssirkel (valgfri, gir en pen app-ikon-look) -->
+  <rect width="512" height="512" rx="112" fill="url(#primaryGrad)" />
+
+  <!-- Kalenderkort -->
+  <g filter="url(#softShadow)">
+    <!-- Hovedboks -->
+    <rect x="96" y="112" width="320" height="300" rx="24" fill="url(#cardGrad)" />
+
+    <!-- Kalenderstang / topptekst -->
+    <path d="M 96 136 C 96 122.7 106.7 112 120 112 L 392 112 C 405.3 112 416 122.7 416 136 L 416 180 L 96 180 Z" fill="url(#primaryGrad)" />
+
+    <!-- Kalender-ringer / oppheng -->
+    <rect x="160" y="88" width="16" height="40" rx="8" fill="#e2e8f0" />
+    <rect x="162" y="90" width="12" height="36" rx="6" fill="#ffffff" />
+    
+    <rect x="336" y="88" width="16" height="40" rx="8" fill="#e2e8f0" />
+    <rect x="338" y="90" width="12" height="36" rx="6" fill="#ffffff" />
+
+    <!-- Rutenett / Avtalepunkter i kalenderen -->
+    <!-- Rader med avtaler (fargede linjer/piller) -->
+    <rect x="136" y="212" width="110" height="16" rx="8" fill="#4f46e5" opacity="0.85" />
+    <rect x="258" y="212" width="40" height="16" rx="8" fill="#cbd5e1" opacity="0.5" />
+
+    <rect x="136" y="248" width="50" height="16" rx="8" fill="#cbd5e1" opacity="0.5" />
+    <rect x="198" y="248" width="100" height="16" rx="8" fill="#06b6d4" opacity="0.9" />
+
+    <rect x="136" y="284" width="80" height="16" rx="8" fill="#10b981" opacity="0.85" />
+
+    <rect x="136" y="320" width="140" height="16" rx="8" fill="#cbd5e1" opacity="0.5" />
+
+    <!-- Sjekkmerke / Fullført-symbol nede til venstre -->
+    <circle cx="156" cy="364" r="14" fill="#10b981" />
+    <path d="M 150 364 L 154 368 L 163 359" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  </g>
+
+  <!-- Flytende Klokke-badge (Tid & Avtaler) -->
+  <g filter="url(#softShadow)">
+    <circle cx="344" cy="328" r="52" fill="#ffffff" />
+    <circle cx="344" cy="328" r="44" fill="url(#accentGrad)" />
+    <!-- Klokkevisere -->
+    <path d="M 344 304 L 344 328 L 360 336" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    <circle cx="344" cy="328" r="3" fill="#ffffff" />
+  </g>
+</svg>
