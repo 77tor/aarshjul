@@ -9,87 +9,27 @@
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 
-  <style>
+<style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { margin: 0; padding: 20px; background-color: #f3f4f6; color: #333; }
     
-    .app-header {
-      margin-bottom: 15px;
-    }
+    /* LAYOUT & HEADER */
+    .app-header { margin-bottom: 15px; }
     .app-header h1 { margin: 0; font-size: 1.6em; color: #1f2937; }
+    .app-container { display: flex; gap: 20px; align-items: flex-start; }
 
-    /* LAYOUT: SIDEBAR + HOVEDKALENDER (Outlook style) */
-    .app-container {
-      display: flex;
-      gap: 20px;
-      align-items: flex-start;
-    }
-
-    /* VENSTREMENY */
-    .sidebar {
-      width: 280px;
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    .sidebar-card {
-      background: #ffffff;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-      border: 1px solid #e5e7eb;
-    }
-
-    .sidebar-card-title {
-      font-size: 0.9em;
-      font-weight: 700;
-      color: #4b5563;
-      margin: 0 0 10px 0;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
+    /* VENSTREMENY & KORT */
+    .sidebar { width: 280px; flex-shrink: 0; display: flex; flex-direction: column; gap: 15px; }
+    .sidebar-card { background: #ffffff; padding: 15px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 1px solid #e5e7eb; }
+    .sidebar-card-title { font-size: 0.9em; font-weight: 700; color: #4b5563; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 0.5px; }
 
     /* MINI-KALENDER */
-    .mini-cal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-      font-weight: bold;
-      font-size: 0.9em;
-    }
-    .mini-cal-nav {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 1.1em;
-      padding: 2px 6px;
-      color: #6b7280;
-      border-radius: 4px;
-    }
+    .mini-cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: bold; font-size: 0.9em; }
+    .mini-cal-nav { background: none; border: none; cursor: pointer; font-size: 1.1em; padding: 2px 6px; color: #6b7280; border-radius: 4px; }
     .mini-cal-nav:hover { background-color: #f3f4f6; color: #111827; }
-
-    .mini-calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      text-align: center;
-      font-size: 0.8em;
-      gap: 2px;
-    }
-    .mini-day-name {
-      font-weight: 600;
-      color: #9ca3af;
-      padding-bottom: 4px;
-    }
-    .mini-day-cell {
-      padding: 6px 0;
-      border-radius: 50%;
-      cursor: pointer;
-      user-select: none;
-      transition: background-color 0.15s;
-    }
+    .mini-calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.8em; gap: 2px; }
+    .mini-day-name { font-weight: 600; color: #9ca3af; padding-bottom: 4px; }
+    .mini-day-cell { padding: 6px 0; border-radius: 50%; cursor: pointer; user-select: none; transition: background-color 0.15s; }
     .mini-day-cell:hover { background-color: #e5e7eb; }
     .mini-day-cell.other-month { color: #d1d5db; }
     .mini-day-cell.today { font-weight: bold; color: #2563eb; }
@@ -97,207 +37,47 @@
     .mini-day-cell.red-day { color: #dc2626; font-weight: 600; }
     .mini-day-cell.off-day { background-color: #f3f4f6; }
 
+    /* KATEGORI FILTERLISTE */
+    .filter-list-vertical { display: flex !important; flex-direction: column !important; gap: 4px !important; width: 100% !important; }
+    .filter-item-vert { display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; width: 100% !important; padding: 4px 6px !important; margin: 0 !important; font-size: 0.88em !important; cursor: pointer !important; border-radius: 4px !important; box-sizing: border-box !important; user-select: none !important; white-space: nowrap !important; }
+    .filter-item-vert:hover { background-color: #f3f4f6 !important; }
+    .filter-item-vert input[type="checkbox"] { margin: 0 8px 0 0 !important; padding: 0 !important; width: 16px !important; height: 16px !important; cursor: pointer !important; flex-shrink: 0 !important; }
+    .filter-item-vert .color-dot { width: 10px !important; height: 10px !important; border-radius: 50% !important; margin: 0 8px 0 0 !important; display: inline-block !important; flex-shrink: 0 !important; }
+    .filter-item-vert .filter-label { margin: 0 !important; padding: 0 !important; color: #374151 !important; font-size: 1em !important; line-height: 1 !important; white-space: nowrap !important; text-align: left !important; }
 
-/* CATEGORY FILTER LIST (Tvinger alt helt til venstre) */
-    .filter-list-vertical {
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 4px !important;
-      width: 100% !important;
-    }
-
-    .filter-item-vert {
-      display: flex !important;
-      flex-direction: row !important;
-      align-items: center !important;
-      justify-content: flex-start !important; /* Tvinger alt inn mot venstre */
-      width: 100% !important;
-      padding: 4px 6px !important;
-      margin: 0 !important;
-      font-size: 0.88em !important;
-      cursor: pointer !important;
-      border-radius: 4px !important;
-      box-sizing: border-box !important;
-      user-select: none !important;
-      white-space: nowrap !important;
-    }
-
-    .filter-item-vert:hover {
-      background-color: #f3f4f6 !important;
-    }
-
-    .filter-item-vert input[type="checkbox"] {
-      margin: 0 8px 0 0 !important;
-      padding: 0 !important;
-      width: 16px !important;
-      height: 16px !important;
-      cursor: pointer !important;
-      flex-shrink: 0 !important;
-    }
-
-    .filter-item-vert .color-dot {
-      width: 10px !important;
-      height: 10px !important;
-      border-radius: 50% !important;
-      margin: 0 8px 0 0 !important;
-      display: inline-block !important;
-      flex-shrink: 0 !important;
-    }
-
-    .filter-item-vert .filter-label {
-      margin: 0 !important;
-      padding: 0 !important;
-      color: #374151 !important;
-      font-size: 1em !important;
-      line-height: 1 !important;
-      white-space: nowrap !important;
-      text-align: left !important;
-    }
-
-/* Fargelegger overskriften/kolonnen for den valgte datoen i hovedkalenderen */
-    .fc-col-header-cell.selected-highlight-day {
-      background-color: #e0f2fe !important; /* Lys blå bakgrunn for datofeltet */
-      transition: background-color 0.2s ease;
-    }
-
-    /* Eventuelt gjør teksten/tallet i datofeltet litt tøffere */
-    .fc-col-header-cell.selected-highlight-day .fc-scrollgrid-sync-inner {
-      font-weight: bold !important;
-      color: #0284c7 !important;
-    }
-
-
-    /* HOVEDKALENDER */
-    .main-calendar-card {
-      flex-grow: 1;
-      background: #ffffff;
-      padding: 18px;
-      border-radius: 8px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-      border: 1px solid #e5e7eb;
-      min-width: 0; /* Hindrer at flexboksen blir ødelagt ved smal skjerm */
-    }
-
-    /* Smale helgedager */
-    .fc .fc-day-sat,
-    .fc .fc-day-sun {
-      width: 6% !important;
-    }
-    
-    /* STYLING FOR RØDE DAGER OG FRIDAGER */
-    .fc .fc-day-sun,
-    .fc .day-red-day {
-      background-color: #ffe6e6 !important;
-    }
-    .fc .fc-day-sun .fc-daygrid-day-number,
-    .fc .day-red-day .fc-daygrid-day-number {
-      color: #d32f2f !important;
-      font-weight: bold;
-    }
-
-    .fc .day-off-day {
-      background-color: #f3f4f6 !important;
-    }
-
-    /* Rader i ukesvisning */
+    /* HOVEDKALENDER & DAGS-MARKERING */
+    .main-calendar-card { flex-grow: 1; background: #ffffff; padding: 18px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 1px solid #e5e7eb; min-width: 0; }
+    .fc-col-header-cell.selected-highlight-day { background-color: #e0f2fe !important; transition: background-color 0.2s ease; }
+    .fc-col-header-cell.selected-highlight-day .fc-scrollgrid-sync-inner { font-weight: bold !important; color: #0284c7 !important; }
+    .fc .fc-day-sat, .fc .fc-day-sun { width: 6% !important; }
+    .fc .fc-day-sun, .fc .day-red-day { background-color: #ffe6e6 !important; }
+    .fc .fc-day-sun .fc-daygrid-day-number, .fc .day-red-day .fc-daygrid-day-number { color: #d32f2f !important; font-weight: bold; }
+    .fc .day-off-day { background-color: #f3f4f6 !important; }
     .fc-timegrid-slot { height: 30px !important; }
     .fc-school-hours { height: 60px !important; background-color: #ffffff; }
     .fc-event { cursor: pointer; }
 
     /* CONTEXT MENU */
-    .custom-context-menu {
-      display: none;
-      position: absolute;
-      z-index: 10000;
-      background: #ffffff;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      padding: 6px 0;
-      min-width: 190px;
-    }
+    .custom-context-menu { display: none; position: absolute; z-index: 10000; background: #ffffff; border: 1px solid #ccc; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 6px 0; min-width: 190px; }
     .custom-context-menu ul { list-style: none; margin: 0; padding: 0; }
-    .custom-context-menu li {
-      padding: 8px 16px;
-      font-size: 0.9em;
-      cursor: pointer;
-      color: #333;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .custom-context-menu li { padding: 8px 16px; font-size: 0.9em; cursor: pointer; color: #333; display: flex; align-items: center; gap: 8px; }
     .custom-context-menu li:hover { background-color: #2b78e4; color: #ffffff; }
 
-    /* POPUP / MODAL */
-    .modal-backdrop {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.4);
-      z-index: 9999;
-      justify-content: center;
-      align-items: center;
-    }
-    .modal {
-      background: #ffffff;
-      padding: 24px;
-      border-radius: 8px;
-      max-width: 520px;
-      width: 90%;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 10px;
-    }
+    /* MODAL & SKJEMA */
+    .modal-backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); z-index: 9999; justify-content: center; align-items: center; }
+    .modal { background: #ffffff; padding: 24px; border-radius: 8px; max-width: 520px; width: 90%; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
     .modal-header h3 { margin: 0; color: #2c3e50; font-size: 1.25em; }
     .close-btn { background: none; border: none; font-size: 1.2em; cursor: pointer; color: #777; width: auto; padding: 0; }
-
     .form-group { margin-bottom: 12px; }
     .form-row { display: flex; gap: 10px; }
     .form-row .form-group { flex: 1; }
-
     label { display: block; font-weight: 600; font-size: 0.85em; margin-bottom: 4px; color: #444; }
-    input, select, textarea {
-      width: 100%;
-      padding: 8px 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 0.9em;
-    }
+    input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9em; }
     input:focus, select:focus, textarea:focus { outline: none; border-color: #2b78e4; }
+    .description-display { background: #f8f9fa; padding: 10px; border-radius: 4px; border-left: 4px solid #2b78e4; margin-top: 5px; white-space: pre-wrap; font-size: 0.9em; }
 
-    .description-display {
-      background: #f8f9fa;
-      padding: 10px;
-      border-radius: 4px;
-      border-left: 4px solid #2b78e4;
-      margin-top: 5px;
-      white-space: pre-wrap;
-      font-size: 0.9em;
-    }
-
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 20px;
-      border-top: 1px solid #eee;
-      padding-top: 15px;
-    }
-
-    .delete-options {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 15px;
-    }
-    .delete-options button { text-align: left; width: 100%; }
-
+    /* KNAPPER & MODAL FOOTER */
     button { cursor: pointer; font-weight: bold; padding: 8px 16px; border-radius: 4px; border: none; font-size: 0.9em; }
     .btn-primary { background-color: #2b78e4; color: white; }
     .btn-primary:hover { background-color: #1a5bb8; }
@@ -305,7 +85,23 @@
     .btn-secondary:hover { background-color: #d8dadf; }
     .btn-danger { background-color: #dc3545; color: white; }
     .btn-danger:hover { background-color: #bd2130; }
+
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
+    .delete-options { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+    .delete-options button { text-align: left; width: 100%; }
+
+    /* DETALJVISNING KNAPPER (Endre/Slett/Lukk) */
+    #normalFooter { display: flex !important; align-items: center !important; justify-content: space-between !important; width: 100% !important; margin-top: 15px !important; padding-top: 12px !important; border-top: 1px solid #e5e7eb !important; }
+    .view-action-btns { display: flex !important; gap: 8px !important; align-items: center !important; }
+    #viewEditBtn, #viewDeleteBtn { font-size: 0.85em !important; padding: 6px 12px !important; border-radius: 5px !important; font-weight: 500 !important; cursor: pointer !important; box-shadow: none !important; }
+    #viewEditBtn { background-color: #f3f4f6 !important; color: #374151 !important; border: 1px solid #d1d5db !important; }
+    #viewEditBtn:hover { background-color: #e5e7eb !important; }
+    #viewDeleteBtn { background-color: #fef2f2 !important; color: #991b1b !important; border: 1px solid #fecaca !important; }
+    #viewDeleteBtn:hover { background-color: #fee2e2 !important; border-color: #fca5a5 !important; }
+    #viewCancelBtn { background-color: #10b981 !important; color: #ffffff !important; border: none !important; font-size: 0.9em !important; font-weight: 600 !important; padding: 8px 18px !important; border-radius: 6px !important; cursor: pointer !important; transition: background-color 0.15s ease !important; margin-left: auto !important; }
+    #viewCancelBtn:hover { background-color: #059669 !important; }
   </style>
+
 </head>
 <body>
 
@@ -348,7 +144,8 @@
     </div>
   </div>
 
-  <!-- MODAL / POPUP -->
+
+<!-- MODAL / POPUP -->
   <div id="eventModal" class="modal-backdrop">
     <div class="modal">
       <div class="modal-header">
@@ -364,18 +161,21 @@
         <label style="margin-top: 12px;">Beskrivelse:</label>
         <div id="viewDescription" class="description-display"></div>
 
-        <div id="normalFooter" class="modal-footer">
-          <button id="viewCancelBtn" class="btn-secondary">Lukk</button>
-          <button id="viewEditBtn" class="btn-primary">Endre</button>
-          <button id="viewDeleteBtn" class="btn-danger">Slett</button>
+        <!-- OPPDATERT FOOTER FOR DETALJVISNING -->
+        <div id="normalFooter">
+          <div class="view-action-btns">
+            <button type="button" id="viewEditBtn">Endre</button>
+            <button type="button" id="viewDeleteBtn">Slett</button>
+          </div>
+          <button type="button" id="viewCancelBtn">Lukk</button>
         </div>
 
         <div id="deleteConfirmMode" style="display: none;" class="delete-options">
           <p style="margin: 5px 0; font-weight: bold; color: #dc3545;">Hvordan vil du slette hendelsen?</p>
-          <button id="deleteSingleBtn" class="btn-secondary">Kun denne hendelsen</button>
-          <button id="deleteFutureBtn" class="btn-secondary">Denne og alle fremtidige hendelser</button>
-          <button id="deleteAllSeriesBtn" class="btn-danger">Hele serien (alle hendelser)</button>
-          <button id="cancelDeleteModeBtn" class="btn-secondary" style="margin-top: 5px; text-align: center;">Avbryt</button>
+          <button type="button" id="deleteSingleBtn" class="btn-secondary">Kun denne hendelsen</button>
+          <button type="button" id="deleteFutureBtn" class="btn-secondary">Denne og alle fremtidige hendelser</button>
+          <button type="button" id="deleteAllSeriesBtn" class="btn-danger">Hele serien (alle hendelser)</button>
+          <button type="button" id="cancelDeleteModeBtn" class="btn-secondary" style="margin-top: 5px; text-align: center;">Avbryt</button>
         </div>
       </div>
 
