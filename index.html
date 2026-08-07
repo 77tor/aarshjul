@@ -565,7 +565,8 @@ function renderMiniCalendar() {
       renderMiniCalendar();
     });
 
-    // STARTUP LOGIKK
+
+// STARTUP LOGIKK
     document.addEventListener('DOMContentLoaded', () => {
       populateGroupDropdown();
 
@@ -587,12 +588,11 @@ function renderMiniCalendar() {
         scrollTime: '08:00:00',
         slotDuration: '00:30:00',
 
-        // --- OPPDATERT DATESSET ---
+        // --- DATESSET ---
         datesSet: function(info) {
           miniCalCurrentDate = new Date(info.view.currentStart);
           renderMiniCalendar();
           
-          // Re-aktiver markeringsfarge hvis datoen er synlig i nåværende visning
           if (calendar) {
             const currentSelectedStr = formatDate(calendar.getDate());
             setTimeout(() => {
@@ -617,20 +617,6 @@ function renderMiniCalendar() {
         select: function(info) {
           currentSelection = info;
           hideContextMenu();
-
-          // SJEKKER OM DET ER ET DOBBELTKLIKK (under 300 ms)
-          const currentTime = new Date().getTime();
-          const timeDiff = currentTime - lastClickTime;
-          const selectedStr = info.startStr;
-
-          if (timeDiff < 300 && timeDiff > 0 && lastClickDate === selectedStr) {
-            // Åpner skjemaet med den valgte datoen/tiden utfylt
-            populateFormFromSelection();
-            showFormMode("Ny avtale", false);
-          }
-
-          lastClickTime = currentTime;
-          lastClickDate = selectedStr;
         },
 
         eventClick: function(info) {
@@ -679,6 +665,18 @@ function renderMiniCalendar() {
       calendar.render();
       renderFilters();
       renderMiniCalendar();
+
+      // --- DIREKTE DOBBELTKLIKK-LYTTER PÅ KALENDER-ELEMENTET ---
+      calendarEl.addEventListener('dblclick', (e) => {
+        // Hvis man dobbelklikker på en eksisterende hendelse eller en knapp, skal det ikke åpne ny avtale
+        if (e.target.closest('.fc-event') || e.target.closest('button')) return;
+
+        // Dersom vi har markert et tidsrom med select, fylles dette inn
+        if (currentSelection) {
+          populateFormFromSelection();
+          showFormMode("Ny avtale", false);
+        }
+      });
 
       calendarEl.addEventListener('contextmenu', (e) => {
         if (currentSelection) {
