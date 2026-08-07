@@ -98,48 +98,60 @@
     .mini-day-cell.off-day { background-color: #f3f4f6; }
 
 
-/* CATEGORY FILTER LIST (Tett, oppryddet visning) */
+/* CATEGORY FILTER LIST (Tvinger alt helt til venstre) */
     .filter-list-vertical {
-      display: flex;
-      flex-direction: column;
-      gap: 3px; /* Mindre avstand mellom elementene */
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 4px !important;
+      width: 100% !important;
     }
 
     .filter-item-vert {
-      display: flex;
-      align-items: center;
-      font-size: 0.85em;
-      cursor: pointer;
-      padding: 5px 8px;
-      border-radius: 6px;
-      transition: background-color 0.15s;
-      white-space: nowrap; /* Hindrer at teksten brekker over på ny linje */
-      user-select: none;
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      justify-content: flex-start !important; /* Tvinger alt inn mot venstre */
+      width: 100% !important;
+      padding: 4px 6px !important;
+      margin: 0 !important;
+      font-size: 0.88em !important;
+      cursor: pointer !important;
+      border-radius: 4px !important;
+      box-sizing: border-box !important;
+      user-select: none !important;
+      white-space: nowrap !important;
     }
 
     .filter-item-vert:hover {
-      background-color: #f3f4f6;
+      background-color: #f3f4f6 !important;
     }
 
-    .filter-item-vert input {
-      margin: 0 8px 0 0;
-      cursor: pointer;
-      flex-shrink: 0;
+    .filter-item-vert input[type="checkbox"] {
+      margin: 0 8px 0 0 !important;
+      padding: 0 !important;
+      width: 16px !important;
+      height: 16px !important;
+      cursor: pointer !important;
+      flex-shrink: 0 !important;
     }
 
-    .color-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 8px;
-      flex-shrink: 0;
+    .filter-item-vert .color-dot {
+      width: 10px !important;
+      height: 10px !important;
+      border-radius: 50% !important;
+      margin: 0 8px 0 0 !important;
+      display: inline-block !important;
+      flex-shrink: 0 !important;
     }
 
-    .filter-item-vert span.filter-label {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    .filter-item-vert .filter-label {
+      margin: 0 !important;
+      padding: 0 !important;
+      color: #374151 !important;
+      font-size: 1em !important;
+      line-height: 1 !important;
+      white-space: nowrap !important;
+      text-align: left !important;
     }
 
     /* HOVEDKALENDER */
@@ -1075,6 +1087,7 @@ function renderFilters() {
         filterContainer.appendChild(item);
       });
     }
+
 
   </script>
 </body>
