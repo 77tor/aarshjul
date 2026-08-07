@@ -237,6 +237,18 @@
     </div>
   </div>
 
+
+<!-- Flytende aksjons-meny ved markering/klikk -->
+<div id="selectionPopover" style="display: none; position: absolute; z-index: 1000;" class="flex gap-1 bg-white p-1 rounded-lg shadow-xl border border-gray-200 animate-fade-in">
+  <button id="btnQuickNewEvent" class="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded shadow flex items-center gap-1 transition">
+    <span>➕</span> Ny avtale
+  </button>
+  <button id="btnQuickNewRecurring" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded shadow flex items-center gap-1 transition">
+    <span>🔁</span> Fast avtale
+  </button>
+</div>
+
+
   <!-- Firebase & JavaScript Moduler -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -617,35 +629,20 @@ function renderMiniCalendar() {
 select: function(info) {
           currentSelection = info;
           hideContextMenu();
+          showSelectionPopover(info.jsEvent);
         },
 
         dateClick: function(info) {
-          const currentTime = new Date().getTime();
-          const timeDiff = currentTime - lastClickTime;
-          const clickDateStr = info.dateStr;
+          hideSelectionPopover();
+        },
 
-          // Sjekker om det er et dobbeltslikk (under 300 ms) på samme tidsluke/dato
-          if (timeDiff < 300 && timeDiff > 0 && lastClickDate === clickDateStr) {
-            const startDate = info.date;
-            // Setter slutttid til 30 minutter etter start som standard
-            const endDate = new Date(startDate.getTime() + (30 * 60 * 1000));
-
-            currentSelection = {
-              start: startDate,
-              end: endDate,
-              allDay: info.allDay
-            };
-
-            populateFormFromSelection();
-            showFormMode("Ny avtale", false);
-          }
-
-          lastClickTime = currentTime;
-          lastClickDate = clickDateStr;
+        unselect: function() {
+          hideSelectionPopover();
         },
 
         eventClick: function(info) {
           hideContextMenu();
+          hideSelectionPopover(); // Skjuler popover om man trykker på en hendelse
           activeEvent = {
             id: info.event.id,
             title: info.event.extendedProps.rawTitle || info.event.title,
@@ -686,6 +683,7 @@ select: function(info) {
 
         events: []
       });
+
 
       calendar.render();
       renderFilters();
