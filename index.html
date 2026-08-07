@@ -154,6 +154,19 @@
       text-align: left !important;
     }
 
+/* Fargelegger overskriften/kolonnen for den valgte datoen i hovedkalenderen */
+    .fc-col-header-cell.selected-highlight-day {
+      background-color: #e0f2fe !important; /* Lys blå bakgrunn for datofeltet */
+      transition: background-color 0.2s ease;
+    }
+
+    /* Eventuelt gjør teksten/tallet i datofeltet litt tøffere */
+    .fc-col-header-cell.selected-highlight-day .fc-scrollgrid-sync-inner {
+      font-weight: bold !important;
+      color: #0284c7 !important;
+    }
+
+
     /* HOVEDKALENDER */
     .main-calendar-card {
       flex-grow: 1;
@@ -652,7 +665,21 @@
       "Juli", "August", "September", "Oktober", "November", "Desember"
     ];
 
-    function renderMiniCalendar() {
+// Funksjon for å utheve dato-overskriften i FullCalendar
+function highlightDateInHeader(selectedDateStr) {
+  // Fjern tidligere utheving
+  document.querySelectorAll('.selected-highlight-day').forEach(el => {
+    el.classList.remove('selected-highlight-day');
+  });
+
+  // Finn og uthev datokolonnen som matcher (format YYYY-MM-DD)
+  const headerCell = document.querySelector(`.fc-col-header-cell[data-date="${selectedDateStr}"]`);
+  if (headerCell) {
+    headerCell.classList.add('selected-highlight-day');
+  }
+}
+
+function renderMiniCalendar() {
       const grid = document.getElementById('miniCalGrid');
       const title = document.getElementById('miniCalTitle');
       grid.innerHTML = '';
@@ -709,10 +736,16 @@
           div.classList.add('off-day');
         }
 
+        // --- OPPDATERT KLIKK-HÅNDTERER ---
         div.addEventListener('click', () => {
           if (calendar) {
             calendar.gotoDate(dateObj);
             renderMiniCalendar();
+            
+            // Fargelegg overskriften i hovedkalenderen
+            setTimeout(() => {
+              highlightDateInHeader(dateStr);
+            }, 50);
           }
         });
 
@@ -752,12 +785,20 @@
         scrollTime: '08:00:00',
         slotDuration: '00:30:00',
 
+        // --- OPPDATERT DATESSET ---
         datesSet: function(info) {
-          // Synkroniser minikalender med visningen i hovedkalenderen
           miniCalCurrentDate = new Date(info.view.currentStart);
           renderMiniCalendar();
+          
+          // Re-aktiver markeringsfarge hvis datoen er synlig i nåværende visning
+          if (calendar) {
+            const currentSelectedStr = formatDate(calendar.getDate());
+            setTimeout(() => {
+              highlightDateInHeader(currentSelectedStr);
+            }, 50);
+          }
         },
-
+        
         dayCellClassNames: function(arg) {
           const dateStr = formatDate(arg.date);
           if (redDateSet.has(dateStr)) return ['day-red-day'];
