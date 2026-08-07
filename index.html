@@ -56,6 +56,31 @@
     .mini-day-cell.selected-day { background-color: #2563eb !important; color: #ffffff !important; font-weight: bold; }
     .mini-day-cell.red-day { color: #dc2626; font-weight: 600; }
     .mini-day-cell.off-day { background-color: #f3f4f6; }
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.filter-header h3 {
+  margin: 0;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #4f46e5;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.btn-link:hover {
+  color: #3730a3;
+}
 
     /* KATEGORI FILTERLISTE */
     .filter-list-vertical { display: flex !important; flex-direction: column !important; gap: 4px !important; width: 100% !important; }
@@ -200,8 +225,11 @@
       </div>
 
       <!-- Kategori- og Trinnfiltre -->
-      <div class="sidebar-card">
-        <h3 class="sidebar-card-title">Kategorier</h3>
+       <div class="sidebar-card">
+        <div class="filter-header">
+          <h3 class="sidebar-card-title">Kategorier</h3>
+          <button type="button" id="btnToggleAllCategories" class="btn-link">Velg ingen</button>
+        </div>
         <div class="filter-list-vertical" id="filterList"></div>
       </div>
 
@@ -673,30 +701,27 @@ function renderMiniCalendar() {
 
 
 // STARTUP LOGIKK
-    document.addEventListener('DOMContentLoaded', () => {
-      populateGroupDropdown();
+document.addEventListener('DOMContentLoaded', () => {
+  populateGroupDropdown();
 
-      const calendarEl = document.getElementById('calendar');
+  const calendarEl = document.getElementById('calendar');
 
-      calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'timeGridWeek', // UKESVISNING SOM STANDARD
-        selectable: true,
-        selectMirror: true,
-        unselectAuto: false,
+  calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'timeGridWeek', // UKESVISNING SOM STANDARD
+    selectable: true,
+    selectMirror: true,
+    unselectAuto: false,
 
-// 1. Legg til den egendefinerte knappen her:
+    // 1. Legg til den egendefinerte knappen her:
     customButtons: {
       printWeekBtn: {
         text: '🖨️ Skriv ut uke',
-click: function() {
-          // 1. Bytter til ukesliste
+        click: function() {
           calendar.changeView('listWeek');
 
-          // 2. Skjuler eventuelle åpne menyer
           if (typeof hideContextMenu === 'function') hideContextMenu();
           if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
 
-          // 3. Vent litt så FullCalendar rekker å bygge opp ukeslisten, og åpne utskrift
           setTimeout(() => {
             window.print();
           }, 150);
@@ -704,16 +729,16 @@ click: function() {
       }
     },
 
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'printWeekBtn timeGridWeek,dayGridMonth,listMonth'
-        },
-        buttonText: { today: 'I dag', month: 'Måned', week: 'Uke', list: 'Liste' },
-        locale: 'no',
-        firstDay: 1,
-        scrollTime: '08:00:00',
-        slotDuration: '00:30:00',
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'printWeekBtn timeGridWeek,dayGridMonth,listMonth'
+    },
+    buttonText: { today: 'I dag', month: 'Måned', week: 'Uke', list: 'Liste' },
+    locale: 'no',
+    firstDay: 1,
+    scrollTime: '08:00:00',
+    slotDuration: '00:30:00',
 
         // --- DATESSET ---
         datesSet: function(info) {
@@ -806,6 +831,32 @@ click: function() {
       calendar.render();
       renderFilters();
       renderMiniCalendar();
+
+// --- LOGIKK FOR "VELG ALLE / VELG INGEN"-KNAPPEN ---
+      const btnToggleAll = document.getElementById('btnToggleAllCategories');
+      if (btnToggleAll) {
+        btnToggleAll.addEventListener('click', (e) => {
+          const filterContainer = document.getElementById('filterList');
+          if (!filterContainer) return;
+
+          const checkboxes = filterContainer.querySelectorAll('input[type="checkbox"]');
+          if (checkboxes.length === 0) return;
+
+          // Sjekk om minst én boks er huket av
+          const isAnyChecked = Array.from(checkboxes).some(cb => cb.checked);
+          const shouldCheck = !isAnyChecked;
+
+          // Oppdater tilstand på alle avkrysningsbokser
+          checkboxes.forEach(cb => {
+            cb.checked = shouldCheck;
+            // Avfyr change-event så filterfunksjonaliteten fanger det opp
+            cb.dispatchEvent(new Event('change'));
+          });
+
+          // Oppdater knappeteksten
+          e.target.textContent = shouldCheck ? 'Velg ingen' : 'Velg alle';
+        });
+      }
 
       calendarEl.addEventListener('contextmenu', (e) => {
         if (currentSelection) {
