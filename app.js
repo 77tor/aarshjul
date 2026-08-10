@@ -911,12 +911,18 @@ function renderFilters() {
     
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
-    checkbox.checked = true;
+    checkbox.checked = selectedCategories.includes(cat);
     checkbox.value = cat;
+    
     checkbox.addEventListener('change', (e) => {
-      if (e.target.checked) selectedCategories.push(cat);
-      else selectedCategories = selectedCategories.filter(c => c !== cat);
+      if (e.target.checked) {
+        if (!selectedCategories.includes(cat)) selectedCategories.push(cat);
+      } else {
+        selectedCategories = selectedCategories.filter(c => c !== cat);
+      }
+      
       updateCalendarEvents();
+      checkSingleCategorySelection(); // Sjekker om kun 1 kategori er valgt
     });
 
     const colorDot = document.createElement('span');
@@ -932,4 +938,49 @@ function renderFilters() {
     item.appendChild(labelText);
     filterContainer.appendChild(item);
   });
+
+  // Kjør en initiell sjekk ved oppstart
+  checkSingleCategorySelection();
 }
+
+// Sjekker om nøyaktig 1 kategori er valgt og styrer knappen
+function checkSingleCategorySelection() {
+  const printBtn = document.getElementById('btnPrintCategory');
+  if (!printBtn) return;
+
+  if (selectedCategories.length === 1) {
+    const activeCat = selectedCategories[0];
+    printBtn.textContent = `🖨️ Skriv ut liste for "${activeCat}"`;
+    printBtn.style.display = 'block';
+  } else {
+    printBtn.style.display = 'none';
+  }
+}
+
+// Lytter på den nye utskriftsknappen
+document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
+  if (selectedCategories.length !== 1) return;
+
+  const selectedCategory = selectedCategories[0];
+  const originalView = calendar.view.type;
+
+  // 1. Bytt til hele listevisningen (listYear eller listMonth avhengig av hvor mye data du vil ha med)
+  calendar.changeView('listYear'); 
+
+  // 2. Oppdater utskriftstittel i toppbanneret
+  const titleEl = document.getElementById('printTitle');
+  const subTitleEl = document.getElementById('printSubTitle');
+  if (titleEl) titleEl.textContent = `Oversikt – ${selectedCategory}`;
+  if (subTitleEl) subTitleEl.textContent = `Generert utskrift for valgt kategori`;
+
+  if (typeof hideContextMenu === 'function') hideContextMenu();
+  if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
+
+  // 3. Vent til FullCalendar har rendret listen og Åpne utskriftsdialog
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      window.print();
+      calendar.changeView(originalView); // Bytter tilbake til ukesvisningen etter utskrift
+    }, 300);
+  });
+});
