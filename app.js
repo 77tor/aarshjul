@@ -964,27 +964,23 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
 
   const selectedCategory = selectedCategories[0];
   const originalView = calendar.view.type;
+  const originalDate = calendar.getDate();
 
-  // 1. Sett datovisning til å dekke HELE skoleåret (1. aug 2026 til 31. juli 2027)
-  const currentViewDate = calendar.getDate();
-  const startYear = currentViewDate.getMonth() >= 7 ? currentViewDate.getFullYear() : currentViewDate.getFullYear() - 1;
-  
+  // 1. Beregn start av skoleåret (1. august i inneværende skoleår)
+  const currentMonth = originalDate.getMonth(); // 0 = Jan, 7 = Aug
+  const startYear = currentMonth >= 7 ? originalDate.getFullYear() : originalDate.getFullYear() - 1;
   const schoolYearStart = `${startYear}-08-01`;
-  const schoolYearEnd = `${startYear + 1}-07-31`;
 
-  // 2. Bytt til listevisning for hele periode-intervallet
-  calendar.changeView('list', {
-    start: schoolYearStart,
-    end: schoolYearEnd
-  });
+  // 2. Bytt til 'listYear' og hopp til skolestart i august
+  calendar.changeView('listYear');
+  calendar.gotoDate(schoolYearStart);
 
-  // 3. Oppdater hendelsene midlertidig slik at fridager (schoolEvents) fjernes fra utskriften
+  // 3. Filtrer ut fridager (schoolEvents), men ta med alt annet som matcher valgt kategori
   const filteredUserEvents = rawEvents.filter(event => isEventInSelectedCategories(event));
   const filteredFellesEvents = (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
   const filteredDksEvents = (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
   const filteredSvommeEvents = (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
 
-  // Vi utelater 'schoolEventsFromJs' her slik at fridager ikke blir med i utskriften
   const printEventsOnly = [
     ...filteredFellesEvents, 
     ...filteredDksEvents, 
@@ -995,7 +991,7 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   calendar.removeAllEvents();
   calendar.addEventSource(printEventsOnly);
 
-  // 4. Oppdater utskriftstittel i overskriften
+  // 4. Oppdater utskriftstittel
   const titleEl = document.getElementById('printTitle');
   const subTitleEl = document.getElementById('printSubTitle');
   if (titleEl) titleEl.textContent = `Oversikt – ${selectedCategory}`;
@@ -1004,14 +1000,15 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (typeof hideContextMenu === 'function') hideContextMenu();
   if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
 
-  // 5. Vent på at visningen bygges, åpne utskrift, og tilbakestill kalenderen etterpå
+  // 5. Vent på at alt rendres, kjør utskrift, og tilbakestill
   requestAnimationFrame(() => {
     setTimeout(() => {
       window.print();
       
-      // Tilbakestill kalendervisning og legg fridagene tilbake
+      // Tilbakestill til opprinnelig visning, dato og tilstand
       calendar.changeView(originalView);
+      calendar.gotoDate(originalDate);
       updateCalendarEvents(); 
-    }, 300);
+    }, 400);
   });
 });
