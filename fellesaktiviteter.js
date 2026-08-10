@@ -448,18 +448,20 @@ export function getFellesaktiviteter(skoleaar) {
   return Object.values(FELLESAKTIVITETER_REGISTER).flat();
 }
 
-/**
- * Konverterer fellesaktivitetene til hendelser (events) som FullCalendar forstår.
- * @param {string} [skoleaar] Valgfritt skoleår (f.eks. "2026-2027")
- */
 export function getFellesaktiviteterSomEvents(skoleaar) {
   const liste = getFellesaktiviteter(skoleaar);
 
   return liste
-    .filter(a => a.dato || a.fraDato) // Fjerner uavklarte datoer
+    .filter(a => a.dato || a.fraDato)
     .map(a => {
       let start = a.dato || a.fraDato;
-      let end = a.dato || a.tilDato;
+      let end = null;
+
+      if (a.tilDato) {
+        const d = new Date(a.tilDato);
+        d.setDate(d.getDate() + 1);
+        end = d.toISOString().split('T')[0];
+      }
 
       return {
         id: a.id,
@@ -467,10 +469,10 @@ export function getFellesaktiviteterSomEvents(skoleaar) {
         start: start,
         end: end,
         allDay: true,
-        backgroundColor: '#8b5cf6', // Lilla bakgrunnsfarge
+        backgroundColor: '#8b5cf6',
         borderColor: '#7c3aed',
         extendedProps: {
-          group: 'Felles',
+          group: 'Fellesaktiviteter', // <-- Endret fra 'Felles' til 'Fellesaktiviteter'
           rawTitle: a.tittel,
           deltakere: a.deltakere,
           ansvar: a.ansvar,
