@@ -368,55 +368,60 @@ document.addEventListener('DOMContentLoaded', () => {
 
   calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'timeGridWeek',
+    initialDate: '2026-08-17', // <-- RETTING 1: Åpner direkte i august 2026 der testdataene dine ligger
     selectable: true,
     selectMirror: true,
     unselectAuto: false,
 
     customButtons: {
-printWeekBtn: {
-  text: '🖨️ Skriv ut uke',
-  click: function() {
-    // 1. Bytt til ukesliste
-    calendar.changeView('listWeek');
+      printWeekBtn: {
+        text: '🖨️ Skriv ut uke',
+        click: function() {
+          const originalView = calendar.view.type;
 
-    // 2. Hent start- og sluttdato for uken
-    const view = calendar.view;
-    const start = view.currentStart;
-    const end = new Date(view.currentEnd.getTime() - 1);
+          // 1. Bytt til ukesliste
+          calendar.changeView('listWeek');
 
-    // 3. Beregn ukenummer (ISO 8601)
-    const target = new Date(start.valueOf());
-    const dayNr = (start.getDay() + 6) % 7;
-    target.setDate(target.getDate() - dayNr + 3);
-    const firstThursday = target.valueOf();
-    target.setMonth(0, 1);
-    if (target.getDay() !== 4) {
-      target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
-    }
-    const weekNum = 1 + Math.ceil((firstThursday - target) / 604800000);
+          // 2. Hent start- og sluttdato for uken
+          const view = calendar.view;
+          const start = view.currentStart;
+          const end = new Date(view.currentEnd.getTime() - 1);
 
-    // 4. Formater datoer
-    const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
-    const startStr = start.toLocaleDateString('no-NO', options);
-    const endStr = end.toLocaleDateString('no-NO', options);
+          // 3. Beregn ukenummer (ISO 8601)
+          const target = new Date(start.valueOf());
+          const dayNr = (start.getDay() + 6) % 7;
+          target.setDate(target.getDate() - dayNr + 3);
+          const firstThursday = target.valueOf();
+          target.setMonth(0, 1);
+          if (target.getDay() !== 4) {
+            target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
+          }
+          const weekNum = 1 + Math.ceil((firstThursday - target) / 604800000);
 
-    // 5. Oppdater utskriftsoverskriften
-    const titleEl = document.getElementById('printTitle');
-    const subTitleEl = document.getElementById('printSubTitle');
-    if (titleEl) titleEl.textContent = `Ukeplan – Uke ${weekNum}`;
-    if (subTitleEl) subTitleEl.textContent = `${startStr} – ${endStr}`;
+          // 4. Formater datoer
+          const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+          const startStr = start.toLocaleDateString('no-NO', options);
+          const endStr = end.toLocaleDateString('no-NO', options);
 
-    hideContextMenu();
-    hideSelectionPopover();
+          // 5. Oppdater utskriftsoverskriften
+          const titleEl = document.getElementById('printTitle');
+          const subTitleEl = document.getElementById('printSubTitle');
+          if (titleEl) titleEl.textContent = `Ukeplan – Uke ${weekNum}`;
+          if (subTitleEl) subTitleEl.textContent = `${startStr} – ${endStr}`;
 
-    // 6. Vent på at renderingen er fullført før vi printer
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        window.print();
-      }, 300);
-    });
-  }
-}
+          if (typeof hideContextMenu === 'function') hideContextMenu();
+          if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
+
+          // 6. Vent på at renderingen er fullført før vi printer
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              window.print();
+              calendar.changeView(originalView); // Bytter tilbake etter print
+            }, 300);
+          });
+        }
+      }
+    },
 
     headerToolbar: {
       left: 'prev,next today',
@@ -511,6 +516,9 @@ printWeekBtn: {
   calendar.render();
   renderFilters();
   renderMiniCalendar();
+
+  // <-- RETTING 2: Tvinger hendelsene inn i kalenderen ved oppstart!
+  updateCalendarEvents();
 
   const btnToggleAll = document.getElementById('btnToggleAllCategories');
   if (btnToggleAll) {
@@ -622,7 +630,7 @@ onSnapshot(eventsRef, (snapshot) => {
   updateCalendarEvents();
 });
 
-
+// <-- RETTING 3: Riktig filtrering av samlekategorier og trinn
 function isEventInSelectedCategories(event) {
   const group = event.extendedProps?.group;
   const deltakere = (event.extendedProps?.deltakere || '').toLowerCase();
@@ -631,49 +639,43 @@ function isEventInSelectedCategories(event) {
   
   const altInnhold = `${title} ${deltakere} ${description}`;
 
-  // 1. Sjekk direkte match på gruppe (f.eks. om "Svømming", "DKS", "SFO" osv. er avhuket)
+  // 1. Sjekk direkte match på gruppe/kategori (om boksen i filteret er huka av)
   if (selectedCategories.includes(group)) {
     return true;
   }
 
-  // 2. Sjekk filtrering basert på valgte trinn eller steder
+  // 2. Sjekk samlekategorier
+  if (selectedCategories.includes("Alle på Heståsen") && (altInnhold.includes("heståsen") || altInnhold.includes("1.-3. trinn"))) {
+    return true;
+  }
+  if (selectedCategories.includes("Alle på Brattbakken") && (altInnhold.includes("brattbakken") || altInnhold.includes("4.-7. trinn"))) {
+    return true;
+  }
+
+  // 3. Løkke over trinn
   for (const cat of selectedCategories) {
-    // Sjekk samlekategoriene "Alle på Heståsen" eller "Alle på Brattbakken"
-    if (selectedCategories.includes("Alle på Heståsen") && (altInnhold.includes("heståsen") || altInnhold.includes("1.-3. trinn"))) {
-      return true;
-    }
-    if (selectedCategories.includes("Alle på Brattbakken") && (altInnhold.includes("brattbakken") || altInnhold.includes("4.-7. trinn"))) {
-      return true;
-    }
-
     if (cat.endsWith('. trinn')) {
-      const trinnNummer = parseInt(cat.split('.')[0].trim(), 10); // F.eks. 1, 2, 3, 4, 7...
+      const trinnNummer = parseInt(cat.split('.')[0].trim(), 10);
 
-      // A. "Alle trinn" / "1.-7. trinn"
       if (altInnhold.includes("alle trinn") || altInnhold.includes("1.-7. trinn") || altInnhold.includes("1-7. trinn")) {
         return true;
       }
 
-      // B. Heståsen (1.–3. trinn) og Brattbakken (4.–7. trinn)
       if (altInnhold.includes("heståsen") && trinnNummer >= 1 && trinnNummer <= 3) {
-        // Dersom det står f.eks. "Heståsen 3a-b" og vi har valgt 3. trinn:
         const trinnSjekk = new RegExp(`\\b${trinnNummer}`, 'i');
         if (trinnSjekk.test(altInnhold)) return true;
       }
 
       if (altInnhold.includes("brattbakken") && trinnNummer >= 4 && trinnNummer <= 7) {
-        // Dersom det står f.eks. "Brattbakken 7a-b" og vi har valgt 7. trinn:
         const trinnSjekk = new RegExp(`\\b${trinnNummer}`, 'i');
         if (trinnSjekk.test(altInnhold)) return true;
       }
 
-      // C. Generell match for trinn og klasser (f.eks. "7a", "7a-b", "7c-a", "4b-c", "7. trinn")
       const klasseMatchRegex = new RegExp(`\\b${trinnNummer}([a-zæøå]|\\.[\\s]*trinn|-|$)`, 'i');
       if (klasseMatchRegex.test(altInnhold)) {
         return true;
       }
 
-      // D. Intervaller som "1.-3. trinn", "5.-7. trinn"
       const rangeMatch = altInnhold.match(/(\d+)\.\s*-\s*(\d+)\.\s*trinn/i) || altInnhold.match(/(\d+)\s*-\s*(\d+)\.\s*trinn/i);
       if (rangeMatch) {
         const startTrinn = parseInt(rangeMatch[1], 10);
@@ -689,28 +691,27 @@ function isEventInSelectedCategories(event) {
   return false;
 }
 
-
-
 function updateCalendarEvents() {
   const filteredUserEvents = rawEvents.filter(event => 
     isEventInSelectedCategories(event)
   );
 
-  const filteredFellesEvents = fellesEventsFromJs.filter(event => 
+  const filteredFellesEvents = (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []).filter(event => 
     isEventInSelectedCategories(event)
   );
 
-  const filteredDksEvents = dksEventsFromJs.filter(event => 
+  const filteredDksEvents = (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []).filter(event => 
     isEventInSelectedCategories(event)
   );
 
-  // Filtrer svømming
-  const filteredSvommeEvents = svommeEventsFromJs.filter(event => 
+  const filteredSvommeEvents = (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []).filter(event => 
     isEventInSelectedCategories(event)
   );
+
+  const schoolEvents = typeof schoolEventsFromJs !== 'undefined' ? schoolEventsFromJs : [];
 
   const allEvents = [
-    ...schoolEventsFromJs, 
+    ...schoolEvents, 
     ...filteredFellesEvents, 
     ...filteredDksEvents, 
     ...filteredSvommeEvents, 
