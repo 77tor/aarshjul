@@ -14,6 +14,7 @@ import {
 
 import { schoolYearsData } from "./fridager.js";
 import { getFellesaktiviteterSomEvents } from "./fellesaktiviteter.js";
+import { getDKSAktiviteterSomEvents } from './DKS.js';
 
 // Firebase-konfigurasjon
 const firebaseConfig = {
@@ -37,6 +38,7 @@ const categoryColors = {
   "7. trinn": "#34495e",
   "Alle på Heståsen": "#e74c3c",
   "Alle på Brattbakken": "#c0392b",
+  "DKS": "#1abc9c"
   "Fellesaktiviteter": "#34495e",
   "SFO": "#e67e22",
   "Kartlegginger": "#f1c40f",
@@ -112,6 +114,9 @@ parseSchoolYearsData();
 
 const fellesEventsFromJs = typeof getFellesaktiviteterSomEvents === 'function' 
   ? getFellesaktiviteterSomEvents('2026-2027') 
+  : [];
+const dksEventsFromJs = typeof getDKSAktiviteterSomEvents === 'function' 
+  ? getDKSAktiviteterSomEvents() 
   : [];
 
 const app = initializeApp(firebaseConfig);
@@ -582,6 +587,7 @@ onSnapshot(eventsRef, (snapshot) => {
 });
 
 function updateCalendarEvents() {
+  // Filtrer eksisterende hendelser
   const filteredUserEvents = rawEvents.filter(event => 
     selectedCategories.includes(event.extendedProps.group)
   );
@@ -590,7 +596,18 @@ function updateCalendarEvents() {
     selectedCategories.includes(event.extendedProps.group)
   );
 
-  const allEvents = [...schoolEventsFromJs, ...filteredFellesEvents, ...filteredUserEvents];
+  // Filtrer DKS-hendelser
+  const filteredDksEvents = dksEventsFromJs.filter(event => 
+    selectedCategories.includes(event.extendedProps.group)
+  );
+
+  // Slå sammen alle hendelsene som skal inn i FullCalendar
+  const allEvents = [
+    ...schoolEventsFromJs, 
+    ...filteredFellesEvents, 
+    ...filteredDksEvents, 
+    ...filteredUserEvents
+  ];
 
   if (calendar) {
     calendar.removeAllEvents();
