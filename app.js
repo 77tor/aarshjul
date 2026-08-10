@@ -379,10 +379,10 @@ printWeekBtn: {
     // 1. Bytt til ukesliste
     calendar.changeView('listWeek');
 
-    // 2. Hent start- og sluttdato for gjeldende uke
+    // 2. Hent start- og sluttdato for uken
     const view = calendar.view;
     const start = view.currentStart;
-    const end = new Date(view.currentEnd.getTime() - 1); // Juster til søndag
+    const end = new Date(view.currentEnd.getTime() - 1);
 
     // 3. Beregn ukenummer (ISO 8601)
     const target = new Date(start.valueOf());
@@ -395,7 +395,7 @@ printWeekBtn: {
     }
     const weekNum = 1 + Math.ceil((firstThursday - target) / 604800000);
 
-    // 4. Formater datoer (f.eks. 17.08.2026 - 23.08.2026)
+    // 4. Formater datoer
     const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
     const startStr = start.toLocaleDateString('no-NO', options);
     const endStr = end.toLocaleDateString('no-NO', options);
@@ -409,10 +409,12 @@ printWeekBtn: {
     hideContextMenu();
     hideSelectionPopover();
 
-    // 6. Åpne utskriftsdialogen
-    setTimeout(() => {
-      window.print();
-    }, 150);
+    // 6. Vent på at renderingen er fullført før vi printer
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        window.print();
+      }, 300);
+    });
   }
 }
 
