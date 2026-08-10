@@ -963,7 +963,7 @@ function checkSingleCategorySelection() {
 }
 
 
-// Lytter på utskriftsknappen for valgt kategori (Kompakt og radd-ryddet)
+// Lytter på utskriftsknappen for valgt kategori (Garanti mot duplikater)
 document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (selectedCategories.length !== 1) return;
 
@@ -976,11 +976,11 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   const startYear = currentMonth >= 7 ? originalDate.getFullYear() : originalDate.getFullYear() - 1;
   const schoolYearStart = `${startYear}-08-01`;
 
-  // 2. Bytt til 'schoolYearList'
+  // 2. Bytt til 'schoolYearList' og hopp til skolestart
   calendar.changeView('schoolYearList');
   calendar.gotoDate(schoolYearStart);
 
-  // 3. Hent og filtrer hendelser (utelater fridager)
+  // 3. Hent og filtrer alle hendelser (utelater fridager/schoolEvents)
   const filteredUserEvents = rawEvents.filter(event => isEventInSelectedCategories(event));
   const filteredFellesEvents = (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
   const filteredDksEvents = (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
@@ -993,48 +993,46 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
     ...filteredUserEvents
   ];
 
-  // 4. Aggressiv sammenslåing basert på TITTEL
+  // 4. Slå sammen duplikater/reiterasjoner basert på ren tittel
   const consolidatedMap = new Map();
 
   allRawEvents.forEach(evt => {
-    // Rens tittelen slik at duplikater fanges opp likt
-    const cleanTitle = (evt.title || '').trim();
-    if (!cleanTitle) return;
+    const rawTitle = (evt.title || evt.extendedProps?.rawTitle || '').trim();
+    if (!rawTitle) return;
 
-    // Nøkkel kun basert på tittel (fjerner unike ID-er eller klassenavn)
-    const key = cleanTitle.toLowerCase();
+    // Rengjør tittelen for å fange opp eksakte treff (f.eks. "[Felles] Kildesortering" vs "Kildesortering")
+    const cleanKey = rawTitle.toLowerCase().replace(/^\[.*?\]\s*/, '');
     
     const evtStart = new Date(evt.start);
     const evtEnd = evt.end ? new Date(evt.end) : evtStart;
 
-    if (!consolidatedMap.has(key)) {
-      consolidatedMap.set(key, {
-        rawTitle: cleanTitle,
+    if (!consolidatedMap.has(cleanKey)) {
+      consolidatedMap.set(cleanKey, {
+        displayTitle: rawTitle,
         minStart: evtStart,
         maxEnd: evtEnd,
         allDay: evt.allDay || false,
         originalEvt: evt
       });
     } else {
-      const existing = consolidatedMap.get(key);
+      const existing = consolidatedMap.get(cleanKey);
       if (evtStart < existing.minStart) existing.minStart = evtStart;
       if (evtEnd > existing.maxEnd) existing.maxEnd = evtEnd;
     }
   });
 
-  // Convert to array and sort chronologically by start date
+  // Sorter kronologisk etter første startdato
   const sortedItems = Array.from(consolidatedMap.values()).sort((a, b) => a.minStart - b.minStart);
 
-  // 5. Bygg kompakte tittel-linjer uten duplikater
-  const compactPrintEvents = sortedItems.map(item => {
+  // 5. Tving FullCalendar til å kun lage ÉN linje per aktivitet
+  const singleRowEvents = sortedItems.map((item, index) => {
     const startStr = item.minStart.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
     const endStr = item.maxEnd.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
     
-    // Sjekk om hendelsen strekker seg over flere dager
     const isMultiDay = item.minStart.toDateString() !== item.maxEnd.toDateString();
-    const dateLabel = isMultiDay ? `${startStr} – ${endStr}` : startStr;
+    const dateLabel = isMultiDay ? `${startStr}. – ${endStr}.` : `${startStr}.`;
 
-    // Sjekk for gyldig klokkeslett (unngå 00:00 / 02:00 på all-day hendelser)
+    // Sjekk klokkeslett
     let timeLabel = '';
     const hours = item.minStart.getHours();
     const isRealTime = !item.allDay && hours >= 7 && hours <= 20;
@@ -1046,15 +1044,18 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
     }
 
     return {
-      ...item.originalEvt,
-      start: item.minStart,
-      end: item.maxEnd,
-      title: `[${dateLabel}${timeLabel}]  ${item.rawTitle}`
+      id: `print_evt_${index}`,
+      title: `[${dateLabel}${timeLabel}]  ${item.displayTitle}`,
+      // VIKTIG: Ved å sette start og end til samme dag unngår vi at FullCalendar lager 300 duplikatrader!
+      start: item.minStart.toISOString().split('T')[0],
+      end: item.minStart.toISOString().split('T')[0],
+      allDay: true,
+      color: item.originalEvt.color || item.originalEvt.backgroundColor
     };
   });
 
   calendar.removeAllEvents();
-  calendar.addEventSource(compactPrintEvents);
+  calendar.addEventSource(singleRowEvents);
 
   // 6. Oppdater utskriftsoverskrift
   const titleEl = document.getElementById('printTitle');
