@@ -963,7 +963,7 @@ function checkSingleCategorySelection() {
 }
 
 
-// Lytter på utskriftsknappen for valgt kategori
+// Lytter på utskriftsknappen for valgt kategori (Kompakt utskrift)
 document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (selectedCategories.length !== 1) return;
 
@@ -971,32 +971,73 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   const originalView = calendar.view.type;
   const originalDate = calendar.getDate();
 
-  // 1. Finne startår for skoleåret (august)
-  const currentMonth = originalDate.getMonth(); // 0 = Jan, 7 = Aug
+  // 1. Sett start til august i skoleåret
+  const currentMonth = originalDate.getMonth();
   const startYear = currentMonth >= 7 ? originalDate.getFullYear() : originalDate.getFullYear() - 1;
   const schoolYearStart = `${startYear}-08-01`;
 
-  // 2. Bytt til den nye spesialvisningen for hele skoleåret og gå til 1. august
+  // 2. Bytt til 'schoolYearList'
   calendar.changeView('schoolYearList');
   calendar.gotoDate(schoolYearStart);
 
-  // 3. Filtrer hendelser (utelater fridager / schoolEvents)
+  // 3. Hent og filtrer hendelser (utelater fridager)
   const filteredUserEvents = rawEvents.filter(event => isEventInSelectedCategories(event));
   const filteredFellesEvents = (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
   const filteredDksEvents = (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
   const filteredSvommeEvents = (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
 
-  const printEventsOnly = [
+  const allRawEvents = [
     ...filteredFellesEvents, 
     ...filteredDksEvents, 
     ...filteredSvommeEvents, 
     ...filteredUserEvents
   ];
 
-  calendar.removeAllEvents();
-  calendar.addEventSource(printEventsOnly);
+  // 4. Slå sammen flerdagershendelser/duplikater til én oppføring
+  const consolidatedMap = new Map();
 
-  // 4. Oppdater overskrifter for print
+  allRawEvents.forEach(evt => {
+    // Lag en unik nøkkel basert på tittel og kategori
+    const key = `${evt.title}_${evt.extendedProps?.group || ''}`;
+    
+    const evtStart = new Date(evt.start);
+    const evtEnd = evt.end ? new Date(evt.end) : evtStart;
+
+    if (!consolidatedMap.has(key)) {
+      consolidatedMap.set(key, {
+        ...evt,
+        minStart: evtStart,
+        maxEnd: evtEnd
+      });
+    } else {
+      const existing = consolidatedMap.get(key);
+      if (evtStart < existing.minStart) existing.minStart = evtStart;
+      if (evtEnd > existing.maxEnd) existing.maxEnd = evtEnd;
+    }
+  });
+
+  // Bygg kompakt liste med riktige start- og sluttdatoer
+  const compactPrintEvents = Array.from(consolidatedMap.values()).map(item => {
+    const startStr = item.minStart.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
+    const endStr = item.maxEnd.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
+    
+    // Hvis hendelsen strekker seg over flere dager, vis intervall (f.eks. "12. okt – 23. okt")
+    const isMultiDay = item.minStart.toDateString() !== item.maxEnd.toDateString();
+    const dateLabel = isMultiDay ? `${startStr} – ${endStr}` : startStr;
+
+    return {
+      ...item,
+      start: item.minStart,
+      end: item.maxEnd,
+      // Vi setter dato-intervallet direkte i tittelen for kompakt visning
+      title: `[${dateLabel}]  ${item.title}`
+    };
+  });
+
+  calendar.removeAllEvents();
+  calendar.addEventSource(compactPrintEvents);
+
+  // 5. Oppdater utskriftsoverskrift
   const titleEl = document.getElementById('printTitle');
   const subTitleEl = document.getElementById('printSubTitle');
   if (titleEl) titleEl.textContent = `Oversikt – ${selectedCategory}`;
@@ -1005,12 +1046,11 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (typeof hideContextMenu === 'function') hideContextMenu();
   if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
 
-  // 5. Vent på opptegning, skriv ut, og tilbakestill
+  // 6. Kjør print og tilbakestill
   requestAnimationFrame(() => {
     setTimeout(() => {
       window.print();
       
-      // Tilbakestill kalenderen
       calendar.changeView(originalView);
       calendar.gotoDate(originalDate);
       updateCalendarEvents(); 

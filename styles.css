@@ -70,21 +70,20 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 @media print {
   @page { 
     size: A4 portrait; 
-    margin: 12mm; 
+    margin: 10mm; 
   }
 
-  /* 1. Nullstill hele siden til ren hvit utskriftsflate */
   html, body { 
     background: #ffffff !important; 
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; 
-    color: #1e293b !important; 
+    color: #0f172a !important; 
     margin: 0 !important; 
     padding: 0 !important; 
     height: auto !important; 
     overflow: visible !important; 
   }
 
-  /* 2. Skjul alt uviktig (sidepanel, modaler, menyer osv.) */
+  /* Skjul uviktige UI-elementer */
   .sidebar, 
   .fc-header-toolbar, 
   .popover, 
@@ -95,7 +94,6 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     display: none !important; 
   }
 
-  /* 3. Fjern rammer og faste bredder på layout-containere */
   .app-layout, 
   .main-content { 
     display: block !important; 
@@ -104,46 +102,39 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     width: 100% !important; 
     height: auto !important; 
     overflow: visible !important; 
-    background: transparent !important; 
   }
 
-  /* 4. Print-overskrift på topp */
+  /* Kompakt overskrift */
   #printHeader { 
     display: block !important; 
     text-align: center; 
     border-bottom: 2px solid #0f172a; 
-    padding-bottom: 8px; 
-    margin-bottom: 20px; 
+    padding-bottom: 4px; 
+    margin-bottom: 12px; 
   }
 
   #printTitle { 
     margin: 0; 
-    font-size: 20pt; 
+    font-size: 16pt; 
     font-weight: 800; 
     color: #0f172a; 
   }
 
   #printSubTitle { 
-    margin: 4px 0 0 0; 
-    font-size: 10pt; 
+    margin: 2px 0 0 0; 
+    font-size: 9pt; 
     color: #64748b; 
-    font-weight: 600; 
   }
 
-  /* 5. Kalender – strekk ut i full bredde uten skygger eller faste høyder */
-  #calendar, 
-  .fc { 
+  #calendar, .fc { 
     display: block !important; 
     width: 100% !important; 
     height: auto !important; 
     box-shadow: none !important; 
     border: none !important; 
     padding: 0 !important; 
-    margin: 0 !important; 
-    background: transparent !important; 
   }
 
-  /* 6. Fjern interne rullefelt i FullCalendar */
   .fc-scroller, 
   .fc-scroller-liquid-absolute,
   .fc-scroller-harness { 
@@ -153,42 +144,45 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     position: static !important; 
   }
 
-  /* 7. Tabellstil for utskrift */
+  /* SKJUL egne datorader fra FullCalendar for å spare plass */
+  .fc-list-day { 
+    display: none !important; 
+  }
+
+  /* Tett og kompakt tabelloppsett */
   .fc-list-table { 
     width: 100% !important; 
     border-collapse: collapse !important; 
   }
 
-  .fc-list-day-cushion { 
-    background-color: #f1f5f9 !important; 
-    padding: 6px 12px !important; 
-    font-size: 10pt !important; 
-    font-weight: 700 !important; 
-    color: #0f172a !important; 
-    border-bottom: 1px solid #cbd5e1 !important; 
-  }
-
   .fc-list-event { 
-    font-size: 9.5pt !important; 
+    font-size: 8.5pt !important; 
+    border-bottom: 1px solid #e2e8f0 !important; 
   }
 
   .fc-list-event td { 
-    padding: 6px 12px !important; 
-    border-color: #e2e8f0 !important; 
+    padding: 3px 6px !important; 
+  }
+
+  .fc-list-event-time { 
+    display: none !important; /* Tidspunkt er bakdatiert i tittelen */
+  }
+
+  .fc-list-event-graphic { 
+    padding-right: 4px !important; 
+  }
+
+  .fc-list-event-dot { 
+    border-width: 4px !important; 
   }
 
   .fc-list-event-title { 
     font-weight: 600 !important; 
     color: #0f172a !important; 
+    line-height: 1.2 !important;
   }
 
-  .fc-list-event-time { 
-    font-weight: 500; 
-    color: #475569 !important; 
-  }
-
-  /* Unngå at en dag eller rad bli delt uheldig over et sideskift */
-  tr, .fc-list-day { 
+  tr { 
     page-break-inside: avoid !important; 
     break-inside: avoid !important; 
   }
