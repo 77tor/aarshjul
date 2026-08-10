@@ -423,7 +423,7 @@ const FELLESAKTIVITETER_REGISTER = {
     }
   ],
 
-  // =========================================================================
+// =========================================================================
   // EKSEMPEL: SKOLEÅRET 2027 / 2028 (Kan fylles ut senere)
   // =========================================================================
   "2027-2028": [
@@ -439,7 +439,7 @@ const FELLESAKTIVITETER_REGISTER = {
  * Henter rådata for enten et spesifikt skoleår eller alle år flettet sammen.
  * @param {string} [skoleaar] F.eks. "2026-2027". Om utelatt returneres alle.
  */
-function getFellesaktiviteter(skoleaar) {
+export function getFellesaktiviteter(skoleaar) {
   if (skoleaar && FELLESAKTIVITETER_REGISTER[skoleaar]) {
     return FELLESAKTIVITETER_REGISTER[skoleaar];
   }
@@ -452,7 +452,7 @@ function getFellesaktiviteter(skoleaar) {
  * Konverterer fellesaktivitetene til hendelser (events) som FullCalendar forstår.
  * @param {string} [skoleaar] Valgfritt skoleår (f.eks. "2026-2027")
  */
-function getFellesaktiviteterSomEvents(skoleaar) {
+export function getFellesaktiviteterSomEvents(skoleaar) {
   const liste = getFellesaktiviteter(skoleaar);
 
   return liste
