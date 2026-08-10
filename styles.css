@@ -1,0 +1,73 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f8fafc; color: #1e293b; }
+
+/* Layout */
+.app-layout { display: flex; height: 100vh; overflow: hidden; }
+.sidebar { width: 280px; background-color: #ffffff; border-right: 1px solid #e2e8f0; padding: 20px; display: flex; flex-direction: column; gap: 24px; overflow-y: auto; }
+.sidebar-header h2 { font-size: 1.25rem; font-weight: 700; color: #0f172a; }
+.main-content { flex: 1; padding: 20px; overflow-y: auto; }
+
+/* Mini-kalender */
+.mini-calendar { background: #f8fafc; border-radius: 8px; padding: 12px; border: 1px solid #e2e8f0; }
+.mini-cal-header { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; }
+.mini-cal-header button { background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+.mini-cal-header button:hover { background-color: #e2e8f0; }
+.mini-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; font-size: 0.75rem; }
+.mini-day-name { font-weight: 600; color: #64748b; padding: 4px 0; }
+.mini-day-cell { padding: 6px 0; border-radius: 4px; cursor: pointer; color: #334155; }
+.mini-day-cell:hover { background-color: #e2e8f0; }
+.mini-day-cell.other-month { color: #cbd5e1; }
+.mini-day-cell.today { font-weight: bold; border: 1px solid #3b82f6; }
+.mini-day-cell.selected-day { background-color: #3b82f6; color: white !important; }
+.mini-day-cell.red-day { color: #ef4444; font-weight: 600; }
+.mini-day-cell.off-day { color: #94a3b8; }
+
+/* Kategorifilter */
+.filter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.filter-header h3 { font-size: 0.95rem; font-weight: 600; }
+.btn-text { background: none; border: none; color: #2563eb; font-size: 0.8rem; cursor: pointer; }
+.filter-list { display: flex; flex-direction: column; gap: 8px; }
+.filter-item-vert { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer; }
+.color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+
+/* FullCalendar Tilpassinger */
+.fc { background: #ffffff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); height: 100%; }
+.day-red-day { background-color: #fef2f2 !important; }
+.day-off-day { background-color: #f8fafc !important; }
+.fc-school-hours { background-color: rgba(241, 245, 249, 0.5); }
+.selected-highlight-day { background-color: #dbeafe !important; }
+
+/* Popover & Kontekstmeny */
+.popover { display: none; gap: 8px; background: white; padding: 6px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; }
+.context-menu { display: none; position: absolute; background: white; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; overflow: hidden; }
+.context-menu-item { padding: 8px 16px; font-size: 0.85rem; cursor: pointer; }
+.context-menu-item:hover { background-color: #f1f5f9; }
+
+/* Modaler */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; z-index: 2000; }
+.modal-card { background: white; border-radius: 12px; width: 100%; max-width: 480px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; }
+.modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+.close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; }
+.modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label { font-size: 0.85rem; font-weight: 600; color: #475569; }
+.form-group input, .form-group select, .form-group textarea { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; }
+.form-row { display: flex; gap: 12px; }
+.form-row .form-group { flex: 1; }
+.modal-footer { padding: 16px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px; }
+
+/* Knapper */
+.btn { padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: none; cursor: pointer; }
+.btn-sm { padding: 4px 8px; font-size: 0.75rem; }
+.btn-primary { background: #2563eb; color: white; }
+.btn-secondary { background: #e2e8f0; color: #334155; }
+.btn-danger { background: #ef4444; color: white; }
+.delete-options { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+
+/* Utskriftstil */
+@media print {
+  .sidebar, .fc-header-toolbar, .popover, .context-menu { display: none !important; }
+  .app-layout { display: block; height: auto; }
+  .main-content { padding: 0; }
+  .fc { box-shadow: none; border: none; }
+}

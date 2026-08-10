@@ -1,328 +1,128 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Felleskalender - Hånes skole</title>
-  <link rel="icon" type="image/png" href="aarshjul.svg">
-  <link rel="apple-touch-icon" href="aarshjul.svg">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Årshjul og Skolekalender</title>
 
-  <!-- FullCalendar CSS & JS -->
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
+  <!-- FullCalendar CDN -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/locales/no.global.min.js"></script>
 
-  <script src="fellesaktiviteter.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-<style>
-    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { margin: 0; padding: 20px; background-color: #f3f4f6; color: #333; }
-    
-    /* LAYOUT & HEADER */
-    .app-header { margin-bottom: 15px; }
-    .app-header h1 { margin: 0; font-size: 1.6em; color: #1f2937; }
-    .app-container { display: flex; gap: 20px; align-items: flex-start; }
-
-    /* VENSTREMENY & KORT */
-    .sidebar { width: 280px; flex-shrink: 0; display: flex; flex-direction: column; gap: 15px; }
-    .sidebar-card { background: #ffffff; padding: 15px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 1px solid #e5e7eb; }
-    .sidebar-card-title { font-size: 0.9em; font-weight: 700; color: #4b5563; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 0.5px; }
-
-/* LOGO */
-.logo-title-container {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-logo {
-  width: 42px;
-  height: 42px;
-  flex-shrink: 0;
-  border-radius: 10px;
-}
-
-.logo-title-container h1 {
-  margin: 0;
-}
-
-    /* MINI-KALENDER */
-    .mini-cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: bold; font-size: 0.9em; }
-    .mini-cal-nav { background: none; border: none; cursor: pointer; font-size: 1.1em; padding: 2px 6px; color: #6b7280; border-radius: 4px; }
-    .mini-cal-nav:hover { background-color: #f3f4f6; color: #111827; }
-    .mini-calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.8em; gap: 2px; }
-    .mini-day-name { font-weight: 600; color: #9ca3af; padding-bottom: 4px; }
-    .mini-day-cell { padding: 6px 0; border-radius: 50%; cursor: pointer; user-select: none; transition: background-color 0.15s; }
-    .mini-day-cell:hover { background-color: #e5e7eb; }
-    .mini-day-cell.other-month { color: #d1d5db; }
-    .mini-day-cell.today { font-weight: bold; color: #2563eb; }
-    .mini-day-cell.selected-day { background-color: #2563eb !important; color: #ffffff !important; font-weight: bold; }
-    .mini-day-cell.red-day { color: #dc2626; font-weight: 600; }
-    .mini-day-cell.off-day { background-color: #f3f4f6; }
-.filter-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.filter-header h3 {
-  margin: 0;
-}
-
-.btn-link {
-  background: none;
-  border: none;
-  color: #4f46e5;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-  text-decoration: underline;
-}
-
-.btn-link:hover {
-  color: #3730a3;
-}
-
-    /* KATEGORI FILTERLISTE */
-    .filter-list-vertical { display: flex !important; flex-direction: column !important; gap: 4px !important; width: 100% !important; }
-    .filter-item-vert { display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; width: 100% !important; padding: 4px 6px !important; margin: 0 !important; font-size: 0.88em !important; cursor: pointer !important; border-radius: 4px !important; box-sizing: border-box !important; user-select: none !important; white-space: nowrap !important; }
-    .filter-item-vert:hover { background-color: #f3f4f6 !important; }
-    .filter-item-vert input[type="checkbox"] { margin: 0 8px 0 0 !important; padding: 0 !important; width: 16px !important; height: 16px !important; cursor: pointer !important; flex-shrink: 0 !important; }
-    .filter-item-vert .color-dot { width: 10px !important; height: 10px !important; border-radius: 50% !important; margin: 0 8px 0 0 !important; display: inline-block !important; flex-shrink: 0 !important; }
-    .filter-item-vert .filter-label { margin: 0 !important; padding: 0 !important; color: #374151 !important; font-size: 1em !important; line-height: 1 !important; white-space: nowrap !important; text-align: left !important; }
-
-    /* HOVEDKALENDER & DAGS-MARKERING */
-    .main-calendar-card { flex-grow: 1; background: #ffffff; padding: 18px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 1px solid #e5e7eb; min-width: 0; }
-    .fc-col-header-cell.selected-highlight-day { background-color: #e0f2fe !important; transition: background-color 0.2s ease; }
-    .fc-col-header-cell.selected-highlight-day .fc-scrollgrid-sync-inner { font-weight: bold !important; color: #0284c7 !important; }
-    .fc .fc-day-sat, .fc .fc-day-sun { width: 6% !important; }
-    .fc .fc-day-sun, .fc .day-red-day { background-color: #ffe6e6 !important; }
-    .fc .fc-day-sun .fc-daygrid-day-number, .fc .day-red-day .fc-daygrid-day-number { color: #d32f2f !important; font-weight: bold; }
-    .fc .day-off-day { background-color: #f3f4f6 !important; }
-    .fc-timegrid-slot { height: 30px !important; }
-    .fc-school-hours { height: 60px !important; background-color: #ffffff; }
-    .fc-event { cursor: pointer; }
-
-    /* CONTEXT MENU */
-    .custom-context-menu { display: none; position: absolute; z-index: 10000; background: #ffffff; border: 1px solid #ccc; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 6px 0; min-width: 190px; }
-    .custom-context-menu ul { list-style: none; margin: 0; padding: 0; }
-    .custom-context-menu li { padding: 8px 16px; font-size: 0.9em; cursor: pointer; color: #333; display: flex; align-items: center; gap: 8px; }
-    .custom-context-menu li:hover { background-color: #2b78e4; color: #ffffff; }
-
-    /* MODAL & SKJEMA */
-    .modal-backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); z-index: 9999; justify-content: center; align-items: center; }
-    .modal { background: #ffffff; padding: 24px; border-radius: 8px; max-width: 520px; width: 90%; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-    .modal-header h3 { margin: 0; color: #2c3e50; font-size: 1.25em; }
-    .close-btn { background: none; border: none; font-size: 1.2em; cursor: pointer; color: #777; width: auto; padding: 0; }
-    .form-group { margin-bottom: 12px; }
-    .form-row { display: flex; gap: 10px; }
-    .form-row .form-group { flex: 1; }
-    label { display: block; font-weight: 600; font-size: 0.85em; margin-bottom: 4px; color: #444; }
-    input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9em; }
-    input:focus, select:focus, textarea:focus { outline: none; border-color: #2b78e4; }
-    .description-display { background: #f8f9fa; padding: 10px; border-radius: 4px; border-left: 4px solid #2b78e4; margin-top: 5px; white-space: pre-wrap; font-size: 0.9em; }
-
-    /* KNAPPER & MODAL FOOTER */
-    button { cursor: pointer; font-weight: bold; padding: 8px 16px; border-radius: 4px; border: none; font-size: 0.9em; }
-    .btn-primary { background-color: #2b78e4; color: white; }
-    .btn-primary:hover { background-color: #1a5bb8; }
-    .btn-secondary { background-color: #e4e6eb; color: #4b4f56; }
-    .btn-secondary:hover { background-color: #d8dadf; }
-    .btn-danger { background-color: #dc3545; color: white; }
-    .btn-danger:hover { background-color: #bd2130; }
-
-    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
-    .delete-options { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
-    .delete-options button { text-align: left; width: 100%; }
-
-    /* DETALJVISNING KNAPPER (Endre/Slett/Lukk) */
-    #normalFooter { display: flex !important; align-items: center !important; justify-content: space-between !important; width: 100% !important; margin-top: 15px !important; padding-top: 12px !important; border-top: 1px solid #e5e7eb !important; }
-    .view-action-btns { display: flex !important; gap: 8px !important; align-items: center !important; }
-    #viewEditBtn, #viewDeleteBtn { font-size: 0.85em !important; padding: 6px 12px !important; border-radius: 5px !important; font-weight: 500 !important; cursor: pointer !important; box-shadow: none !important; }
-    #viewEditBtn { background-color: #f3f4f6 !important; color: #374151 !important; border: 1px solid #d1d5db !important; }
-    #viewEditBtn:hover { background-color: #e5e7eb !important; }
-    #viewDeleteBtn { background-color: #fef2f2 !important; color: #991b1b !important; border: 1px solid #fecaca !important; }
-    #viewDeleteBtn:hover { background-color: #fee2e2 !important; border-color: #fca5a5 !important; }
-    #viewCancelBtn { background-color: #10b981 !important; color: #ffffff !important; border: none !important; font-size: 0.9em !important; font-weight: 600 !important; padding: 8px 18px !important; border-radius: 6px !important; cursor: pointer !important; transition: background-color 0.15s ease !important; margin-left: auto !important; }
-    #viewCancelBtn:hover { background-color: #059669 !important; }
-  
-/* --- UTSKRIFTSFORMATERING FOR UKESLISTE --- */
-@media print {
-  @page {
-    size: A4 portrait; /* Stående format passer som regel best for lister */
-    margin: 12mm;
-  }
-
-  /* Skjul overflødige meny- og knappeelementer */
-  header,
-  nav,
-  .sidebar,
-  #selectionPopover,
-  #contextMenu,
-  .btn,
-  button,
-  .fc-header-toolbar {
-    display: none !important;
-  }
-
-  /* Tilpass visningsområdet for liste */
-  body, #calendar, .main-content {
-    width: 100% !important;
-    height: auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: visible !important;
-    background: #fff !important;
-    color: #000 !important;
-  }
-
-  /* Sørg for at listen og fargekodene vises tydelig på trykk */
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* Styling av ukesliste for papir */
-  .fc-list-table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-  }
-
-  .fc-list-day-cushion {
-    background-color: #f0f0f0 !important;
-    font-weight: bold !important;
-  }
-
-  .fc-list-event:hover td {
-    background-color: transparent !important;
-  }
-}
-
-</style>
-
+  <!-- Egen CSS-fil -->
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
-<div class="app-header">
-    <div class="logo-title-container">
-      <img src="aarshjul.svg" alt="Kalender Logo" class="header-logo">
-      <h1>Felleskalender for Lærere</h1>
-    </div>
-  </div>
+  <div class="app-layout">
+    <!-- Sidepanel -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Skolekalender</h2>
+      </div>
 
-  <div class="app-container">
-    <!-- VENSTRE SIDEBAR (Minikalender + Filtre) -->
-    <div class="sidebar">
-      
-      <!-- Minikalender -->
-      <div class="sidebar-card">
+      <!-- Mini-kalender -->
+      <div class="mini-calendar">
         <div class="mini-cal-header">
-          <button id="miniPrevBtn" class="mini-cal-nav">&lt;</button>
-          <span id="miniCalTitle">Måned År</span>
-          <button id="miniNextBtn" class="mini-cal-nav">&gt;</button>
+          <button id="miniPrevBtn" type="button">&lt;</button>
+          <span id="miniCalTitle"></span>
+          <button id="miniNextBtn" type="button">&gt;</button>
         </div>
-        <div class="mini-calendar-grid" id="miniCalGrid"></div>
+        <div id="miniCalGrid" class="mini-cal-grid"></div>
       </div>
 
-      <!-- Kategori- og Trinnfiltre -->
-       <div class="sidebar-card">
+      <!-- Kategorifilter -->
+      <div class="filter-section">
         <div class="filter-header">
-          <h3 class="sidebar-card-title">Kategorier</h3>
-          <button type="button" id="btnToggleAllCategories" class="btn-link">Velg ingen</button>
+          <h3>Kategorier</h3>
+          <button id="btnToggleAllCategories" type="button" class="btn-text">Velg ingen</button>
         </div>
-        <div class="filter-list-vertical" id="filterList"></div>
+        <div id="filterList" class="filter-list"></div>
       </div>
+    </aside>
 
-    </div>
-
-    <!-- HOVEDKALENDER -->
-    <div class="main-calendar-card" id="calendarCard">
+    <!-- Hovedinnhold med FullCalendar -->
+    <main class="main-content">
       <div id="calendar"></div>
-
-      <div id="contextMenu" class="custom-context-menu">
-        <ul>
-          <li id="menuNewEvent">➕ Ny hendelse</li>
-          <li id="menuNewRecurringEvent">🔁 Ny regelmessig hendelse</li>
-        </ul>
-      </div>
-    </div>
+    </main>
   </div>
 
+  <!-- Hurtigmeny-popover ved markering -->
+  <div id="selectionPopover" class="popover">
+    <button id="btnQuickNewEvent" type="button" class="btn btn-primary btn-sm">+ Ny avtale</button>
+    <button id="btnQuickNewRecurring" type="button" class="btn btn-secondary btn-sm">🔁 Regelmessig</button>
+  </div>
 
-<!-- MODAL / POPUP -->
-  <div id="eventModal" class="modal-backdrop">
-    <div class="modal">
+  <!-- Høyreklikk-kontekstmeny -->
+  <div id="contextMenu" class="context-menu">
+    <div id="menuNewEvent" class="context-menu-item">➕ Ny avtale</div>
+    <div id="menuNewRecurringEvent" class="context-menu-item">🔁 Ny regelmessig avtale</div>
+  </div>
+
+  <!-- Modal for Visning / Opprettelse / Redigering -->
+  <div id="eventModal" class="modal-overlay">
+    <div class="modal-card">
       <div class="modal-header">
         <h3 id="modalHeaderTitle">Ny avtale</h3>
-        <button class="close-btn" id="modalCloseX">&times;</button>
+        <button id="modalCloseX" type="button" class="close-btn">&times;</button>
       </div>
 
-      <div id="viewMode" style="display: none;">
-        <h3 id="viewTitle" style="color: #2b78e4; margin-bottom: 10px;"></h3>
-        <p style="margin: 5px 0;"><strong>Gruppe:</strong> <span id="viewGroup"></span></p>
-        <p style="margin: 5px 0;"><strong>Tidspunkt:</strong> <span id="viewTime"></span></p>
-        <p style="margin: 5px 0;" id="viewRecurringRow"><strong>Gjentakelse:</strong> <span id="viewRecurring"></span></p>
-        <label style="margin-top: 12px;">Beskrivelse:</label>
-        <div id="viewDescription" class="description-display"></div>
-
-        <!-- OPPDATERT FOOTER FOR DETALJVISNING -->
-        <div id="normalFooter">
-          <div class="view-action-btns">
-            <button type="button" id="viewEditBtn">Endre</button>
-            <button type="button" id="viewDeleteBtn">Slett</button>
-          </div>
-          <button type="button" id="viewCancelBtn">Lukk</button>
-        </div>
-
-        <div id="deleteConfirmMode" style="display: none;" class="delete-options">
-          <p style="margin: 5px 0; font-weight: bold; color: #dc3545;">Hvordan vil du slette hendelsen?</p>
-          <button type="button" id="deleteSingleBtn" class="btn-secondary">Kun denne hendelsen</button>
-          <button type="button" id="deleteFutureBtn" class="btn-secondary">Denne og alle fremtidige hendelser</button>
-          <button type="button" id="deleteAllSeriesBtn" class="btn-danger">Hele serien (alle hendelser)</button>
-          <button type="button" id="cancelDeleteModeBtn" class="btn-secondary" style="margin-top: 5px; text-align: center;">Avbryt</button>
-        </div>
+      <!-- VISNINGSMODUS -->
+      <div id="viewMode" class="modal-body" style="display: none;">
+        <h2 id="viewTitle" class="view-title"></h2>
+        <div class="view-badge"><span id="viewGroup"></span></div>
+        <p class="view-detail"><strong>Tid:</strong> <span id="viewTime"></span></p>
+        <p id="viewRecurringRow" class="view-detail" style="display: none;">
+          <strong>Gjentakelse:</strong> <span id="viewRecurring"></span>
+        </p>
+        <p class="view-detail"><strong>Beskrivelse:</strong></p>
+        <div id="viewDescription" class="view-description-box"></div>
       </div>
 
-      <form id="eventForm" style="display: block;">
-        <input type="hidden" id="eventId">
-        <input type="hidden" id="isRecurringMode" value="false">
+      <!-- SKJEMAMODUS (Opprett / Rediger) -->
+      <form id="eventForm" class="modal-body">
+        <input type="hidden" id="eventId" />
+        <input type="hidden" id="isRecurringMode" value="false" />
 
         <div class="form-group">
-          <label for="title">Tittel *</label>
-          <input type="text" id="title" required placeholder="Legg til tittel">
+          <label for="title">Tittel</label>
+          <input type="text" id="title" required placeholder="Tittel på avtalen..." />
         </div>
 
         <div class="form-group">
-          <label for="group">Gruppe / Kategori *</label>
+          <label for="group">Kategori</label>
           <select id="group" required></select>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="startDate">Startdato *</label>
-            <input type="date" id="startDate" required>
+            <label for="startDate">Startdato</label>
+            <input type="date" id="startDate" required />
           </div>
           <div class="form-group">
-            <label for="startTime">Starttid (valgfri)</label>
-            <input type="time" id="startTime">
+            <label for="startTime">Starttid</label>
+            <input type="time" id="startTime" />
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="endDate">Sluttdato *</label>
-            <input type="date" id="endDate" required>
+            <label for="endDate">Sluttdato</label>
+            <input type="date" id="endDate" />
           </div>
           <div class="form-group">
-            <label for="endTime">Sluttid (valgfri)</label>
-            <input type="time" id="endTime">
+            <label for="endTime">Sluttid</label>
+            <input type="time" id="endTime" />
           </div>
         </div>
 
-        <div class="form-group" id="recurringGroup" style="display: none;">
-          <label for="repeatPattern">Gjentas</label>
+        <div id="recurringGroup" class="form-group" style="display: none;">
+          <label for="repeatPattern">Gjenta</label>
           <select id="repeatPattern">
             <option value="weekly">Hver uke</option>
             <option value="biweekly">Annenhver uke</option>
@@ -332,833 +132,34 @@
 
         <div class="form-group">
           <label for="description">Beskrivelse</label>
-          <textarea id="description" rows="3" placeholder="Legg til detaljer..."></textarea>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" id="formCancelBtn" class="btn-secondary">Avbryt</button>
-          <button type="submit" id="submitBtn" class="btn-primary">Lagre</button>
+          <textarea id="description" rows="3" placeholder="Valgfri beskrivelse..."></textarea>
         </div>
       </form>
+
+      <!-- BEKREFT SLETTING AV SERIE -->
+      <div id="deleteConfirmMode" class="modal-body" style="display: none;">
+        <p>Denne hendelsen er en del av en regelmessig serie. Hva vil du slette?</p>
+        <div class="delete-options">
+          <button id="deleteSingleBtn" type="button" class="btn btn-danger">Kun denne hendelsen</button>
+          <button id="deleteFutureBtn" type="button" class="btn btn-danger">Denne og fremtidige</button>
+          <button id="deleteAllSeriesBtn" type="button" class="btn btn-danger">Hele serien</button>
+          <button id="cancelDeleteModeBtn" type="button" class="btn btn-secondary">Avbryt</button>
+        </div>
+      </div>
+
+      <!-- FOOTER KNAPPER -->
+      <div id="normalFooter" class="modal-footer">
+        <button id="formCancelBtn" type="button" class="btn btn-secondary">Avbryt</button>
+        <button id="viewCancelBtn" type="button" class="btn btn-secondary" style="display: none;">Lukk</button>
+        <button id="viewEditBtn" type="button" class="btn btn-primary" style="display: none;">Rediger</button>
+        <button id="viewDeleteBtn" type="button" class="btn btn-danger" style="display: none;">Slett</button>
+        <button id="formSubmitBtn" type="submit" form="eventForm" class="btn btn-primary">Lagre</button>
+      </div>
+
     </div>
   </div>
 
-
-<!-- Flytende aksjons-meny ved markering/klikk -->
-<div id="selectionPopover" style="display: none; position: absolute; z-index: 1000;" class="flex gap-1 bg-white p-1 rounded-lg shadow-xl border border-gray-200 animate-fade-in">
-  <button id="btnQuickNewEvent" class="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded shadow flex items-center gap-1 transition">
-    <span>➕</span> Ny avtale
-  </button>
-  <button id="btnQuickNewRecurring" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded shadow flex items-center gap-1 transition">
-    <span>🔁</span> Fast avtale
-  </button>
-</div>
-
-
-  <!-- Firebase & JavaScript Moduler -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { 
-      getFirestore, 
-      collection, 
-      addDoc, 
-      updateDoc,
-      deleteDoc,
-      doc,
-      getDocs,
-      query,
-      where,
-      onSnapshot 
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-import { schoolYearsData } from "./fridager.js";
-import { getFellesaktiviteterSomEvents } from "./fellesaktiviteter.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBFIOEfe6g7QfJppfOHTvhnNpd1XWMFpv0",
-      authDomain: "aarshjul-b4a2a.firebaseapp.com",
-      databaseURL: "https://aarshjul-b4a2a-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "aarshjul-b4a2a",
-      storageBucket: "aarshjul-b4a2a.firebasestorage.app",
-      messagingSenderId: "186927305986",
-      appId: "1:186927305986:web:c8534d5733dcfd2f2c9e1b",
-      measurementId: "G-M02DFGGH3R"
-    };
-
-    const categoryColors = {
-      "1. trinn": "#2ecc71",
-      "2. trinn": "#27ae60",
-      "3. trinn": "#3498db",
-      "4. trinn": "#2980b9",
-      "5. trinn": "#9b59b6",
-      "6. trinn": "#8e44ad",
-      "7. trinn": "#34495e",
-      "Alle på Heståsen": "#e74c3c",
-      "Alle på Brattbakken": "#c0392b",
-      "Fellesaktiviteter": "#34495e", // Legg til fargen du ønsker for fellesaktiviteter
-      "SFO": "#e67e22",
-      "Kartlegginger": "#f1c40f",
-      "Frister": "#d35400",
-      "UiA": "#1abc9c",
-      "Sosialt": "#e84393"
-    };
-
-    const repeatLabels = {
-      "weekly": "Hver uke",
-      "biweekly": "Annenhver uke",
-      "monthly": "Hver måned"
-    };
-
-    const redDateSet = new Set();
-    const offDateSet = new Set();
-    const schoolEventsFromJs = [];
-
-    function parseSchoolYearsData() {
-      Object.values(schoolYearsData).flat().forEach(item => {
-        let cur = new Date(item.startDate + "T00:00:00");
-        const last = new Date(item.endDate + "T00:00:00");
-
-        while (cur <= last) {
-          const yyyy = cur.getFullYear();
-          const mm = String(cur.getMonth() + 1).padStart(2, '0');
-          const dd = String(cur.getDate()).padStart(2, '0');
-          const dateStr = `${yyyy}-${mm}-${dd}`;
-
-          if (item.type === 'roddag') {
-            redDateSet.add(dateStr);
-          } else if (item.type === 'ferie' || item.type.startsWith('planlegging')) {
-            offDateSet.add(dateStr);
-          }
-          cur.setDate(cur.getDate() + 1);
-        }
-
-        let endAdjusted = new Date(item.endDate + "T00:00:00");
-        endAdjusted.setDate(endAdjusted.getDate() + 1);
-        
-        const yyyy = endAdjusted.getFullYear();
-        const mm = String(endAdjusted.getMonth() + 1).padStart(2, '0');
-        const dd = String(endAdjusted.getDate()).padStart(2, '0');
-        const endStr = `${yyyy}-${mm}-${dd}`;
-
-        let bgColor = '#95a5a6';
-        if (item.type === 'roddag') bgColor = '#e74c3c';
-        else if (item.type === 'ferie') bgColor = '#7f8c8d';
-
-        schoolEventsFromJs.push({
-          id: 'school_route_' + Math.random().toString(36).substring(2, 7),
-          title: `📌 ${item.title}`,
-          start: item.startDate,
-          end: endStr,
-          allDay: true,
-          backgroundColor: bgColor,
-          borderColor: bgColor,
-          isSchoolRoute: true,
-          extendedProps: {
-            group: 'Skolerute',
-            rawTitle: item.title,
-            startDate: item.startDate,
-            endDate: item.endDate,
-            description: `Skolerute/Fridag (${item.type})`,
-            isSchoolRoute: true
-          }
-        });
-      });
-    }
-
-    parseSchoolYearsData();
-
-    const fellesEventsFromJs = getFellesaktiviteterSomEvents('2026-2027');
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const eventsRef = collection(db, "school_events");
-
-    let rawEvents = [];
-    let selectedCategories = Object.keys(categoryColors);
-    let calendar;
-    let activeEvent = null;
-    let currentSelection = null;
-    const contextMenu = document.getElementById('contextMenu');
-    let lastClickTime = 0;
-    let lastClickDate = null;
-
-    // Månedstilstand for mini-kalenderen
-    let miniCalCurrentDate = new Date();
-
-    function populateGroupDropdown() {
-      const groupSelect = document.getElementById('group');
-      groupSelect.innerHTML = '';
-      Object.keys(categoryColors).forEach(cat => {
-        const option = document.createElement('option');
-        option.value = cat;
-        option.textContent = cat;
-        groupSelect.appendChild(option);
-      });
-    }
-
-    function hideContextMenu() {
-      contextMenu.style.display = 'none';
-    }
-
-function showSelectionPopover(jsEvent) {
-      const popover = document.getElementById('selectionPopover');
-      if (!popover || !jsEvent) return;
-
-      // Posisjonerer popoveren rett over musepekeren/fingeren
-      popover.style.position = 'fixed';
-      popover.style.left = `${jsEvent.clientX}px`;
-      popover.style.top = `${jsEvent.clientY - 45}px`;
-      popover.style.display = 'flex';
-    }
-
-    function hideSelectionPopover() {
-      const popover = document.getElementById('selectionPopover');
-      if (popover) {
-        popover.style.display = 'none';
-      }
-    }
-
-    function closeModal() {
-      document.getElementById('eventModal').style.display = 'none';
-      document.getElementById('deleteConfirmMode').style.display = 'none';
-      document.getElementById('normalFooter').style.display = 'flex';
-      activeEvent = null;
-      hideContextMenu();
-      if (calendar) calendar.unselect();
-    }
-
-    function showFormMode(title = "Ny avtale", isRecurring = false) {
-      hideContextMenu();
-      document.getElementById('modalHeaderTitle').textContent = title;
-      document.getElementById('viewMode').style.display = 'none';
-      document.getElementById('eventForm').style.display = 'block';
-      document.getElementById('isRecurringMode').value = isRecurring ? "true" : "false";
-
-      const recurringGroup = document.getElementById('recurringGroup');
-      recurringGroup.style.display = isRecurring ? 'block' : 'none';
-
-      document.getElementById('eventModal').style.display = 'flex';
-      setTimeout(() => document.getElementById('title').focus(), 50);
-    }
-
-    function showViewMode() {
-      hideContextMenu();
-      document.getElementById('modalHeaderTitle').textContent = "Avtaledetaljer";
-      document.getElementById('eventForm').style.display = 'none';
-      document.getElementById('viewMode').style.display = 'block';
-      document.getElementById('deleteConfirmMode').style.display = 'none';
-      document.getElementById('normalFooter').style.display = 'flex';
-
-      const isRoute = activeEvent && activeEvent.isSchoolRoute;
-      document.getElementById('viewEditBtn').style.display = isRoute ? 'none' : 'inline-block';
-      document.getElementById('viewDeleteBtn').style.display = isRoute ? 'none' : 'inline-block';
-
-      document.getElementById('eventModal').style.display = 'flex';
-    }
-
-    function formatDate(dateObj) {
-      const year = dateObj.getFullYear();
-      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-      const day = String(dateObj.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
-
-    function formatTime(dateObj) {
-      const hours = String(dateObj.getHours()).padStart(2, '0');
-      const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-      return `${hours}:${minutes}`;
-    }
-
-    function formatNorwegianDate(dateStr) {
-      if (!dateStr) return '';
-      const [year, month, day] = dateStr.split('-');
-      if (!year || !month || !day) return dateStr;
-      return `${day}.${month}.${year}`;
-    }
-
-    function populateFormFromSelection() {
-      if (!currentSelection) return;
-
-      document.getElementById('eventId').value = '';
-      document.getElementById('eventForm').reset();
-
-      let startDate = currentSelection.start;
-      let endDate = currentSelection.end;
-
-      if (currentSelection.allDay) {
-        endDate = new Date(endDate.getTime() - 1);
-      }
-
-      document.getElementById('startDate').value = formatDate(startDate);
-      document.getElementById('endDate').value = formatDate(endDate);
-
-      if (!currentSelection.allDay) {
-        document.getElementById('startTime').value = formatTime(startDate);
-        document.getElementById('endTime').value = formatTime(endDate);
-      } else {
-        document.getElementById('startTime').value = '';
-        document.getElementById('endTime').value = '';
-      }
-    }
-
-    // --- MINI-KALENDER LOGIKK ---
-    const monthNamesNorwegian = [
-      "Januar", "Februar", "Mars", "April", "Mai", "Juni", 
-      "Juli", "August", "September", "Oktober", "November", "Desember"
-    ];
-
-// Funksjon for å utheve dato-overskriften i FullCalendar
-function highlightDateInHeader(selectedDateStr) {
-  // Fjern tidligere utheving
-  document.querySelectorAll('.selected-highlight-day').forEach(el => {
-    el.classList.remove('selected-highlight-day');
-  });
-
-  // Finn og uthev datokolonnen som matcher (format YYYY-MM-DD)
-  const headerCell = document.querySelector(`.fc-col-header-cell[data-date="${selectedDateStr}"]`);
-  if (headerCell) {
-    headerCell.classList.add('selected-highlight-day');
-  }
-}
-
-function renderMiniCalendar() {
-      const grid = document.getElementById('miniCalGrid');
-      const title = document.getElementById('miniCalTitle');
-      grid.innerHTML = '';
-
-      const year = miniCalCurrentDate.getFullYear();
-      const month = miniCalCurrentDate.getMonth();
-
-      title.textContent = `${monthNamesNorwegian[month]} ${year}`;
-
-      // Overskrifter for dager (Man - Søn)
-      const dayHeaders = ['M', 'T', 'O', 'T', 'F', 'L', 'S'];
-      dayHeaders.forEach(dh => {
-        const div = document.createElement('div');
-        div.className = 'mini-day-name';
-        div.textContent = dh;
-        grid.appendChild(div);
-      });
-
-      // Finn første dag i måneden (Mandag som første dag)
-      const firstDayOfMonth = new Date(year, month, 1);
-      let startingDay = firstDayOfMonth.getDay() - 1;
-      if (startingDay === -1) startingDay = 6; // Søndag
-
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const prevMonthDays = new Date(year, month, 0).getDate();
-
-      const todayStr = formatDate(new Date());
-      const selectedStr = calendar ? formatDate(calendar.getDate()) : todayStr;
-
-      // Forrige måneds dager
-      for (let i = startingDay - 1; i >= 0; i--) {
-        const dayNum = prevMonthDays - i;
-        const div = document.createElement('div');
-        div.className = 'mini-day-cell other-month';
-        div.textContent = dayNum;
-        grid.appendChild(div);
-      }
-
-      // Dager i denne måneden
-      for (let day = 1; day <= daysInMonth; day++) {
-        const div = document.createElement('div');
-        div.className = 'mini-day-cell';
-        div.textContent = day;
-
-        const dateObj = new Date(year, month, day);
-        const dateStr = formatDate(dateObj);
-
-        if (dateStr === todayStr) div.classList.add('today');
-        if (dateStr === selectedStr) div.classList.add('selected-day');
-
-        if (redDateSet.has(dateStr) || dateObj.getDay() === 0) {
-          div.classList.add('red-day');
-        } else if (offDateSet.has(dateStr)) {
-          div.classList.add('off-day');
-        }
-
-        // --- OPPDATERT KLIKK-HÅNDTERER ---
-        div.addEventListener('click', () => {
-          if (calendar) {
-            calendar.gotoDate(dateObj);
-            renderMiniCalendar();
-            
-            // Fargelegg overskriften i hovedkalenderen
-            setTimeout(() => {
-              highlightDateInHeader(dateStr);
-            }, 50);
-          }
-        });
-
-        grid.appendChild(div);
-      }
-    }
-
-    document.getElementById('miniPrevBtn').addEventListener('click', () => {
-      miniCalCurrentDate.setMonth(miniCalCurrentDate.getMonth() - 1);
-      renderMiniCalendar();
-    });
-
-    document.getElementById('miniNextBtn').addEventListener('click', () => {
-      miniCalCurrentDate.setMonth(miniCalCurrentDate.getMonth() + 1);
-      renderMiniCalendar();
-    });
-
-
-// STARTUP LOGIKK
-document.addEventListener('DOMContentLoaded', () => {
-  populateGroupDropdown();
-
-  const calendarEl = document.getElementById('calendar');
-
-  calendar = new FullCalendar.Calendar(calendarEl, {
-    initialView: 'timeGridWeek', // UKESVISNING SOM STANDARD
-    selectable: true,
-    selectMirror: true,
-    unselectAuto: false,
-
-    // 1. Legg til den egendefinerte knappen her:
-    customButtons: {
-      printWeekBtn: {
-        text: '🖨️ Skriv ut uke',
-        click: function() {
-          calendar.changeView('listWeek');
-
-          if (typeof hideContextMenu === 'function') hideContextMenu();
-          if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
-
-          setTimeout(() => {
-            window.print();
-          }, 150);
-        }
-      }
-    },
-
-    headerToolbar: {
-      left: 'prev,next today',
-      center: 'title',
-      right: 'printWeekBtn timeGridWeek,dayGridMonth,listMonth'
-    },
-    buttonText: { today: 'I dag', month: 'Måned', week: 'Uke', list: 'Liste' },
-    locale: 'no',
-    firstDay: 1,
-    scrollTime: '08:00:00',
-    slotDuration: '00:30:00',
-
-        // --- DATESSET ---
-        datesSet: function(info) {
-          miniCalCurrentDate = new Date(info.view.currentStart);
-          renderMiniCalendar();
-          
-          if (calendar) {
-            const currentSelectedStr = formatDate(calendar.getDate());
-            setTimeout(() => {
-              highlightDateInHeader(currentSelectedStr);
-            }, 50);
-          }
-        },
-        
-        dayCellClassNames: function(arg) {
-          const dateStr = formatDate(arg.date);
-          if (redDateSet.has(dateStr)) return ['day-red-day'];
-          if (offDateSet.has(dateStr)) return ['day-off-day'];
-          return [];
-        },
-
-        slotLaneClassNames: function(arg) {
-          const timeStr = arg.date.toTimeString().substring(0, 5);
-          if (timeStr >= "08:30" && timeStr < "14:30") return ['fc-school-hours'];
-          return [];
-        },
-
-        select: function(info) {
-          currentSelection = info;
-          hideContextMenu();
-          showSelectionPopover(info.jsEvent);
-        },
-
-        dateClick: function(info) {
-          // FJERN hideSelectionPopover() herfra! 
-          // Klikk på en dato skal la select() vise popoveren i fred.
-        },
-
-        unselect: function() {
-          // FJERN hideSelectionPopover() herfra også!
-          // Vi lar document.addEventListener('click', ...) ta seg av å skjule popoveren.
-          hideContextMenu();
-        },
-
-        eventClick: function(info) {
-          hideContextMenu();
-          hideSelectionPopover(); // Skjuler popover om man trykker på en hendelse
-          activeEvent = {
-            id: info.event.id,
-            title: info.event.extendedProps.rawTitle || info.event.title,
-            group: info.event.extendedProps.group,
-            startDate: info.event.extendedProps.startDate || info.event.startStr,
-            startTime: info.event.extendedProps.startTime || '',
-            endDate: info.event.extendedProps.endDate || info.event.endStr,
-            endTime: info.event.extendedProps.endTime || '',
-            description: info.event.extendedProps.description,
-            repeatPattern: info.event.extendedProps.repeatPattern,
-            recurringSeriesId: info.event.extendedProps.recurringSeriesId,
-            isSchoolRoute: info.event.extendedProps.isSchoolRoute || false
-          };
-
-          document.getElementById('viewTitle').textContent = activeEvent.title;
-          document.getElementById('viewGroup').textContent = activeEvent.group;
-          
-          let timeText = formatNorwegianDate(activeEvent.startDate);
-          if (activeEvent.startTime) timeText += ` kl. ${activeEvent.startTime}`;
-          if (activeEvent.endTime) timeText += ` - ${activeEvent.endTime}`;
-          if (activeEvent.endDate && activeEvent.endDate !== activeEvent.startDate) {
-            timeText += ` til ${formatNorwegianDate(activeEvent.endDate)}`;
-          }
-          document.getElementById('viewTime').textContent = timeText;
-
-          const recurringRow = document.getElementById('viewRecurringRow');
-          if (activeEvent.repeatPattern && repeatLabels[activeEvent.repeatPattern]) {
-            document.getElementById('viewRecurring').textContent = `🔁 ${repeatLabels[activeEvent.repeatPattern]}`;
-            recurringRow.style.display = 'block';
-          } else {
-            recurringRow.style.display = 'none';
-          }
-
-          document.getElementById('viewDescription').textContent = activeEvent.description || "Ingen beskrivelse oppgitt.";
-
-          showViewMode();
-        },
-
-        events: []
-      });
-
-
-      calendar.render();
-      renderFilters();
-      renderMiniCalendar();
-
-// --- LOGIKK FOR "VELG ALLE / VELG INGEN"-KNAPPEN ---
-      const btnToggleAll = document.getElementById('btnToggleAllCategories');
-      if (btnToggleAll) {
-        btnToggleAll.addEventListener('click', (e) => {
-          const filterContainer = document.getElementById('filterList');
-          if (!filterContainer) return;
-
-          const checkboxes = filterContainer.querySelectorAll('input[type="checkbox"]');
-          if (checkboxes.length === 0) return;
-
-          // Sjekk om minst én boks er huket av
-          const isAnyChecked = Array.from(checkboxes).some(cb => cb.checked);
-          const shouldCheck = !isAnyChecked;
-
-          // Oppdater tilstand på alle avkrysningsbokser
-          checkboxes.forEach(cb => {
-            cb.checked = shouldCheck;
-            // Avfyr change-event så filterfunksjonaliteten fanger det opp
-            cb.dispatchEvent(new Event('change'));
-          });
-
-          // Oppdater knappeteksten
-          e.target.textContent = shouldCheck ? 'Velg ingen' : 'Velg alle';
-        });
-      }
-
-      calendarEl.addEventListener('contextmenu', (e) => {
-        if (currentSelection) {
-          e.preventDefault();
-          
-          const rect = calendarEl.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
-
-          contextMenu.style.left = `${x}px`;
-          contextMenu.style.top = `${y}px`;
-          contextMenu.style.display = 'block';
-        }
-      });
-
-document.addEventListener('click', (e) => {
-        const popover = document.getElementById('selectionPopover');
-        
-        // Skjuler høyreklikk-menyen hvis man klikker utenfor den
-        if (!contextMenu.contains(e.target)) {
-          hideContextMenu();
-        }
-
-        // Skjuler popoveren hvis man klikker utenfor popoveren og kalender-flaten
-        if (popover && !popover.contains(e.target) && !e.target.closest('.fc')) {
-          hideSelectionPopover();
-        }
-      });
-
-      document.getElementById('menuNewEvent').addEventListener('click', () => {
-        populateFormFromSelection();
-        showFormMode("Ny avtale", false);
-      });
-
-      document.getElementById('menuNewRecurringEvent').addEventListener('click', () => {
-        populateFormFromSelection();
-        showFormMode("Ny regelmessig avtale", true);
-      });
-
-      // Knapper fra popover (knappene som spretter opp)
-      document.getElementById('btnQuickNewEvent').addEventListener('click', (e) => {
-        e.stopPropagation();
-        hideSelectionPopover();
-        populateFormFromSelection();
-        showFormMode("Ny avtale", false);
-      });
-
-      document.getElementById('btnQuickNewRecurring').addEventListener('click', (e) => {
-        e.stopPropagation();
-        hideSelectionPopover();
-        populateFormFromSelection();
-        showFormMode("Ny regelmessig avtale", true);
-      });
-
-    });
-
-    onSnapshot(eventsRef, (snapshot) => {
-      rawEvents = snapshot.docs.map(doc => {
-        const data = doc.data();
-        
-        let startIso = data.startDate;
-        if (data.startTime) startIso += `T${data.startTime}`;
-
-        let endIso = data.endDate || data.startDate;
-        if (data.endTime) endIso += `T${data.endTime}`;
-
-        const isRecurring = Boolean(data.repeatPattern || data.recurringSeriesId);
-        const iconPrefix = isRecurring ? "🔁 " : "";
-
-        return {
-          id: doc.id,
-          title: `${iconPrefix}[${data.group}] ${data.title}`,
-          start: startIso,
-          end: endIso,
-          backgroundColor: categoryColors[data.group] || '#3788d8',
-          borderColor: categoryColors[data.group] || '#3788d8',
-          extendedProps: { 
-            group: data.group,
-            rawTitle: data.title,
-            startDate: data.startDate,
-            startTime: data.startTime || '',
-            endDate: data.endDate || data.startDate,
-            endTime: data.endTime || '',
-            description: data.description || '',
-            repeatPattern: data.repeatPattern || null,
-            recurringSeriesId: data.recurringSeriesId || null
-          }
-        };
-      });
-      updateCalendarEvents();
-    });
-
-function updateCalendarEvents() {
-  const filteredUserEvents = rawEvents.filter(event => 
-    selectedCategories.includes(event.extendedProps.group)
-  );
-
-  const filteredFellesEvents = fellesEventsFromJs.filter(event => 
-    selectedCategories.includes(event.extendedProps.group)
-  );
-
-  const allEvents = [...schoolEventsFromJs, ...filteredFellesEvents, ...filteredUserEvents];
-
-  calendar.removeAllEvents();
-  calendar.addEventSource(allEvents);
-}
-
-    document.getElementById('modalCloseX').addEventListener('click', closeModal);
-    document.getElementById('formCancelBtn').addEventListener('click', closeModal);
-    document.getElementById('viewCancelBtn').addEventListener('click', closeModal);
-
-    document.getElementById('viewEditBtn').addEventListener('click', () => {
-      if (activeEvent && !activeEvent.isSchoolRoute) {
-        document.getElementById('eventId').value = activeEvent.id;
-        document.getElementById('title').value = activeEvent.title;
-        document.getElementById('group').value = activeEvent.group;
-        document.getElementById('startDate').value = activeEvent.startDate;
-        document.getElementById('startTime').value = activeEvent.startTime;
-        document.getElementById('endDate').value = activeEvent.endDate;
-        document.getElementById('endTime').value = activeEvent.endTime;
-        document.getElementById('description').value = activeEvent.description;
-
-        showFormMode("Rediger avtale", false);
-      }
-    });
-
-    document.getElementById('viewDeleteBtn').addEventListener('click', async () => {
-      if (!activeEvent || activeEvent.isSchoolRoute) return;
-
-      if (activeEvent.recurringSeriesId) {
-        document.getElementById('normalFooter').style.display = 'none';
-        document.getElementById('deleteConfirmMode').style.display = 'flex';
-      } else {
-        if (confirm(`Er du sikker på at du vil slette "${activeEvent.title}"?`)) {
-          const targetId = activeEvent.id;
-          closeModal();
-          await deleteDoc(doc(db, "school_events", targetId));
-        }
-      }
-    });
-
-    document.getElementById('cancelDeleteModeBtn').addEventListener('click', () => {
-      document.getElementById('deleteConfirmMode').style.display = 'none';
-      document.getElementById('normalFooter').style.display = 'flex';
-    });
-
-    document.getElementById('deleteSingleBtn').addEventListener('click', async () => {
-      if (!activeEvent) return;
-      const targetId = activeEvent.id;
-      closeModal();
-      await deleteDoc(doc(db, "school_events", targetId));
-    });
-
-    document.getElementById('deleteFutureBtn').addEventListener('click', async () => {
-      if (!activeEvent || !activeEvent.recurringSeriesId) return;
-      const seriesId = activeEvent.recurringSeriesId;
-      const currentDate = activeEvent.startDate;
-
-      closeModal();
-
-      const q = query(
-        eventsRef, 
-        where("recurringSeriesId", "==", seriesId),
-        where("startDate", ">=", currentDate)
-      );
-      const querySnapshot = await getDocs(q);
-      const deletePromises = querySnapshot.docs.map(d => deleteDoc(doc(db, "school_events", d.id)));
-      await Promise.all(deletePromises);
-    });
-
-    document.getElementById('deleteAllSeriesBtn').addEventListener('click', async () => {
-      if (!activeEvent || !activeEvent.recurringSeriesId) return;
-      const seriesId = activeEvent.recurringSeriesId;
-
-      closeModal();
-
-      const q = query(eventsRef, where("recurringSeriesId", "==", seriesId));
-      const querySnapshot = await getDocs(q);
-      const deletePromises = querySnapshot.docs.map(d => deleteDoc(doc(db, "school_events", d.id)));
-      await Promise.all(deletePromises);
-    });
-
-    document.getElementById('eventForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const eventId = document.getElementById('eventId').value;
-      const isRecurring = document.getElementById('isRecurringMode').value === "true";
-      const repeatPattern = document.getElementById('repeatPattern').value;
-      
-      const title = document.getElementById('title').value;
-      const group = document.getElementById('group').value;
-      const startDateStr = document.getElementById('startDate').value;
-      const startTime = document.getElementById('startTime').value;
-      const endDateStr = document.getElementById('endDate').value;
-      const endTime = document.getElementById('endTime').value;
-      const description = document.getElementById('description').value;
-
-      closeModal();
-
-      try {
-        if (eventId) {
-          const singleData = {
-            title, group, startDate: startDateStr, startTime: startTime || null,
-            endDate: endDateStr || startDateStr, endTime: endTime || null,
-            description: description || '', updatedAt: new Date().toISOString()
-          };
-          await updateDoc(doc(db, "school_events", eventId), singleData);
-        } else if (isRecurring) {
-          const eventsToCreate = [];
-          let currentStart = new Date(startDateStr + "T00:00:00");
-          let currentEnd = new Date((endDateStr || startDateStr) + "T00:00:00");
-
-          const daySpan = Math.round((currentEnd - currentStart) / (1000 * 60 * 60 * 24));
-          const iterations = (repeatPattern === 'monthly') ? 10 : (repeatPattern === 'biweekly' ? 20 : 40);
-          const seriesId = 'series_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
-
-          for (let i = 0; i < iterations; i++) {
-            const nextStart = new Date(currentStart);
-            const nextEnd = new Date(currentEnd);
-
-            if (repeatPattern === 'weekly') {
-              nextStart.setDate(currentStart.getDate() + (i * 7));
-              nextEnd.setDate(currentStart.getDate() + (i * 7) + daySpan);
-            } else if (repeatPattern === 'biweekly') {
-              nextStart.setDate(currentStart.getDate() + (i * 14));
-              nextEnd.setDate(currentStart.getDate() + (i * 14) + daySpan);
-            } else if (repeatPattern === 'monthly') {
-              nextStart.setMonth(currentStart.getMonth() + i);
-              nextEnd.setMonth(currentStart.getMonth() + i);
-              nextEnd.setDate(nextStart.getDate() + daySpan);
-            }
-
-            eventsToCreate.push({
-              title: title,
-              group: group,
-              startDate: formatDate(nextStart),
-              startTime: startTime || null,
-              endDate: formatDate(nextEnd),
-              endTime: endTime || null,
-              description: description || '',
-              repeatPattern: repeatPattern,
-              recurringSeriesId: seriesId,
-              createdAt: new Date().toISOString()
-            });
-          }
-
-          await Promise.all(eventsToCreate.map(evt => addDoc(eventsRef, evt)));
-
-        } else {
-          const singleData = {
-            title, group, startDate: startDateStr, startTime: startTime || null,
-            endDate: endDateStr || startDateStr, endTime: endTime || null,
-            description: description || '', createdAt: new Date().toISOString()
-          };
-          await addDoc(eventsRef, singleData);
-        }
-      } catch (error) {
-        console.error("Feil ved lagring: ", error);
-        alert("Feil ved lagring til databasen.");
-      }
-    });
-
-function renderFilters() {
-      const filterContainer = document.getElementById('filterList');
-      filterContainer.innerHTML = '';
-
-      Object.keys(categoryColors).forEach(cat => {
-        const item = document.createElement('label');
-        item.className = 'filter-item-vert';
-        
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.checked = true;
-        checkbox.value = cat;
-        checkbox.addEventListener('change', (e) => {
-          if (e.target.checked) selectedCategories.push(cat);
-          else selectedCategories = selectedCategories.filter(c => c !== cat);
-          updateCalendarEvents();
-        });
-
-        const colorDot = document.createElement('span');
-        colorDot.className = 'color-dot';
-        colorDot.style.backgroundColor = categoryColors[cat];
-
-        const labelText = document.createElement('span');
-        labelText.className = 'filter-label';
-        labelText.textContent = cat;
-
-        item.appendChild(checkbox);
-        item.appendChild(colorDot);
-        item.appendChild(labelText);
-        filterContainer.appendChild(item);
-      });
-    }
-
-
-  </script>
+  <!-- Hovedskript som ES-modul -->
+  <script type="module" src="app.js"></script>
 </body>
 </html>
