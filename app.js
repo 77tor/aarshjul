@@ -957,30 +957,61 @@ function checkSingleCategorySelection() {
   }
 }
 
-// Lytter på den nye utskriftsknappen
+
+// Lytter på utskriftsknappen for valgt kategori
 document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (selectedCategories.length !== 1) return;
 
   const selectedCategory = selectedCategories[0];
   const originalView = calendar.view.type;
 
-  // 1. Bytt til hele listevisningen (listYear eller listMonth avhengig av hvor mye data du vil ha med)
-  calendar.changeView('listYear'); 
+  // 1. Sett datovisning til å dekke HELE skoleåret (1. aug 2026 til 31. juli 2027)
+  const currentViewDate = calendar.getDate();
+  const startYear = currentViewDate.getMonth() >= 7 ? currentViewDate.getFullYear() : currentViewDate.getFullYear() - 1;
+  
+  const schoolYearStart = `${startYear}-08-01`;
+  const schoolYearEnd = `${startYear + 1}-07-31`;
 
-  // 2. Oppdater utskriftstittel i toppbanneret
+  // 2. Bytt til listevisning for hele periode-intervallet
+  calendar.changeView('list', {
+    start: schoolYearStart,
+    end: schoolYearEnd
+  });
+
+  // 3. Oppdater hendelsene midlertidig slik at fridager (schoolEvents) fjernes fra utskriften
+  const filteredUserEvents = rawEvents.filter(event => isEventInSelectedCategories(event));
+  const filteredFellesEvents = (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
+  const filteredDksEvents = (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
+  const filteredSvommeEvents = (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
+
+  // Vi utelater 'schoolEventsFromJs' her slik at fridager ikke blir med i utskriften
+  const printEventsOnly = [
+    ...filteredFellesEvents, 
+    ...filteredDksEvents, 
+    ...filteredSvommeEvents, 
+    ...filteredUserEvents
+  ];
+
+  calendar.removeAllEvents();
+  calendar.addEventSource(printEventsOnly);
+
+  // 4. Oppdater utskriftstittel i overskriften
   const titleEl = document.getElementById('printTitle');
   const subTitleEl = document.getElementById('printSubTitle');
   if (titleEl) titleEl.textContent = `Oversikt – ${selectedCategory}`;
-  if (subTitleEl) subTitleEl.textContent = `Generert utskrift for valgt kategori`;
+  if (subTitleEl) subTitleEl.textContent = `Skoleåret ${startYear}/${startYear + 1}`;
 
   if (typeof hideContextMenu === 'function') hideContextMenu();
   if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
 
-  // 3. Vent til FullCalendar har rendret listen og Åpne utskriftsdialog
+  // 5. Vent på at visningen bygges, åpne utskrift, og tilbakestill kalenderen etterpå
   requestAnimationFrame(() => {
     setTimeout(() => {
       window.print();
-      calendar.changeView(originalView); // Bytter tilbake til ukesvisningen etter utskrift
+      
+      // Tilbakestill kalendervisning og legg fridagene tilbake
+      calendar.changeView(originalView);
+      updateCalendarEvents(); 
     }, 300);
   });
 });
