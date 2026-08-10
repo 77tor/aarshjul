@@ -38,7 +38,7 @@ const categoryColors = {
   "7. trinn": "#34495e",
   "Alle på Heståsen": "#e74c3c",
   "Alle på Brattbakken": "#c0392b",
-  "DKS": "#1abc9c"
+  "DKS": "#1abc9c",
   "Fellesaktiviteter": "#34495e",
   "SFO": "#e67e22",
   "Kartlegginger": "#f1c40f",
