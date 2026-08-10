@@ -366,12 +366,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const calendarEl = document.getElementById('calendar');
 
-  calendar = new FullCalendar.Calendar(calendarEl, {
+calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'timeGridWeek',
     initialDate: '2026-08-17', // <-- RETTING 1: Åpner direkte i august 2026 der testdataene dine ligger
     selectable: true,
     selectMirror: true,
     unselectAuto: false,
+
+    // LEGG TIL DETTE: Tvinger listen til å dekke 12 måneder fra startdato i stedet for å stoppe ved nyttår
+    views: {
+      schoolYearList: {
+        type: 'list',
+        duration: { months: 12 },
+        buttonText: 'Skoleår'
+      }
+    },
 
     customButtons: {
       printWeekBtn: {
@@ -966,16 +975,16 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   const originalView = calendar.view.type;
   const originalDate = calendar.getDate();
 
-  // 1. Beregn start av skoleåret (1. august i inneværende skoleår)
+  // 1. Finne startår for skoleåret (august)
   const currentMonth = originalDate.getMonth(); // 0 = Jan, 7 = Aug
   const startYear = currentMonth >= 7 ? originalDate.getFullYear() : originalDate.getFullYear() - 1;
   const schoolYearStart = `${startYear}-08-01`;
 
-  // 2. Bytt til 'listYear' og hopp til skolestart i august
-  calendar.changeView('listYear');
+  // 2. Bytt til den nye spesialvisningen for hele skoleåret og gå til 1. august
+  calendar.changeView('schoolYearList');
   calendar.gotoDate(schoolYearStart);
 
-  // 3. Filtrer ut fridager (schoolEvents), men ta med alt annet som matcher valgt kategori
+  // 3. Filtrer hendelser (utelater fridager / schoolEvents)
   const filteredUserEvents = rawEvents.filter(event => isEventInSelectedCategories(event));
   const filteredFellesEvents = (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
   const filteredDksEvents = (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
@@ -991,7 +1000,7 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   calendar.removeAllEvents();
   calendar.addEventSource(printEventsOnly);
 
-  // 4. Oppdater utskriftstittel
+  // 4. Oppdater overskrifter for print
   const titleEl = document.getElementById('printTitle');
   const subTitleEl = document.getElementById('printSubTitle');
   if (titleEl) titleEl.textContent = `Oversikt – ${selectedCategory}`;
@@ -1000,12 +1009,12 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (typeof hideContextMenu === 'function') hideContextMenu();
   if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
 
-  // 5. Vent på at alt rendres, kjør utskrift, og tilbakestill
+  // 5. Vent på opptegning, skriv ut, og tilbakestill
   requestAnimationFrame(() => {
     setTimeout(() => {
       window.print();
       
-      // Tilbakestill til opprinnelig visning, dato og tilstand
+      // Tilbakestill kalenderen
       calendar.changeView(originalView);
       calendar.gotoDate(originalDate);
       updateCalendarEvents(); 
