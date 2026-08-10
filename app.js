@@ -641,58 +641,54 @@ onSnapshot(eventsRef, (snapshot) => {
 
 // <-- RETTING 3: Riktig filtrering av samlekategorier og trinn
 function isEventInSelectedCategories(event) {
-  const group = event.extendedProps?.group;
+  if (selectedCategories.length === 0) return false;
+
+  const group = (event.extendedProps?.group || '').toLowerCase();
   const deltakere = (event.extendedProps?.deltakere || '').toLowerCase();
-  const title = (event.title || '').toLowerCase();
+  const title = (event.title || event.extendedProps?.rawTitle || '').toLowerCase();
   const description = (event.extendedProps?.description || '').toLowerCase();
   
-  const altInnhold = `${title} ${deltakere} ${description}`;
+  const altInnhold = `${group} ${title} ${deltakere} ${description}`;
 
-  // 1. Sjekk direkte match på gruppe/kategori (om boksen i filteret er huka av)
-  if (selectedCategories.includes(group)) {
-    return true;
-  }
-
-  // 2. Sjekk samlekategorier
-  if (selectedCategories.includes("Alle på Heståsen") && (altInnhold.includes("heståsen") || altInnhold.includes("1.-3. trinn"))) {
-    return true;
-  }
-  if (selectedCategories.includes("Alle på Brattbakken") && (altInnhold.includes("brattbakken") || altInnhold.includes("4.-7. trinn"))) {
-    return true;
-  }
-
-  // 3. Løkke over trinn
   for (const cat of selectedCategories) {
+    const catLower = cat.toLowerCase();
+
+    // 1. Direkte match på gruppenavn eller fritekst (f.eks. "Felles", "DKS", "Svømming", "Fellesaktiviteter")
+    if (group === catLower || altInnhold.includes(catLower)) {
+      return true;
+    }
+
+    // 2. Samlekategorier
+    if (cat === "Alle på Heståsen" && (altInnhold.includes("heståsen") || altInnhold.includes("1.-3. trinn") || altInnhold.includes("1-3. trinn"))) {
+      return true;
+    }
+    if (cat === "Alle på Brattbakken" && (altInnhold.includes("brattbakken") || altInnhold.includes("4.-7. trinn") || altInnhold.includes("4-7. trinn"))) {
+      return true;
+    }
+
+    // 3. Trinn-sjekk (1. trinn, 2. trinn, osv.)
     if (cat.endsWith('. trinn')) {
       const trinnNummer = parseInt(cat.split('.')[0].trim(), 10);
 
-      if (altInnhold.includes("alle trinn") || altInnhold.includes("1.-7. trinn") || altInnhold.includes("1-7. trinn")) {
+      // Fellesaktiviteter som gjelder alle eller hele skolen skal alltid med på trinnet
+      if (altInnhold.includes("alle trinn") || altInnhold.includes("1.-7. trinn") || altInnhold.includes("1-7. trinn") || altInnhold.includes("felles")) {
         return true;
       }
 
-      if (altInnhold.includes("heståsen") && trinnNummer >= 1 && trinnNummer <= 3) {
-        const trinnSjekk = new RegExp(`\\b${trinnNummer}`, 'i');
-        if (trinnSjekk.test(altInnhold)) return true;
-      }
+      // Trinn-spesifikke sjekker for Heståsen (1-3) og Brattbakken (4-7)
+      if (altInnhold.includes("heståsen") && trinnNummer >= 1 && trinnNummer <= 3) return true;
+      if (altInnhold.includes("brattbakken") && trinnNummer >= 4 && trinnNummer <= 7) return true;
 
-      if (altInnhold.includes("brattbakken") && trinnNummer >= 4 && trinnNummer <= 7) {
-        const trinnSjekk = new RegExp(`\\b${trinnNummer}`, 'i');
-        if (trinnSjekk.test(altInnhold)) return true;
-      }
+      // Sjekk om trinnet er nevnt i teksten (f.eks. "1. trinn", "1A", "1.-3.")
+      const trinnRegex = new RegExp(`\\b${trinnNummer}(\\.|a|b|c|d|\\s*-\\s*|\\s*\\.\\s*trinn)`, 'i');
+      if (trinnRegex.test(altInnhold)) return true;
 
-      const klasseMatchRegex = new RegExp(`\\b${trinnNummer}([a-zæøå]|\\.[\\s]*trinn|-|$)`, 'i');
-      if (klasseMatchRegex.test(altInnhold)) {
-        return true;
-      }
-
-      const rangeMatch = altInnhold.match(/(\d+)\.\s*-\s*(\d+)\.\s*trinn/i) || altInnhold.match(/(\d+)\s*-\s*(\d+)\.\s*trinn/i);
+      // Intervall-sjekk (f.eks "1.-4. trinn")
+      const rangeMatch = altInnhold.match(/(\d+)\s*[\.\-]\s*(\d+)\.?\s*trinn/i);
       if (rangeMatch) {
         const startTrinn = parseInt(rangeMatch[1], 10);
         const sluttTrinn = parseInt(rangeMatch[2], 10);
-
-        if (trinnNummer >= startTrinn && trinnNummer <= sluttTrinn) {
-          return true;
-        }
+        if (trinnNummer >= startTrinn && trinnNummer <= sluttTrinn) return true;
       }
     }
   }
