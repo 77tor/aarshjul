@@ -963,7 +963,7 @@ function checkSingleCategorySelection() {
 }
 
 
-// Lytter på utskriftsknappen for valgt kategori (Kompakt utskrift)
+// Lytter på utskriftsknappen for valgt kategori (Kompakt utskrift med klokkeslett)
 document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (selectedCategories.length !== 1) return;
 
@@ -997,7 +997,6 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   const consolidatedMap = new Map();
 
   allRawEvents.forEach(evt => {
-    // Lag en unik nøkkel basert på tittel og kategori
     const key = `${evt.title}_${evt.extendedProps?.group || ''}`;
     
     const evtStart = new Date(evt.start);
@@ -1016,21 +1015,30 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
     }
   });
 
-  // Bygg kompakt liste med riktige start- og sluttdatoer
+  // Bygg kompakt liste med dato og klokkeslett
   const compactPrintEvents = Array.from(consolidatedMap.values()).map(item => {
     const startStr = item.minStart.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
     const endStr = item.maxEnd.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
     
-    // Hvis hendelsen strekker seg over flere dager, vis intervall (f.eks. "12. okt – 23. okt")
     const isMultiDay = item.minStart.toDateString() !== item.maxEnd.toDateString();
     const dateLabel = isMultiDay ? `${startStr} – ${endStr}` : startStr;
+
+    // Hent klokkeslett dersom det er oppgitt
+    let timeLabel = '';
+    const hasTime = item.minStart.getHours() !== 0 || item.minStart.getMinutes() !== 0;
+    
+    if (hasTime) {
+      const startTimeStr = item.minStart.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+      const endTimeStr = item.maxEnd.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+      timeLabel = item.maxEnd && startTimeStr !== endTimeStr ? ` | ${startTimeStr}–${endTimeStr}` : ` | kl. ${startTimeStr}`;
+    }
 
     return {
       ...item,
       start: item.minStart,
       end: item.maxEnd,
-      // Vi setter dato-intervallet direkte i tittelen for kompakt visning
-      title: `[${dateLabel}]  ${item.title}`
+      // Format: [12. okt | 10:00–11:30] Tittel på aktivitet
+      title: `[${dateLabel}${timeLabel}]  ${item.title}`
     };
   });
 
