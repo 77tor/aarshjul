@@ -65,9 +65,117 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .delete-options { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 
 /* Utskriftstil */
+/* Skjul utskriftsoverskrift på skjermen */
+.print-only-header {
+  display: none;
+}
+
+/* Utskrift-spesifikke stiler */
 @media print {
-  .sidebar, .fc-header-toolbar, .popover, .context-menu { display: none !important; }
-  .app-layout { display: block; height: auto; }
-  .main-content { padding: 0; }
-  .fc { box-shadow: none; border: none; }
+  @page {
+    size: A4 portrait;
+    margin: 8mm; /* Små marginer for maks plass */
+  }
+
+  /* Skjul alt uviktig under utskrift */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Vis kun kalenderen og utskriftsoverskriften */
+  #calendar, 
+  #calendar *,
+  #printHeader,
+  #printHeader * {
+    visibility: visible;
+  }
+
+  /* Plassering og skvis på 1 side */
+  body {
+    background: #fff !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  #printHeader {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    border-bottom: 2px solid #2c3e50;
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+  }
+
+  #printTitle {
+    margin: 0;
+    font-size: 20pt;
+    font-weight: 700;
+    color: #2c3e50;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  #printSubTitle {
+    margin: 3px 0 0 0;
+    font-size: 11pt;
+    color: #666;
+    font-weight: 500;
+  }
+
+  #calendar {
+    position: absolute;
+    top: 65px; /* Slipper overskriften gjennom */
+    left: 0;
+    width: 100% !important;
+    height: calc(100vh - 70px) !important;
+  }
+
+  /* Skjul FullCalendar sin egen topplinje under print */
+  .fc-header-toolbar {
+    display: none !important;
+  }
+
+  /* Kompakt og stilren tabelldesign som fyller A4-siden */
+  .fc-list-table {
+    border: none !important;
+    width: 100% !important;
+  }
+
+  /* Dag-overskrifter i listen */
+  .fc-list-day-cushion {
+    background-color: #f8f9fa !important;
+    padding: 4px 8px !important;
+    font-size: 10pt !important;
+    font-weight: bold !important;
+    color: #2c3e50 !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+  }
+
+  /* Enkelthendelser */
+  .fc-list-event {
+    font-size: 9pt !important;
+  }
+
+  .fc-list-event td {
+    padding: 3px 8px !important; /* Tett polstring for å garantere 1 side */
+    border-color: #f1f5f9 !important;
+  }
+
+  .fc-list-event-title {
+    font-weight: 600 !important;
+  }
+
+  .fc-list-event-dot {
+    border-width: 5px !important; /* Tydelig fargepunkt */
+  }
+
+  /* Forhindre at tabellen brekker over 2 sider */
+  tr, td, .fc-list-day {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
 }

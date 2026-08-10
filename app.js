@@ -373,20 +373,48 @@ document.addEventListener('DOMContentLoaded', () => {
     unselectAuto: false,
 
     customButtons: {
-      printWeekBtn: {
-        text: '🖨️ Skriv ut uke',
-        click: function() {
-          calendar.changeView('listWeek');
+printWeekBtn: {
+  text: '🖨️ Skriv ut uke',
+  click: function() {
+    // 1. Bytt til ukesliste
+    calendar.changeView('listWeek');
 
-          hideContextMenu();
-          hideSelectionPopover();
+    // 2. Hent start- og sluttdato for gjeldende uke
+    const view = calendar.view;
+    const start = view.currentStart;
+    const end = new Date(view.currentEnd.getTime() - 1); // Juster til søndag
 
-          setTimeout(() => {
-            window.print();
-          }, 150);
-        }
-      }
-    },
+    // 3. Beregn ukenummer (ISO 8601)
+    const target = new Date(start.valueOf());
+    const dayNr = (start.getDay() + 6) % 7;
+    target.setDate(target.getDate() - dayNr + 3);
+    const firstThursday = target.valueOf();
+    target.setMonth(0, 1);
+    if (target.getDay() !== 4) {
+      target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
+    }
+    const weekNum = 1 + Math.ceil((firstThursday - target) / 604800000);
+
+    // 4. Formater datoer (f.eks. 17.08.2026 - 23.08.2026)
+    const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+    const startStr = start.toLocaleDateString('no-NO', options);
+    const endStr = end.toLocaleDateString('no-NO', options);
+
+    // 5. Oppdater utskriftsoverskriften
+    const titleEl = document.getElementById('printTitle');
+    const subTitleEl = document.getElementById('printSubTitle');
+    if (titleEl) titleEl.textContent = `Ukeplan – Uke ${weekNum}`;
+    if (subTitleEl) subTitleEl.textContent = `${startStr} – ${endStr}`;
+
+    hideContextMenu();
+    hideSelectionPopover();
+
+    // 6. Åpne utskriftsdialogen
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  }
+}
 
     headerToolbar: {
       left: 'prev,next today',
