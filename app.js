@@ -595,17 +595,16 @@ function isEventInSelectedCategories(event) {
   const title = (event.title || '').toLowerCase();
   const description = (event.extendedProps?.description || '').toLowerCase();
   
-  // Slår sammen alt av tekst for enklere søk
   const altInnhold = `${title} ${deltakere} ${description}`;
 
-  // 1. Sjekk direkte match på gruppe (f.eks. om DKS, SFO, Fellesaktiviteter, UiA osv. er huket av)
+  // 1. Sjekk direkte match på gruppe (f.eks. om "Svømming", "DKS", "SFO" osv. er avhuket)
   if (selectedCategories.includes(group)) {
     return true;
   }
 
-  // 2. Sjekk om hendelsen matcher et av de avhukede trinnene eller stedene
+  // 2. Sjekk filtrering basert på valgte trinn eller steder
   for (const cat of selectedCategories) {
-    // Sjekk om samlekategoriene "Alle på Heståsen" eller "Alle på Brattbakken" er huka av
+    // Sjekk samlekategoriene "Alle på Heståsen" eller "Alle på Brattbakken"
     if (selectedCategories.includes("Alle på Heståsen") && (altInnhold.includes("heståsen") || altInnhold.includes("1.-3. trinn"))) {
       return true;
     }
@@ -614,30 +613,33 @@ function isEventInSelectedCategories(event) {
     }
 
     if (cat.endsWith('. trinn')) {
-      const trinnNummer = parseInt(cat.split('.')[0].trim(), 10); // F.eks. 1, 2, 3...
+      const trinnNummer = parseInt(cat.split('.')[0].trim(), 10); // F.eks. 1, 2, 3, 4, 7...
 
-      // A. "Alle trinn" / "1.-7. trinn" -> Skal alltid vises uansett hvilket trinn som velges
+      // A. "Alle trinn" / "1.-7. trinn"
       if (altInnhold.includes("alle trinn") || altInnhold.includes("1.-7. trinn") || altInnhold.includes("1-7. trinn")) {
         return true;
       }
 
-      // B. Heståsen = 1. til 3. trinn
+      // B. Heståsen (1.–3. trinn) og Brattbakken (4.–7. trinn)
       if (altInnhold.includes("heståsen") && trinnNummer >= 1 && trinnNummer <= 3) {
-        return true;
+        // Dersom det står f.eks. "Heståsen 3a-b" og vi har valgt 3. trinn:
+        const trinnSjekk = new RegExp(`\\b${trinnNummer}`, 'i');
+        if (trinnSjekk.test(altInnhold)) return true;
       }
 
-      // C. Brattbakken = 4. til 7. trinn
       if (altInnhold.includes("brattbakken") && trinnNummer >= 4 && trinnNummer <= 7) {
+        // Dersom det står f.eks. "Brattbakken 7a-b" og vi har valgt 7. trinn:
+        const trinnSjekk = new RegExp(`\\b${trinnNummer}`, 'i');
+        if (trinnSjekk.test(altInnhold)) return true;
+      }
+
+      // C. Generell match for trinn og klasser (f.eks. "7a", "7a-b", "7c-a", "4b-c", "7. trinn")
+      const klasseMatchRegex = new RegExp(`\\b${trinnNummer}([a-zæøå]|\\.[\\s]*trinn|-|$)`, 'i');
+      if (klasseMatchRegex.test(altInnhold)) {
         return true;
       }
 
-      // D. Enkeltklasser (f.eks. 1a, 1b, 2c) eller trinnhenvisning ("1. trinn")
-      const klasseRegex = new RegExp(`\\b${trinnNummer}[a-zæøå]?\\b`, 'i');
-      if (klasseRegex.test(altInnhold)) {
-        return true;
-      }
-
-      // E. Intervaller som "1.-3. trinn", "5.-6. trinn", "3.-5. trinn" osv.
+      // D. Intervaller som "1.-3. trinn", "5.-7. trinn"
       const rangeMatch = altInnhold.match(/(\d+)\.\s*-\s*(\d+)\.\s*trinn/i) || altInnhold.match(/(\d+)\s*-\s*(\d+)\.\s*trinn/i);
       if (rangeMatch) {
         const startTrinn = parseInt(rangeMatch[1], 10);
