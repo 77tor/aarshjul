@@ -30,21 +30,24 @@ const firebaseConfig = {
 };
 
 const categoryColors = {
-  "1. trinn": "#2ecc71",
-  "2. trinn": "#27ae60",
-  "3. trinn": "#3498db",
-  "4. trinn": "#2980b9",
-  "5. trinn": "#9b59b6",
-  "6. trinn": "#8e44ad",
-  "7. trinn": "#34495e",
-  "DKS": "#1abc9c",
-  "Svømming": "#00cec9",
-  "Fellesaktiviteter": "#34495e",
-  "SFO": "#e67e22",
-  "Kartlegginger": "#f1c40f",
-  "Frister": "#d35400",
-  "UiA": "#1abc9c",
-  "Sosialt": "#e84393"
+  // Trinn (En tydelig regnbueskala gjør at trinnene skiller seg klart fra hverandre)
+  "1. trinn": "#e74c3c", // Rød
+  "2. trinn": "#e67e22", // Oransje
+  "3. trinn": "#f1c40f", // Gul
+  "4. trinn": "#2ecc71", // Grønn
+  "5. trinn": "#1abc9c", // Turkis
+  "6. trinn": "#3498db", // Blå
+  "7. trinn": "#9b59b6", // Lila
+
+  // Spesifikke fag og aktiviteter (Unike farger som skiller seg fra trinnene)
+  "DKS": "#d35400",             // Mørk oransje / brent murtone
+  "Svømming": "#00cec9",        // Klar cyan / vannblå
+  "Fellesaktiviteter": "#2c3e50",// Mørk skiferblå
+  "SFO": "#ff7675",             // Korall / varm rosa
+  "Kartlegginger": "#6c5ce7",   // Dyp indigo / lilla-blå
+  "Frister": "#c0392b",         // Dyp rød (signal/varselfarge)
+  "UiA": "#00b894",             // Mørk myntgrønn
+  "Sosialt": "#e84393"          // Knall knallrosa
 };
 
 const repeatLabels = {
