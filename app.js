@@ -587,39 +587,61 @@ onSnapshot(eventsRef, (snapshot) => {
 });
 
 
-
 function isEventInSelectedCategories(event) {
   const group = event.extendedProps?.group;
   const deltakere = (event.extendedProps?.deltakere || '').toLowerCase();
   const title = (event.title || '').toLowerCase();
+  const description = (event.extendedProps?.description || '').toLowerCase();
+  
+  // Slår sammen alt av tekst for enklere søk
+  const altInnhold = `${title} ${deltakere} ${description}`;
 
-  // 1. Sjekk direkte match på gruppe (f.eks. om DKS, SFO, UiA osv. er huket av)
+  // 1. Sjekk direkte match på gruppe (f.eks. om DKS, SFO, Fellesaktiviteter, UiA osv. er huket av)
   if (selectedCategories.includes(group)) {
     return true;
   }
 
-  // 2. Sjekk om hendelsen matcher et av de avhukede trinnene
-  // Går gjennom valgte kategorier for å se om f.eks. "1. trinn" slår ut på "1a", "1b" eller "1.-3. trinn"
+  // 2. Sjekk om hendelsen matcher et av de avhukede trinnene eller stedene
   for (const cat of selectedCategories) {
-    if (cat.endsWith('. trinn')) {
-      const trinnNummer = cat.split('.')[0].trim(); // F.eks. "1", "2", "3"
-      
-      // Sjekk om klasser som 1a, 1b, 1c eller trinn 1 er nevnt i deltakere eller tittel
-      const klasseRegex = new RegExp(`\\b${trinnNummer}[a-zæøå]?\\b`, 'i');
-      const trinnRegex = new RegExp(`\\b${trinnNummer}\\.\\s*-\\s*\\d+\\.\\s*trinn\\b`, 'i');
+    // Sjekk om samlekategoriene "Alle på Heståsen" eller "Alle på Brattbakken" er huka av
+    if (selectedCategories.includes("Alle på Heståsen") && (altInnhold.includes("heståsen") || altInnhold.includes("1.-3. trinn"))) {
+      return true;
+    }
+    if (selectedCategories.includes("Alle på Brattbakken") && (altInnhold.includes("brattbakken") || altInnhold.includes("4.-7. trinn"))) {
+      return true;
+    }
 
-      if (klasseRegex.test(deltakere) || klasseRegex.test(title)) {
+    if (cat.endsWith('. trinn')) {
+      const trinnNummer = parseInt(cat.split('.')[0].trim(), 10); // F.eks. 1, 2, 3...
+
+      // A. "Alle trinn" / "1.-7. trinn" -> Skal alltid vises uansett hvilket trinn som velges
+      if (altInnhold.includes("alle trinn") || altInnhold.includes("1.-7. trinn") || altInnhold.includes("1-7. trinn")) {
         return true;
       }
 
-      // Sjekk for intervaller som "1.-3. trinn" eller "5.-7. trinn"
-      const rangeMatch = deltakere.match(/(\d+)\.\s*-\s*(\d+)\.\s*trinn/i) || title.match(/(\d+)\.\s*-\s*(\d+)\.\s*trinn/i);
+      // B. Heståsen = 1. til 3. trinn
+      if (altInnhold.includes("heståsen") && trinnNummer >= 1 && trinnNummer <= 3) {
+        return true;
+      }
+
+      // C. Brattbakken = 4. til 7. trinn
+      if (altInnhold.includes("brattbakken") && trinnNummer >= 4 && trinnNummer <= 7) {
+        return true;
+      }
+
+      // D. Enkeltklasser (f.eks. 1a, 1b, 2c) eller trinnhenvisning ("1. trinn")
+      const klasseRegex = new RegExp(`\\b${trinnNummer}[a-zæøå]?\\b`, 'i');
+      if (klasseRegex.test(altInnhold)) {
+        return true;
+      }
+
+      // E. Intervaller som "1.-3. trinn", "5.-6. trinn", "3.-5. trinn" osv.
+      const rangeMatch = altInnhold.match(/(\d+)\.\s*-\s*(\d+)\.\s*trinn/i) || altInnhold.match(/(\d+)\s*-\s*(\d+)\.\s*trinn/i);
       if (rangeMatch) {
         const startTrinn = parseInt(rangeMatch[1], 10);
         const sluttTrinn = parseInt(rangeMatch[2], 10);
-        const nuverandeTrinn = parseInt(trinnNummer, 10);
 
-        if (nuverandeTrinn >= startTrinn && nuverandeTrinn <= sluttTrinn) {
+        if (trinnNummer >= startTrinn && trinnNummer <= sluttTrinn) {
           return true;
         }
       }
@@ -628,6 +650,7 @@ function isEventInSelectedCategories(event) {
 
   return false;
 }
+
 
 
 function updateCalendarEvents() {
