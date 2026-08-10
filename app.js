@@ -963,7 +963,7 @@ function checkSingleCategorySelection() {
 }
 
 
-// Lytter på utskriftsknappen for valgt kategori (Kompakt utskrift med klokkeslett)
+// Lytter på utskriftsknappen for valgt kategori (Kompakt og radd-ryddet)
 document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (selectedCategories.length !== 1) return;
 
@@ -993,20 +993,27 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
     ...filteredUserEvents
   ];
 
-  // 4. Slå sammen flerdagershendelser/duplikater til én oppføring
+  // 4. Aggressiv sammenslåing basert på TITTEL
   const consolidatedMap = new Map();
 
   allRawEvents.forEach(evt => {
-    const key = `${evt.title}_${evt.extendedProps?.group || ''}`;
+    // Rens tittelen slik at duplikater fanges opp likt
+    const cleanTitle = (evt.title || '').trim();
+    if (!cleanTitle) return;
+
+    // Nøkkel kun basert på tittel (fjerner unike ID-er eller klassenavn)
+    const key = cleanTitle.toLowerCase();
     
     const evtStart = new Date(evt.start);
     const evtEnd = evt.end ? new Date(evt.end) : evtStart;
 
     if (!consolidatedMap.has(key)) {
       consolidatedMap.set(key, {
-        ...evt,
+        rawTitle: cleanTitle,
         minStart: evtStart,
-        maxEnd: evtEnd
+        maxEnd: evtEnd,
+        allDay: evt.allDay || false,
+        originalEvt: evt
       });
     } else {
       const existing = consolidatedMap.get(key);
@@ -1015,37 +1022,41 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
     }
   });
 
-  // Bygg kompakt liste med dato og klokkeslett
-  const compactPrintEvents = Array.from(consolidatedMap.values()).map(item => {
+  // Convert to array and sort chronologically by start date
+  const sortedItems = Array.from(consolidatedMap.values()).sort((a, b) => a.minStart - b.minStart);
+
+  // 5. Bygg kompakte tittel-linjer uten duplikater
+  const compactPrintEvents = sortedItems.map(item => {
     const startStr = item.minStart.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
     const endStr = item.maxEnd.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
     
+    // Sjekk om hendelsen strekker seg over flere dager
     const isMultiDay = item.minStart.toDateString() !== item.maxEnd.toDateString();
     const dateLabel = isMultiDay ? `${startStr} – ${endStr}` : startStr;
 
-    // Hent klokkeslett dersom det er oppgitt
+    // Sjekk for gyldig klokkeslett (unngå 00:00 / 02:00 på all-day hendelser)
     let timeLabel = '';
-    const hasTime = item.minStart.getHours() !== 0 || item.minStart.getMinutes() !== 0;
-    
-    if (hasTime) {
+    const hours = item.minStart.getHours();
+    const isRealTime = !item.allDay && hours >= 7 && hours <= 20;
+
+    if (isRealTime) {
       const startTimeStr = item.minStart.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
       const endTimeStr = item.maxEnd.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
-      timeLabel = item.maxEnd && startTimeStr !== endTimeStr ? ` | ${startTimeStr}–${endTimeStr}` : ` | kl. ${startTimeStr}`;
+      timeLabel = item.maxEnd && startTimeStr !== endTimeStr ? ` | kl. ${startTimeStr}–${endTimeStr}` : ` | kl. ${startTimeStr}`;
     }
 
     return {
-      ...item,
+      ...item.originalEvt,
       start: item.minStart,
       end: item.maxEnd,
-      // Format: [12. okt | 10:00–11:30] Tittel på aktivitet
-      title: `[${dateLabel}${timeLabel}]  ${item.title}`
+      title: `[${dateLabel}${timeLabel}]  ${item.rawTitle}`
     };
   });
 
   calendar.removeAllEvents();
   calendar.addEventSource(compactPrintEvents);
 
-  // 5. Oppdater utskriftsoverskrift
+  // 6. Oppdater utskriftsoverskrift
   const titleEl = document.getElementById('printTitle');
   const subTitleEl = document.getElementById('printSubTitle');
   if (titleEl) titleEl.textContent = `Oversikt – ${selectedCategory}`;
@@ -1054,7 +1065,7 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (typeof hideContextMenu === 'function') hideContextMenu();
   if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
 
-  // 6. Kjør print og tilbakestill
+  // 7. Kjør print og tilbakestill
   requestAnimationFrame(() => {
     setTimeout(() => {
       window.print();
