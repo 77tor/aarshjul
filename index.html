@@ -11,6 +11,8 @@
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 
+  <script src="fellesaktiviteter.js"></script>
+
 <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { margin: 0; padding: 20px; background-color: #f3f4f6; color: #333; }
@@ -369,7 +371,8 @@
       onSnapshot 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    import { schoolYearsData } from "./fridager.js";
+import { schoolYearsData } from "./fridager.js";
+import { getFellesaktiviteterSomEvents } from "./fellesaktiviteter.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBFIOEfe6g7QfJppfOHTvhnNpd1XWMFpv0",
@@ -392,6 +395,7 @@
       "7. trinn": "#34495e",
       "Alle på Heståsen": "#e74c3c",
       "Alle på Brattbakken": "#c0392b",
+      "Fellesaktiviteter": "#34495e", // Legg til fargen du ønsker for fellesaktiviteter
       "SFO": "#e67e22",
       "Kartlegginger": "#f1c40f",
       "Frister": "#d35400",
@@ -462,6 +466,8 @@
     }
 
     parseSchoolYearsData();
+
+    const fellesEventsFromJs = getFellesaktiviteterSomEvents('2026-2027');
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
@@ -949,15 +955,20 @@ document.addEventListener('click', (e) => {
       updateCalendarEvents();
     });
 
-    function updateCalendarEvents() {
-      const filteredUserEvents = rawEvents.filter(event => 
-        selectedCategories.includes(event.extendedProps.group)
-      );
-      
-      const allEvents = [...schoolEventsFromJs, ...filteredUserEvents];
-      calendar.removeAllEvents();
-      calendar.addEventSource(allEvents);
-    }
+function updateCalendarEvents() {
+  const filteredUserEvents = rawEvents.filter(event => 
+    selectedCategories.includes(event.extendedProps.group)
+  );
+
+  const filteredFellesEvents = fellesEventsFromJs.filter(event => 
+    selectedCategories.includes(event.extendedProps.group)
+  );
+
+  const allEvents = [...schoolEventsFromJs, ...filteredFellesEvents, ...filteredUserEvents];
+
+  calendar.removeAllEvents();
+  calendar.addEventSource(allEvents);
+}
 
     document.getElementById('modalCloseX').addEventListener('click', closeModal);
     document.getElementById('formCancelBtn').addEventListener('click', closeModal);
