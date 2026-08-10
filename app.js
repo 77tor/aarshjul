@@ -15,6 +15,7 @@ import {
 import { schoolYearsData } from "./fridager.js";
 import { getFellesaktiviteterSomEvents } from "./fellesaktiviteter.js";
 import { getDKSAktiviteterSomEvents } from './DKS.js';
+import { getSvommeAktiviteterSomEvents } from './svomming.js';
 
 // Firebase-konfigurasjon
 const firebaseConfig = {
@@ -118,7 +119,7 @@ const dksEventsFromJs = typeof getDKSAktiviteterSomEvents === 'function'
   ? getDKSAktiviteterSomEvents() 
   : [];
 const svommeEventsFromJs = typeof getSvommeAktiviteterSomEvents === 'function' 
-  ? getSvommeAktiviteterSomEvents() 
+  ? getSvommeAktiviteterSomEvents('2026-2027') 
   : [];
 
 const app = initializeApp(firebaseConfig);
