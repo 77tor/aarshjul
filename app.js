@@ -963,7 +963,7 @@ function checkSingleCategorySelection() {
 }
 
 
-// Lytter på utskriftsknappen for valgt kategori (Garanti mot duplikater)
+// Lytter på utskriftsknappen for valgt kategori (Både kompakt og fullstendig)
 document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (selectedCategories.length !== 1) return;
 
@@ -993,21 +993,26 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
     ...filteredUserEvents
   ];
 
-  // 4. Slå sammen duplikater/reiterasjoner basert på ren tittel
+  // Sjekk om det er ren "Fellesaktiviteter" som skrives ut
+  const isOnlyFelles = selectedCategory.toLowerCase().includes('felles');
+
   const consolidatedMap = new Map();
 
-  allRawEvents.forEach(evt => {
+  allRawEvents.forEach((evt, idx) => {
     const rawTitle = (evt.title || evt.extendedProps?.rawTitle || '').trim();
     if (!rawTitle) return;
 
-    // Rengjør tittelen for å fange opp eksakte treff (f.eks. "[Felles] Kildesortering" vs "Kildesortering")
-    const cleanKey = rawTitle.toLowerCase().replace(/^\[.*?\]\s*/, '');
-    
+    // Hvis Fellesaktiviteter: Slå sammen på ren tittel.
+    // Hvis Svømming/DKS/Trinn: Bruk unikk nøkkel (tittel + startdato) så ALLE økter blir med.
     const evtStart = new Date(evt.start);
     const evtEnd = evt.end ? new Date(evt.end) : evtStart;
 
-    if (!consolidatedMap.has(cleanKey)) {
-      consolidatedMap.set(cleanKey, {
+    const key = isOnlyFelles 
+      ? rawTitle.toLowerCase().replace(/^\[.*?\]\s*/, '')
+      : `${rawTitle}_${evtStart.getTime()}_${idx}`;
+
+    if (!consolidatedMap.has(key)) {
+      consolidatedMap.set(key, {
         displayTitle: rawTitle,
         minStart: evtStart,
         maxEnd: evtEnd,
@@ -1015,16 +1020,16 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
         originalEvt: evt
       });
     } else {
-      const existing = consolidatedMap.get(cleanKey);
+      const existing = consolidatedMap.get(key);
       if (evtStart < existing.minStart) existing.minStart = evtStart;
       if (evtEnd > existing.maxEnd) existing.maxEnd = evtEnd;
     }
   });
 
-  // Sorter kronologisk etter første startdato
+  // Sorter kronologisk etter startdato
   const sortedItems = Array.from(consolidatedMap.values()).sort((a, b) => a.minStart - b.minStart);
 
-  // 5. Tving FullCalendar til å kun lage ÉN linje per aktivitet
+  // 4. Bygg kompakte rader uten at FullCalendar genererer 300 duplikater per hendelse
   const singleRowEvents = sortedItems.map((item, index) => {
     const startStr = item.minStart.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
     const endStr = item.maxEnd.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
@@ -1032,7 +1037,7 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
     const isMultiDay = item.minStart.toDateString() !== item.maxEnd.toDateString();
     const dateLabel = isMultiDay ? `${startStr}. – ${endStr}.` : `${startStr}.`;
 
-    // Sjekk klokkeslett
+    // Formatér klokkeslett
     let timeLabel = '';
     const hours = item.minStart.getHours();
     const isRealTime = !item.allDay && hours >= 7 && hours <= 20;
@@ -1046,7 +1051,7 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
     return {
       id: `print_evt_${index}`,
       title: `[${dateLabel}${timeLabel}]  ${item.displayTitle}`,
-      // VIKTIG: Ved å sette start og end til samme dag unngår vi at FullCalendar lager 300 duplikatrader!
+      // Sett start og end til samme dag under utskrift slik at hver økt tar nøyaktig 1 linje
       start: item.minStart.toISOString().split('T')[0],
       end: item.minStart.toISOString().split('T')[0],
       allDay: true,
@@ -1057,7 +1062,7 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   calendar.removeAllEvents();
   calendar.addEventSource(singleRowEvents);
 
-  // 6. Oppdater utskriftsoverskrift
+  // 5. Oppdater utskriftsoverskrift
   const titleEl = document.getElementById('printTitle');
   const subTitleEl = document.getElementById('printSubTitle');
   if (titleEl) titleEl.textContent = `Oversikt – ${selectedCategory}`;
@@ -1066,7 +1071,7 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (typeof hideContextMenu === 'function') hideContextMenu();
   if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
 
-  // 7. Kjør print og tilbakestill
+  // 6. Kjør print og tilbakestill
   requestAnimationFrame(() => {
     setTimeout(() => {
       window.print();
