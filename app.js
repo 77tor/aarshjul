@@ -586,22 +586,67 @@ onSnapshot(eventsRef, (snapshot) => {
   updateCalendarEvents();
 });
 
+
+
+function isEventInSelectedCategories(event) {
+  const group = event.extendedProps?.group;
+  const deltakere = (event.extendedProps?.deltakere || '').toLowerCase();
+  const title = (event.title || '').toLowerCase();
+
+  // 1. Sjekk direkte match på gruppe (f.eks. om DKS, SFO, UiA osv. er huket av)
+  if (selectedCategories.includes(group)) {
+    return true;
+  }
+
+  // 2. Sjekk om hendelsen matcher et av de avhukede trinnene
+  // Går gjennom valgte kategorier for å se om f.eks. "1. trinn" slår ut på "1a", "1b" eller "1.-3. trinn"
+  for (const cat of selectedCategories) {
+    if (cat.endsWith('. trinn')) {
+      const trinnNummer = cat.split('.')[0].trim(); // F.eks. "1", "2", "3"
+      
+      // Sjekk om klasser som 1a, 1b, 1c eller trinn 1 er nevnt i deltakere eller tittel
+      const klasseRegex = new RegExp(`\\b${trinnNummer}[a-zæøå]?\\b`, 'i');
+      const trinnRegex = new RegExp(`\\b${trinnNummer}\\.\\s*-\\s*\\d+\\.\\s*trinn\\b`, 'i');
+
+      if (klasseRegex.test(deltakere) || klasseRegex.test(title)) {
+        return true;
+      }
+
+      // Sjekk for intervaller som "1.-3. trinn" eller "5.-7. trinn"
+      const rangeMatch = deltakere.match(/(\d+)\.\s*-\s*(\d+)\.\s*trinn/i) || title.match(/(\d+)\.\s*-\s*(\d+)\.\s*trinn/i);
+      if (rangeMatch) {
+        const startTrinn = parseInt(rangeMatch[1], 10);
+        const sluttTrinn = parseInt(rangeMatch[2], 10);
+        const nuverandeTrinn = parseInt(trinnNummer, 10);
+
+        if (nuverandeTrinn >= startTrinn && nuverandeTrinn <= sluttTrinn) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+
 function updateCalendarEvents() {
-  // Filtrer eksisterende hendelser
+  // Filtrer brukeropprettede hendelser fra Firebase
   const filteredUserEvents = rawEvents.filter(event => 
-    selectedCategories.includes(event.extendedProps.group)
+    isEventInSelectedCategories(event)
   );
 
+  // Filtrer Fellesaktiviteter
   const filteredFellesEvents = fellesEventsFromJs.filter(event => 
-    selectedCategories.includes(event.extendedProps.group)
+    isEventInSelectedCategories(event)
   );
 
   // Filtrer DKS-hendelser
   const filteredDksEvents = dksEventsFromJs.filter(event => 
-    selectedCategories.includes(event.extendedProps.group)
+    isEventInSelectedCategories(event)
   );
 
-  // Slå sammen alle hendelsene som skal inn i FullCalendar
+  // Slå sammen alle aktive hendelser til FullCalendar
   const allEvents = [
     ...schoolEventsFromJs, 
     ...filteredFellesEvents, 
