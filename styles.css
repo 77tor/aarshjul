@@ -18,7 +18,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .mini-day-cell:hover { background-color: #e2e8f0; }
 .mini-day-cell.other-month { color: #cbd5e1; }
 .mini-day-cell.today { font-weight: bold; border: 1px solid #3b82f6; }
-.mini-day-cell.selected-day { background-color: #3b82f6; color: white !important; }
+.mini-day-cell.selected-day { background-color: #3b82f6; color: #ffffff !important; }
 .mini-day-cell.red-day { color: #ef4444; font-weight: 600; }
 .mini-day-cell.off-day { color: #94a3b8; }
 
@@ -38,14 +38,14 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .selected-highlight-day { background-color: #dbeafe !important; }
 
 /* Popover & Kontekstmeny */
-.popover { display: none; gap: 8px; background: white; padding: 6px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; }
-.context-menu { display: none; position: absolute; background: white; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; overflow: hidden; }
+.popover { display: none; gap: 8px; background: #ffffff; padding: 6px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; }
+.context-menu { display: none; position: absolute; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; overflow: hidden; }
 .context-menu-item { padding: 8px 16px; font-size: 0.85rem; cursor: pointer; }
 .context-menu-item:hover { background-color: #f1f5f9; }
 
 /* Modaler */
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; z-index: 2000; }
-.modal-card { background: white; border-radius: 12px; width: 100%; max-width: 480px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; }
+.modal-card { background: #ffffff; border-radius: 12px; width: 100%; max-width: 480px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; }
 .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
 .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; }
 .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
@@ -59,124 +59,30 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 /* Knapper */
 .btn { padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: none; cursor: pointer; }
 .btn-sm { padding: 4px 8px; font-size: 0.75rem; }
-.btn-primary { background: #2563eb; color: white; }
+.btn-primary { background: #2563eb; color: #ffffff; }
 .btn-secondary { background: #e2e8f0; color: #334155; }
-.btn-danger { background: #ef4444; color: white; }
+.btn-danger { background: #ef4444; color: #ffffff; }
 .delete-options { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 
 /* Utskriftstil */
-/* Skjul utskriftsoverskrift på skjermen */
-.print-only-header {
-  display: none;
-}
+.print-only-header { display: none; }
 
-/* Utskrift-spesifikke stiler */
 @media print {
-  @page {
-    size: A4 portrait;
-    margin: 10mm;
-  }
-
-  /* Skjul alt på siden i utgangspunktet */
-  body * {
-    visibility: hidden;
-  }
-
-  /* Gjør kun print-overskriften og kalenderen synlig */
-  #printHeader, #printHeader *,
-  #calendar, #calendar * {
-    visibility: visible;
-  }
-
-  body {
-    background: #ffffff !important;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
-    color: #2d3748 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  /* Overskrift for utskrift */
-  #printHeader {
-    display: block !important;
-    position: relative;
-    text-align: center;
-    border-bottom: 2px solid #2c3e50;
-    padding-bottom: 8px;
-    margin-bottom: 15px;
-  }
-
-  #printTitle {
-    margin: 0;
-    font-size: 22pt;
-    font-weight: 800;
-    color: #2c3e50;
-    letter-spacing: -0.5px;
-  }
-
-  #printSubTitle {
-    margin: 4px 0 0 0;
-    font-size: 11pt;
-    color: #718096;
-    font-weight: 600;
-  }
-
-  /* Kalenderplassering */
-  #calendar {
-    position: absolute;
-    top: 75px;
-    left: 0;
-    width: 100% !important;
-  }
-
-  /* Skjul FullCalendar sin egen topplinje under print */
-  .fc-header-toolbar {
-    display: none !important;
-  }
-
-  /* Kompakt og stilren tabelldesign */
-  .fc-list-table {
-    border: none !important;
-    width: 100% !important;
-  }
-
-  /* Dag-overskrifter i ukeslisten */
-  .fc-list-day-cushion {
-    background-color: #f7fafc !important;
-    padding: 4px 10px !important;
-    font-size: 10pt !important;
-    font-weight: 700 !important;
-    color: #2d3748 !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-  }
-
-  /* Enkelthendelser */
-  .fc-list-event {
-    font-size: 9.5pt !important;
-  }
-
-  .fc-list-event td {
-    padding: 4px 10px !important; /* Tett polstring for at alt skal få plass */
-    border-color: #edf2f7 !important;
-  }
-
-  .fc-list-event-title {
-    font-weight: 600 !important;
-    color: #1a202c !important;
-  }
-
-  .fc-list-event-time {
-    font-weight: 500;
-    color: #4a5568 !important;
-  }
-
-  .fc-list-event-dot {
-    border-width: 5px !important;
-  }
-
-  /* Hindre tabellen fra å strekke seg over 2 sider */
-  tr, td, .fc-list-day {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
+  @page { size: A4 portrait; margin: 10mm; }
+  html, body { height: 100%; overflow: hidden !important; background: #ffffff !important; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; color: #2d3748 !important; margin: 0 !important; padding: 0 !important; }
+  body * { visibility: hidden; }
+  #printHeader, #printHeader *, #calendar, #calendar * { visibility: visible; }
+  #printHeader { display: block !important; position: relative; text-align: center; border-bottom: 2px solid #2c3e50; padding-bottom: 8px; margin-bottom: 15px; }
+  #printTitle { margin: 0; font-size: 22pt; font-weight: 800; color: #2c3e50; letter-spacing: -0.5px; }
+  #printSubTitle { margin: 4px 0 0 0; font-size: 11pt; color: #718096; font-weight: 600; }
+  #calendar { position: absolute; top: 75px; left: 0; width: 100% !important; }
+  .fc-header-toolbar { display: none !important; }
+  .fc-list-table { border: none !important; width: 100% !important; }
+  .fc-list-day-cushion { background-color: #f7fafc !important; padding: 4px 10px !important; font-size: 10pt !important; font-weight: 700 !important; color: #2d3748 !important; border-bottom: 1px solid #e2e8f0 !important; }
+  .fc-list-event { font-size: 9.5pt !important; }
+  .fc-list-event td { padding: 4px 10px !important; border-color: #edf2f7 !important; }
+  .fc-list-event-title { font-weight: 600 !important; color: #1a202c !important; }
+  .fc-list-event-time { font-weight: 500; color: #4a5568 !important; }
+  .fc-list-event-dot { border-width: 5px !important; }
+  tr, td, .fc-list-day { page-break-inside: avoid !important; break-inside: avoid !important; }
 }
