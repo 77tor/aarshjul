@@ -36,9 +36,8 @@ const categoryColors = {
   "5. trinn": "#9b59b6",
   "6. trinn": "#8e44ad",
   "7. trinn": "#34495e",
-  "Alle på Heståsen": "#e74c3c",
-  "Alle på Brattbakken": "#c0392b",
   "DKS": "#1abc9c",
+  "Svømming": "#00cec9",
   "Fellesaktiviteter": "#34495e",
   "SFO": "#e67e22",
   "Kartlegginger": "#f1c40f",
@@ -117,6 +116,9 @@ const fellesEventsFromJs = typeof getFellesaktiviteterSomEvents === 'function'
   : [];
 const dksEventsFromJs = typeof getDKSAktiviteterSomEvents === 'function' 
   ? getDKSAktiviteterSomEvents() 
+  : [];
+const svommeEventsFromJs = typeof getSvommeAktiviteterSomEvents === 'function' 
+  ? getSvommeAktiviteterSomEvents() 
   : [];
 
 const app = initializeApp(firebaseConfig);
@@ -654,26 +656,28 @@ function isEventInSelectedCategories(event) {
 
 
 function updateCalendarEvents() {
-  // Filtrer brukeropprettede hendelser fra Firebase
   const filteredUserEvents = rawEvents.filter(event => 
     isEventInSelectedCategories(event)
   );
 
-  // Filtrer Fellesaktiviteter
   const filteredFellesEvents = fellesEventsFromJs.filter(event => 
     isEventInSelectedCategories(event)
   );
 
-  // Filtrer DKS-hendelser
   const filteredDksEvents = dksEventsFromJs.filter(event => 
     isEventInSelectedCategories(event)
   );
 
-  // Slå sammen alle aktive hendelser til FullCalendar
+  // Filtrer svømming
+  const filteredSvommeEvents = svommeEventsFromJs.filter(event => 
+    isEventInSelectedCategories(event)
+  );
+
   const allEvents = [
     ...schoolEventsFromJs, 
     ...filteredFellesEvents, 
     ...filteredDksEvents, 
+    ...filteredSvommeEvents, 
     ...filteredUserEvents
   ];
 
