@@ -15,7 +15,7 @@ const FELLESAKTIVITETER_REGISTER = {
       maaned: "August",
       type: "Uke",
       uke: "Uke 33-34",
-      fraDato: "2026-08-10",
+      fraDato: "2026-08-13",
       tilDato: "2026-08-23",
       deltakere: "Alle trinn",
       ansvar: "Alle trinn"
@@ -26,7 +26,7 @@ const FELLESAKTIVITETER_REGISTER = {
       maaned: "August",
       type: "Uke",
       uke: "Uke 33-35",
-      fraDato: "2026-08-10",
+      fraDato: "2026-08-13",
       tilDato: "2026-08-30",
       deltakere: "Alle trinn",
       ansvar: "Alle trinn"
