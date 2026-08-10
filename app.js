@@ -963,7 +963,7 @@ function checkSingleCategorySelection() {
 }
 
 
-// Lytter på utskriftsknappen for valgt kategori (Både kompakt og fullstendig)
+// Lytter på utskriftsknappen for valgt kategori (Med trinn-filtrering for svømming/DKS)
 document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (selectedCategories.length !== 1) return;
 
@@ -980,11 +980,35 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   calendar.changeView('schoolYearList');
   calendar.gotoDate(schoolYearStart);
 
-  // 3. Hent og filtrer alle hendelser (utelater fridager/schoolEvents)
+  // 3. Sjekk om valgt kategori er et trinn (f.eks. "1. trinn", "4. trinn")
+  const trinnMatch = selectedCategory.match(/^(\d+)\.\s*trinn/i);
+  const selectedTrinnNum = trinnMatch ? trinnMatch[1] : null;
+
+  // Hjelpefunksjon for å verifisere at en svømme/DKS-hendelse faktisk tilhører valgt trinn
+  const matchesTrinnText = (event) => {
+    if (!selectedTrinnNum) return true; // Hvis det ikke er et trinn som skrives ut, behold alt
+    
+    // Hvis hendelsen allerede er merket direkte med kategorien (f.eks. "4. trinn")
+    if (isEventInSelectedCategories(event)) return true;
+
+    const title = (event.title || '').toLowerCase();
+    
+    // Regex som matcher tallet etterfulgt av 'a', 'b', 'c', 'trinn' eller i en parentes/tekst (f.eks. "7a", "3c", "2a-b")
+    const trinnRegex = new RegExp(`\\b${selectedTrinnNum}([a-c]|\\.||\\s*trinn|\\s*a-b|\\s*b-c)\\b`, 'i');
+    return trinnRegex.test(title);
+  };
+
+  // 4. Hent og filtrer hendelser basert på kategori OG tekstmatch for trinn
   const filteredUserEvents = rawEvents.filter(event => isEventInSelectedCategories(event));
   const filteredFellesEvents = (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
-  const filteredDksEvents = (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
-  const filteredSvommeEvents = (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
+  
+  // Svømming og DKS sjekkes ekstra godt dersom vi printer ut for et trinn
+  const filteredDksEvents = (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []).filter(event => 
+    isEventInSelectedCategories(event) || matchesTrinnText(event)
+  );
+  const filteredSvommeEvents = (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []).filter(event => 
+    isEventInSelectedCategories(event) || matchesTrinnText(event)
+  );
 
   const allRawEvents = [
     ...filteredFellesEvents, 
@@ -1002,8 +1026,8 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
     const rawTitle = (evt.title || evt.extendedProps?.rawTitle || '').trim();
     if (!rawTitle) return;
 
-    // Hvis Fellesaktiviteter: Slå sammen på ren tittel.
-    // Hvis Svømming/DKS/Trinn: Bruk unikk nøkkel (tittel + startdato) så ALLE økter blir med.
+    // Hvis kun Fellesaktiviteter: Slå sammen på tittel.
+    // Ellers: Unik nøkkel basert på tittel og startdato.
     const evtStart = new Date(evt.start);
     const evtEnd = evt.end ? new Date(evt.end) : evtStart;
 
@@ -1029,7 +1053,7 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   // Sorter kronologisk etter startdato
   const sortedItems = Array.from(consolidatedMap.values()).sort((a, b) => a.minStart - b.minStart);
 
-  // 4. Bygg kompakte rader uten at FullCalendar genererer 300 duplikater per hendelse
+  // 5. Bygg kompakte rader uten dupliseringer
   const singleRowEvents = sortedItems.map((item, index) => {
     const startStr = item.minStart.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
     const endStr = item.maxEnd.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
@@ -1051,7 +1075,6 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
     return {
       id: `print_evt_${index}`,
       title: `[${dateLabel}${timeLabel}]  ${item.displayTitle}`,
-      // Sett start og end til samme dag under utskrift slik at hver økt tar nøyaktig 1 linje
       start: item.minStart.toISOString().split('T')[0],
       end: item.minStart.toISOString().split('T')[0],
       allDay: true,
@@ -1062,7 +1085,7 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   calendar.removeAllEvents();
   calendar.addEventSource(singleRowEvents);
 
-  // 5. Oppdater utskriftsoverskrift
+  // 6. Oppdater utskriftsoverskrift
   const titleEl = document.getElementById('printTitle');
   const subTitleEl = document.getElementById('printSubTitle');
   if (titleEl) titleEl.textContent = `Oversikt – ${selectedCategory}`;
@@ -1071,7 +1094,7 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (typeof hideContextMenu === 'function') hideContextMenu();
   if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
 
-  // 6. Kjør print og tilbakestill
+  // 7. Kjør print og tilbakestill
   requestAnimationFrame(() => {
     setTimeout(() => {
       window.print();
