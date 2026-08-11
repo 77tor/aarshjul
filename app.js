@@ -450,7 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       },
 
-      printWeekBtn: {
+printWeekBtn: {
         text: '🖨️ Skriv ut uke',
         click: function() {
           const originalView = calendar.view.type;
@@ -485,37 +485,49 @@ document.addEventListener('DOMContentLoaded', () => {
           if (typeof hideContextMenu === 'function') hideContextMenu();
           if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
 
-          // Sørg for at FullCalendar har bygget listen før vi rydder duplikater
           requestAnimationFrame(() => {
             setTimeout(() => {
-              // Hent alle viste hendelser fra FullCalendar sin API
               const currentEvents = calendar.getEvents();
-              const multiDayTitleSet = new Set();
+              const multiDayMap = new Map();
 
-              // Identifiser hendelser som spenner over mer enn 1 dag
+              // Bygg kart over flerdagershendelser med start- og sluttdato
               currentEvents.forEach(evt => {
+                const titleKey = evt.title.trim();
+                let isMultiDay = false;
+                let startD = evt.start;
+                let endD = evt.end ? new Date(evt.end.getTime() - 1) : evt.start;
+
                 if (evt.start && evt.end) {
                   const diffDays = (evt.end.getTime() - evt.start.getTime()) / (1000 * 3600 * 24);
-                  if (diffDays > 1) {
-                    multiDayTitleSet.add(evt.title.trim());
-                  }
+                  if (diffDays > 1) isMultiDay = true;
                 } else if (evt.allDay) {
-                  multiDayTitleSet.add(evt.title.trim());
+                  isMultiDay = true;
+                }
+
+                if (isMultiDay && startD) {
+                  const fmt = { day: '2-digit', month: '2-digit' };
+                  const rangeText = `${startD.toLocaleDateString('no-NO', fmt)} – ${endD.toLocaleDateString('no-NO', fmt)}`;
+                  multiDayMap.set(titleKey, rangeText);
                 }
               });
 
-              // Fjern duplikater kun dersom det gjelder en flerdagershendelse
               const eventRows = document.querySelectorAll('.fc-list-event');
               const seenMultiDayTitles = new Set();
 
               eventRows.forEach(row => {
                 const titleText = row.querySelector('.fc-list-event-title')?.textContent?.trim();
-                
-                if (titleText && multiDayTitleSet.has(titleText)) {
+                const timeCell = row.querySelector('.fc-list-event-time');
+
+                if (titleText && multiDayMap.has(titleText)) {
                   if (seenMultiDayTitles.has(titleText)) {
-                    row.style.display = 'none'; // Skjul duplikat fra dag 2, 3 osv.
+                    // Skjul rad fra dag 2, 3 osv.
+                    row.style.display = 'none';
                   } else {
-                    seenMultiDayTitles.add(titleText); // Behold første oppføring (mandag)
+                    seenMultiDayTitles.add(titleText);
+                    // Sett inn til/fra dato i klokkeslett-cellen
+                    if (timeCell) {
+                      timeCell.textContent = multiDayMap.get(titleText);
+                    }
                   }
                 }
               });
@@ -529,7 +541,6 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         }
       }
-    },
 
     headerToolbar: {
       left: 'prev,next today toggleWeekend',
