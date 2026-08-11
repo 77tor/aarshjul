@@ -530,11 +530,17 @@ customButtons: {
         }
         const weekNum = 1 + Math.ceil((firstThursday - target) / 604800000);
 
-        // Oppdater overskriften i kalenderen
+// Oppdater overskriften i kalenderen
         const titleEl = document.querySelector('.fc-toolbar-title');
         if (titleEl) {
           titleEl.textContent = `Uke ${weekNum}: ${view.title}`;
         }
+      }
+      // Sørg for at knappen beholder riktig tekst når verktøylinjen re-renderes
+      const weekendBtn = document.querySelector('.fc-toggleWeekend-button');
+      if (weekendBtn) {
+        const isWeekendVisible = calendar.getOption('weekends');
+        weekendBtn.textContent = isWeekendVisible ? 'Skjul helg' : 'Vis helg';
       }
     },
     
