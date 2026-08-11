@@ -436,17 +436,40 @@ document.addEventListener('DOMContentLoaded', () => {
     scrollTime: '08:00:00',
     slotDuration: '00:30:00',
 
-    datesSet: function(info) {
-      miniCalCurrentDate = new Date(info.view.currentStart);
-      renderMiniCalendar();
-      
-      if (calendar) {
-        const currentSelectedStr = formatDate(calendar.getDate());
-        setTimeout(() => {
-          highlightDateInHeader(currentSelectedStr);
-        }, 50);
-      }
-    },
+datesSet: function(info) {
+  miniCalCurrentDate = new Date(info.view.currentStart);
+  renderMiniCalendar();
+  
+  if (calendar) {
+    const currentSelectedStr = formatDate(calendar.getDate());
+    setTimeout(() => {
+      highlightDateInHeader(currentSelectedStr);
+    }, 50);
+  }
+
+  // Legg til ukenummer i tittelen for ukesvisninger
+  const view = info.view;
+  if (view.type === 'timeGridWeek' || view.type === 'dayGridWeek' || view.type === 'listWeek') {
+    const start = view.currentStart;
+    
+    // Beregn ISO-ukenummer
+    const target = new Date(start.valueOf());
+    const dayNr = (start.getDay() + 6) % 7;
+    target.setDate(target.getDate() - dayNr + 3);
+    const firstThursday = target.valueOf();
+    target.setMonth(0, 1);
+    if (target.getDay() !== 4) {
+      target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
+    }
+    const weekNum = 1 + Math.ceil((firstThursday - target) / 604800000);
+
+    // Oppdater overskriften i kalenderen
+    const titleEl = document.querySelector('.fc-toolbar-title');
+    if (titleEl) {
+      titleEl.textContent = `Uke ${weekNum}: ${view.title}`;
+    }
+  }
+},
     
     dayCellClassNames: function(arg) {
       const dateStr = formatDate(arg.date);
