@@ -47,7 +47,8 @@ const categoryColors = {
   "Kartlegginger": "#6c5ce7",   // Dyp indigo / lilla-blå
   "Frister": "#c0392b",         // Dyp rød (signal/varselfarge)
   "UiA": "#00b894",              // Mørk myntgrønn
-  "Sosialt": "#e84393"          // Knall knallrosa
+  "Sosialt": "#e84393",          // Knall knallrosa
+  "Bursdag": "#f59e0b"          // Varm amber / fest-oransje
 };
 
 const repeatLabels = {
@@ -557,7 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
     scrollTime: '08:00:00',
     slotDuration: '00:30:00',
 
-    datesSet: function(info) {
+datesSet: function(info) {
       if (typeof miniCalCurrentDate !== 'undefined') {
         miniCalCurrentDate = new Date(info.view.currentStart);
       }
@@ -568,6 +569,11 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
           highlightDateInHeader(currentSelectedStr);
         }, 50);
+      }
+
+      // --- NYTT: Oppdater bursdager hvis vi blar til et nytt år ---
+      if (typeof getBirthdayEvents === 'function' && typeof updateCalendarEvents === 'function') {
+        updateCalendarEvents();
       }
 
       // Legg til ukenummer i tittelen for ukesvisninger
@@ -874,6 +880,18 @@ function isEventInSelectedCategories(event) {
 }
 
 function updateCalendarEvents() {
+  // 1. Hent bursdager fra ansatte.js basert på hvilket år kalenderen viser
+  let filteredBursdagEvents = [];
+  if (typeof getBirthdayEvents === 'function' && calendar) {
+    const currentYear = calendar.getDate().getFullYear();
+    const rawBursdager = getBirthdayEvents(currentYear);
+    
+    // Filtrer bursdagene gjennom valgte kategorier
+    filteredBursdagEvents = rawBursdager.filter(event => 
+      isEventInSelectedCategories(event)
+    );
+  }
+
   const filteredUserEvents = rawEvents.filter(event => 
     isEventInSelectedCategories(event)
   );
@@ -892,11 +910,13 @@ function updateCalendarEvents() {
 
   const schoolEvents = typeof schoolEventsFromJs !== 'undefined' ? schoolEventsFromJs : [];
 
+  // 2. Legg til filteredBursdagEvents i listen over alle hendelser
   const allEvents = [
     ...schoolEvents, 
     ...filteredFellesEvents, 
     ...filteredDksEvents, 
     ...filteredSvommeEvents, 
+    ...filteredBursdagEvents, // <-- Bursdager lagt til her
     ...filteredUserEvents
   ];
 
