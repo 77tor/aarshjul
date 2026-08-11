@@ -68,33 +68,138 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .print-only-header { display: none; }
 
 @media print {
-  /* Tvinger at alt innhold holdes kompakt på utskrift */
-  html, body {
-    height: auto !important;
-    overflow: visible !important;
-    margin: 0 !important;
-    padding: 0 !important;
+  @page { 
+    size: A4 portrait; 
+    margin: 8mm 10mm; /* Litt mindre topp/bunn-margin for å forhindre marginal avskjæring */
   }
 
-  /* Fjerner unødvendige margins/paddings på kalenderbeholderen */
-  #calendar, .fc-view-harness, .fc-scroller {
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
+  html, body { 
+    background: #ffffff !important; 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; 
+    color: #0f172a !important; 
+    margin: 0 !important; 
+    padding: 0 !important; 
+    height: 100% !important; /* Tvinger eksakt ramme istedenfor uendelig auto */
+    max-height: 100% !important;
+    overflow: hidden !important; /* Stopper at ekstra marginer oppretter ny side */
   }
 
-  /* Skjuler tomme containere eller footere som skaper ekstra utskriftsside */
-  .fc-footer-toolbar, 
-  #deleteConfirmMode, 
-  .modal, 
+  /* Skjul uviktige UI-elementer og tving dem til å IKKE ta opp plass */
   .sidebar, 
-  .fc-header-toolbar {
-    display: none !important;
+  .fc-header-toolbar, 
+  .popover, 
+  .context-menu, 
+  .modal-overlay,
+  .modal,
+  #selectionPopover, 
+  #contextMenu,
+  #eventModal { 
+    display: none !important; 
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
   }
 
-  /* Sørger for at tabellen ikke tvinger nye sider unødvendig */
-  .fc-list-table {
-    page-break-after: avoid !important;
-    break-after: avoid !important;
+  /* Tilpass layoutholderne så de ikke har bunn-marginer */
+  .app-layout, 
+  .main-content { 
+    display: block !important; 
+    padding: 0 !important; 
+    margin: 0 !important; 
+    width: 100% !important; 
+    height: auto !important; 
+    min-height: 0 !important;
+    overflow: visible !important; 
+  }
+
+  /* Kompakt overskrift */
+  #printHeader { 
+    display: block !important; 
+    text-align: center; 
+    border-bottom: 2px solid #0f172a; 
+    padding-bottom: 4px; 
+    margin-bottom: 8px; 
+  }
+
+  #printTitle { 
+    margin: 0; 
+    font-size: 15pt; 
+    font-weight: 800; 
+    color: #0f172a; 
+  }
+
+  #printSubTitle { 
+    margin: 2px 0 0 0; 
+    font-size: 8.5pt; 
+    color: #64748b; 
+  }
+
+  #calendar, .fc { 
+    display: block !important; 
+    width: 100% !important; 
+    height: auto !important; 
+    box-shadow: none !important; 
+    border: none !important; 
+    padding: 0 !important; 
+    margin: 0 !important;
+  }
+
+  .fc-scroller, 
+  .fc-scroller-liquid-absolute,
+  .fc-scroller-harness,
+  .fc-view-harness { 
+    height: auto !important; 
+    max-height: none !important; 
+    overflow: visible !important; 
+    position: static !important; 
+  }
+
+  /* SKJUL egne datorader fra FullCalendar for å spare plass */
+  .fc-list-day { 
+    display: none !important; 
+  }
+
+  /* Tett og kompakt tabelloppsett */
+  .fc-list-table { 
+    width: 100% !important; 
+    border-collapse: collapse !important; 
+    margin: 0 !important;
+  }
+
+  .fc-list-event { 
+    font-size: 8.5pt !important; 
+    border-bottom: 1px solid #e2e8f0 !important; 
+  }
+
+  .fc-list-event td { 
+    padding: 2.5px 4px !important; /* Marginalt tattere spacing som sikrer at 25-30 rader går på 1 side */
+  }
+
+  .fc-list-event-time { 
+    display: none !important; 
+  }
+
+  .fc-list-event-graphic { 
+    padding-right: 4px !important; 
+  }
+
+  .fc-list-event-dot { 
+    border-width: 3.5px !important; 
+  }
+
+  .fc-list-event-title { 
+    font-weight: 600 !important; 
+    color: #0f172a !important; 
+    line-height: 1.15 !important;
+  }
+
+  /* Forhindrer at tabellen skyver ut ekstra blank side på slutten */
+  tr { 
+    page-break-inside: avoid !important; 
+    break-inside: avoid !important; 
+  }
+
+  .fc-list-empty {
+    padding: 10px !important;
   }
 }
