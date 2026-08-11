@@ -16,6 +16,7 @@ import { schoolYearsData } from "./fridager.js";
 import { getFellesaktiviteterSomEvents } from "./fellesaktiviteter.js";
 import { getDKSAktiviteterSomEvents } from './DKS.js';
 import { getSvommeAktiviteterSomEvents } from './svomming.js';
+import { getBirthdayEvents } from './ansatte.js';
 
 // Firebase-konfigurasjon
 const firebaseConfig = {
@@ -28,6 +29,22 @@ const firebaseConfig = {
   appId: "1:186927305986:web:c8534d5733dcfd2f2c9e1b",
   measurementId: "G-M02DFGGH3R"
 };
+
+const ALLOWED_ADMINS = [
+  "77tor@ikrs.no",
+  "tor.skarprud@gmail.com",
+  "75thomas@ikrs.no",
+  "62marit3@ikrs.no",
+  "72janne@ikrs.no"
+];
+
+// Funksjon for å sjekke om innlogget bruker har administratorrettigheter
+function isUserAdmin() {
+  // Bytter du ut denne med din faktiske innloggingssjekk (f.eks. localStorage.getItem('userEmail'))
+  const currentUserEmail = localStorage.getItem('userEmail') || ''; 
+  return ALLOWED_ADMINS.includes(currentUserEmail.toLowerCase());
+}
+
 
 const categoryColors = {
   // Trinn (En tydelig regnbueskala gjør at trinnene skiller seg klart fra hverandre)
@@ -213,9 +230,19 @@ function showViewMode() {
   document.getElementById('formSubmitBtn').style.display = 'none';
   document.getElementById('viewCancelBtn').style.display = 'inline-block';
 
+  // --- LOGIKK FOR Å SKJULE/VISE REDIGER OG SLETT ---
   const isRoute = activeEvent && activeEvent.isSchoolRoute;
-  document.getElementById('viewEditBtn').style.display = isRoute ? 'none' : 'inline-block';
-  document.getElementById('viewDeleteBtn').style.display = isRoute ? 'none' : 'inline-block';
+  const lockedGroups = ["DKS", "Svømming", "Fellesaktiviteter", "Kartlegginger", "Bursdag"];
+  const isLockedGroup = activeEvent && lockedGroups.includes(activeEvent.group);
+
+  // Hvis det er en skolerute, ELLER en låst gruppe og brukeren IKKE er admin -> Skjul knappene
+  if (isRoute || (isLockedGroup && !isUserAdmin())) {
+    document.getElementById('viewEditBtn').style.display = 'none';
+    document.getElementById('viewDeleteBtn').style.display = 'none';
+  } else {
+    document.getElementById('viewEditBtn').style.display = 'inline-block';
+    document.getElementById('viewDeleteBtn').style.display = 'inline-block';
+  }
 
   document.getElementById('eventModal').style.display = 'flex';
 }
