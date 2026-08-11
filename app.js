@@ -43,10 +43,10 @@ const categoryColors = {
   "DKS": "#d35400",             // Mørk oransje / brent murtone
   "Svømming": "#00cec9",        // Klar cyan / vannblå
   "Fellesaktiviteter": "#2c3e50",// Mørk skiferblå
-  "SFO": "#ff7675",             // Korall / varm rosa
+  "SFO": "#ff7675",              // Korall / varm rosa
   "Kartlegginger": "#6c5ce7",   // Dyp indigo / lilla-blå
   "Frister": "#c0392b",         // Dyp rød (signal/varselfarge)
-  "UiA": "#00b894",             // Mørk myntgrønn
+  "UiA": "#00b894",              // Mørk myntgrønn
   "Sosialt": "#e84393"          // Knall knallrosa
 };
 
@@ -366,14 +366,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const calendarEl = document.getElementById('calendar');
 
-calendar = new FullCalendar.Calendar(calendarEl, {
+  calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'timeGridWeek',
-    initialDate: '2026-08-17', // <-- RETTING 1: Åpner direkte i august 2026 der testdataene dine ligger
+    initialDate: '2026-08-17',
     selectable: true,
     selectMirror: true,
     unselectAuto: false,
 
-    // LEGG TIL DETTE: Tvinger listen til å dekke 12 måneder fra startdato i stedet for å stoppe ved nyttår
     views: {
       schoolYearList: {
         type: 'list',
@@ -388,15 +387,12 @@ calendar = new FullCalendar.Calendar(calendarEl, {
         click: function() {
           const originalView = calendar.view.type;
 
-          // 1. Bytt til ukesliste
           calendar.changeView('listWeek');
 
-          // 2. Hent start- og sluttdato for uken
           const view = calendar.view;
           const start = view.currentStart;
           const end = new Date(view.currentEnd.getTime() - 1);
 
-          // 3. Beregn ukenummer (ISO 8601)
           const target = new Date(start.valueOf());
           const dayNr = (start.getDay() + 6) % 7;
           target.setDate(target.getDate() - dayNr + 3);
@@ -407,12 +403,10 @@ calendar = new FullCalendar.Calendar(calendarEl, {
           }
           const weekNum = 1 + Math.ceil((firstThursday - target) / 604800000);
 
-          // 4. Formater datoer
           const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
           const startStr = start.toLocaleDateString('no-NO', options);
           const endStr = end.toLocaleDateString('no-NO', options);
 
-          // 5. Oppdater utskriftsoverskriften
           const titleEl = document.getElementById('printTitle');
           const subTitleEl = document.getElementById('printSubTitle');
           if (titleEl) titleEl.textContent = `Ukeplan – Uke ${weekNum}`;
@@ -421,11 +415,10 @@ calendar = new FullCalendar.Calendar(calendarEl, {
           if (typeof hideContextMenu === 'function') hideContextMenu();
           if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
 
-          // 6. Vent på at renderingen er fullført før vi printer
           requestAnimationFrame(() => {
             setTimeout(() => {
               window.print();
-              calendar.changeView(originalView); // Bytter tilbake etter print
+              calendar.changeView(originalView);
             }, 300);
           });
         }
@@ -526,8 +519,10 @@ calendar = new FullCalendar.Calendar(calendarEl, {
   renderFilters();
   renderMiniCalendar();
 
-  // <-- RETTING 2: Tvinger hendelsene inn i kalenderen ved oppstart!
-  updateCalendarEvents();
+  // Tvinger hendelsene inn i kalenderen ved oppstart
+  if (typeof updateCalendarEvents === 'function') {
+    updateCalendarEvents();
+  }
 
   const btnToggleAll = document.getElementById('btnToggleAllCategories');
   if (btnToggleAll) {
@@ -632,58 +627,60 @@ onSnapshot(eventsRef, (snapshot) => {
         endTime: data.endTime || '',
         description: data.description || '',
         repeatPattern: data.repeatPattern || null,
-        recurringSeriesId: data.recurringSeriesId || null
+        recurringSeriesId: data.recurringSeriesId || null,
+        trinn: Array.isArray(data.trinn) ? data.trinn : [] // Støtte for trinn-array i Firestore
       }
     };
   });
   updateCalendarEvents();
 });
 
-// <-- RETTING 3: Riktig filtrering av samlekategorier og trinn
+// <-- RETTING 3: Presis filtrering på kategorier og trinn-arrays
 function isEventInSelectedCategories(event) {
   if (selectedCategories.length === 0) return false;
 
-  const group = (event.extendedProps?.group || '').toLowerCase();
-  const deltakere = (event.extendedProps?.deltakere || '').toLowerCase();
+  const group = event.extendedProps?.group || '';
+  const trinnArray = event.extendedProps?.trinn || [];
+  
   const title = (event.title || event.extendedProps?.rawTitle || '').toLowerCase();
   const description = (event.extendedProps?.description || '').toLowerCase();
-  
-  const altInnhold = `${group} ${title} ${deltakere} ${description}`;
+  const altInnhold = `${group} ${title} ${description}`.toLowerCase();
 
   for (const cat of selectedCategories) {
-    const catLower = cat.toLowerCase();
+    // 1. Sjekk om kilde-modulen leverte en trinn-array som inneholder den valgte kategorien (f.eks. "1. trinn")
+    if (Array.isArray(trinnArray) && trinnArray.length > 0) {
+      if (trinnArray.includes(cat)) {
+        return true;
+      }
+    }
 
-    // 1. Direkte match på gruppenavn eller fritekst (f.eks. "Felles", "DKS", "Svømming", "Fellesaktiviteter")
-    if (group === catLower || altInnhold.includes(catLower)) {
+    // 2. Direkte match på gruppenavn (f.eks. "DKS", "Svømming", "Fellesaktiviteter")
+    if (group.toLowerCase() === cat.toLowerCase()) {
       return true;
     }
 
-    // 2. Samlekategorier
-    if (cat === "Alle på Heståsen" && (altInnhold.includes("heståsen") || altInnhold.includes("1.-3. trinn") || altInnhold.includes("1-3. trinn"))) {
+    // 3. Samlekategorier
+    if (cat === "Alle på Heståsen" && (altInnhold.includes("heståsen") || trinnArray.some(t => ["1. trinn", "2. trinn", "3. trinn"].includes(t)))) {
       return true;
     }
-    if (cat === "Alle på Brattbakken" && (altInnhold.includes("brattbakken") || altInnhold.includes("4.-7. trinn") || altInnhold.includes("4-7. trinn"))) {
+    if (cat === "Alle på Brattbakken" && (altInnhold.includes("brattbakken") || trinnArray.some(t => ["4. trinn", "5. trinn", "6. trinn", "7. trinn"].includes(t)))) {
       return true;
     }
 
-    // 3. Trinn-sjekk (1. trinn, 2. trinn, osv.)
+    // 4. Fallback: Trinn-sjekk via fritekst dersom trinn-array mangler på eldre/manuelle events
     if (cat.endsWith('. trinn')) {
       const trinnNummer = parseInt(cat.split('.')[0].trim(), 10);
 
-      // Fellesaktiviteter som gjelder alle eller hele skolen skal alltid med på trinnet
-      if (altInnhold.includes("alle trinn") || altInnhold.includes("1.-7. trinn") || altInnhold.includes("1-7. trinn") || altInnhold.includes("felles")) {
+      if (altInnhold.includes("alle trinn") || altInnhold.includes("1.-7. trinn") || altInnhold.includes("felles")) {
         return true;
       }
 
-      // Trinn-spesifikke sjekker for Heståsen (1-3) og Brattbakken (4-7)
       if (altInnhold.includes("heståsen") && trinnNummer >= 1 && trinnNummer <= 3) return true;
       if (altInnhold.includes("brattbakken") && trinnNummer >= 4 && trinnNummer <= 7) return true;
 
-      // Sjekk om trinnet er nevnt i teksten (f.eks. "1. trinn", "1A", "1.-3.")
       const trinnRegex = new RegExp(`\\b${trinnNummer}(\\.|a|b|c|d|\\s*-\\s*|\\s*\\.\\s*trinn)`, 'i');
       if (trinnRegex.test(altInnhold)) return true;
 
-      // Intervall-sjekk (f.eks "1.-4. trinn")
       const rangeMatch = altInnhold.match(/(\d+)\s*[\.\-]\s*(\d+)\.?\s*trinn/i);
       if (rangeMatch) {
         const startTrinn = parseInt(rangeMatch[1], 10);
@@ -927,7 +924,7 @@ function renderFilters() {
       }
       
       updateCalendarEvents();
-      checkSingleCategorySelection(); // Sjekker om kun 1 kategori er valgt
+      checkSingleCategorySelection();
     });
 
     const colorDot = document.createElement('span');
@@ -944,11 +941,9 @@ function renderFilters() {
     filterContainer.appendChild(item);
   });
 
-  // Kjør en initiell sjekk ved oppstart
   checkSingleCategorySelection();
 }
 
-// Sjekker om nøyaktig 1 kategori er valgt og styrer knappen
 function checkSingleCategorySelection() {
   const printBtn = document.getElementById('btnPrintCategory');
   if (!printBtn) return;
@@ -962,8 +957,7 @@ function checkSingleCategorySelection() {
   }
 }
 
-
-// Lytter på utskriftsknappen for valgt kategori (Eksakt trinn-mating for svømming og DKS)
+// Lytter på utskriftsknappen for valgt kategori (Oppdatert med trinn-array sjekk)
 document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (selectedCategories.length !== 1) return;
 
@@ -971,53 +965,28 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   const originalView = calendar.view.type;
   const originalDate = calendar.getDate();
 
-  // 1. Sett start til august i skoleåret
   const currentMonth = originalDate.getMonth();
   const startYear = currentMonth >= 7 ? originalDate.getFullYear() : originalDate.getFullYear() - 1;
   const schoolYearStart = `${startYear}-08-01`;
 
-  // 2. Bytt til 'schoolYearList' og hopp til skolestart
   calendar.changeView('schoolYearList');
   calendar.gotoDate(schoolYearStart);
 
-  // 3. Identifiser om vi skrives ut for et trinn (1–7)
-  const trinnMatch = selectedCategory.match(/^(\d+)\.\s*trinn/i);
-  const selectedTrinnNum = trinnMatch ? trinnMatch[1] : null;
-
-  // Presis sjekk for om en Svømme- eller DKS-hendelse faktisk tilhører valgt trinn
-  const isEventMatchingTrinn = (event) => {
-    if (!selectedTrinnNum) return true; // Ikke utskrift for et spesifikt trinn
-
-    const title = (event.title || '').toLowerCase();
-    
-    // Sjekk om tittelen explicit nevner det valgte trinnet (f.eks. "1a", "1b", "1c", "1a-b", "1. trinn")
-    // Eksempler på match for 1. trinn: "1a", "1b", "1.trinn", "1a-b", " 1 "
-    const currentTrinnRegex = new RegExp(`(?:\\b|\\s|\\()${selectedTrinnNum}(?:[a-c]|\\.||\\s*trinn|\\s*a-b|\\s*b-c)?(?:\\b|\\s|\\))`, 'i');
-    
-    // Hvis tittelen matcher det valgte trinnet, godkjenn
-    if (currentTrinnRegex.test(title)) {
+  const shouldIncludeEvent = (evt) => {
+    // Sjekk om trinn-arrayen inneholder den valgte kategorien direkte
+    const trinnArray = evt.extendedProps?.trinn || [];
+    if (Array.isArray(trinnArray) && trinnArray.includes(selectedCategory)) {
       return true;
     }
 
-    // Hvis tittelen nevner ET ANNET trinn (f.eks. 2, 3, 4, 5, 6, 7), skal den AVVISES
-    const otherTrinnRegex = /(?:\b|\s|\()(1|2|3|4|5|6|7)(?:[a-c]|\.|\s*trinn|\s*a-b|\s*b-c)?(?:\b|\s|\))/i;
-    const matchOther = title.match(otherTrinnRegex);
-    
-    if (matchOther && matchOther[1] !== selectedTrinnNum) {
-      return false; // Tilhører et annet trinn
-    }
-
-    // Sjekk om kategorifeltet på selve eventet har direkte referanse til valgt trinn
-    return isEventInSelectedCategories(event);
+    // Standard kategorisjekk
+    return isEventInSelectedCategories(evt);
   };
 
-  // 4. Hent og filtrer hendelser
-  const filteredUserEvents = rawEvents.filter(event => isEventInSelectedCategories(event));
-  const filteredFellesEvents = (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
-  
-  // Svømming og DKS filtreres med den strengere trinn-sjekken
-  const filteredDksEvents = (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []).filter(event => isEventMatchingTrinn(event));
-  const filteredSvommeEvents = (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []).filter(event => isEventMatchingTrinn(event));
+  const filteredUserEvents = rawEvents.filter(shouldIncludeEvent);
+  const filteredFellesEvents = (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []).filter(shouldIncludeEvent);
+  const filteredDksEvents = (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []).filter(shouldIncludeEvent);
+  const filteredSvommeEvents = (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []).filter(shouldIncludeEvent);
 
   const allRawEvents = [
     ...filteredFellesEvents, 
@@ -1026,9 +995,7 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
     ...filteredUserEvents
   ];
 
-  // Sjekk om det er ren "Fellesaktiviteter" som skrives ut
   const isOnlyFelles = selectedCategory.toLowerCase().includes('felles');
-
   const consolidatedMap = new Map();
 
   allRawEvents.forEach((evt, idx) => {
@@ -1057,10 +1024,8 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
     }
   });
 
-  // Sorter kronologisk etter startdato
   const sortedItems = Array.from(consolidatedMap.values()).sort((a, b) => a.minStart - b.minStart);
 
-  // 5. Bygg kompakte rader (1 linje per aktivitet)
   const singleRowEvents = sortedItems.map((item, index) => {
     const startStr = item.minStart.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
     const endStr = item.maxEnd.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
@@ -1068,7 +1033,6 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
     const isMultiDay = item.minStart.toDateString() !== item.maxEnd.toDateString();
     const dateLabel = isMultiDay ? `${startStr}. – ${endStr}.` : `${startStr}.`;
 
-    // Formatér klokkeslett
     let timeLabel = '';
     const hours = item.minStart.getHours();
     const isRealTime = !item.allDay && hours >= 7 && hours <= 20;
@@ -1092,7 +1056,6 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   calendar.removeAllEvents();
   calendar.addEventSource(singleRowEvents);
 
-  // 6. Oppdater utskriftsoverskrift
   const titleEl = document.getElementById('printTitle');
   const subTitleEl = document.getElementById('printSubTitle');
   if (titleEl) titleEl.textContent = `Oversikt – ${selectedCategory}`;
@@ -1101,7 +1064,6 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (typeof hideContextMenu === 'function') hideContextMenu();
   if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
 
-  // 7. Kjør print og tilbakestill
   requestAnimationFrame(() => {
     setTimeout(() => {
       window.print();
