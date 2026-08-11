@@ -420,7 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
     selectMirror: true,
     unselectAuto: false,
 
-    // --- NYTT: Skjul helg som standard (viser man-fre) ---
+    // Skjul helg som standard (viser man-fre)
     weekends: false,
 
     views: {
@@ -431,104 +431,107 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     },
 
-customButtons: {
+    customButtons: {
       toggleWeekend: {
         text: 'Vis helg',
-        click: function(mouseEvent, htmlElement) {
+        click: function() {
           const showWeekends = calendar.getOption('weekends');
-          
-          // Veksle status i kalenderen
-          calendar.setOption('weekends', !showWeekends);
-          
-          // Finn selve knappe-elementet presist
-          const btn = htmlElement || mouseEvent.currentTarget;
-          if (btn) {
-            // Bruk textContent i stedet for innerText, og sett kun riktig tekst
-            btn.textContent = showWeekends ? 'Vis helg' : 'Skjul helg';
-          }
+          const nextState = !showWeekends;
+
+          // Oppdater kalenderens status og knappe-tekst synkronisert
+          calendar.setOption('weekends', nextState);
+          calendar.setOption('customButtons', {
+            ...calendar.getOption('customButtons'),
+            toggleWeekend: {
+              ...calendar.getOption('customButtons').toggleWeekend,
+              text: nextState ? 'Skjul helg' : 'Vis helg'
+            }
+          });
         }
       },
-printWeekBtn: {
-  text: '🖨️ Skriv ut uke',
-  click: function() {
-    const originalView = calendar.view.type;
 
-    // Bytt til listevisning for uken
-    calendar.changeView('listWeek');
+      printWeekBtn: {
+        text: '🖨️ Skriv ut uke',
+        click: function() {
+          const originalView = calendar.view.type;
 
-    const view = calendar.view;
-    const start = view.currentStart;
-    const end = new Date(view.currentEnd.getTime() - 1);
+          // Bytt til listevisning for uken
+          calendar.changeView('listWeek');
 
-    // Beregn ISO-ukenummer
-    const target = new Date(start.valueOf());
-    const dayNr = (start.getDay() + 6) % 7;
-    target.setDate(target.getDate() - dayNr + 3);
-    const firstThursday = target.valueOf();
-    target.setMonth(0, 1);
-    if (target.getDay() !== 4) {
-      target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
-    }
-    const weekNum = 1 + Math.ceil((firstThursday - target) / 604800000);
+          const view = calendar.view;
+          const start = view.currentStart;
+          const end = new Date(view.currentEnd.getTime() - 1);
 
-    const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
-    const startStr = start.toLocaleDateString('no-NO', options);
-    const endStr = end.toLocaleDateString('no-NO', options);
-
-    const titleEl = document.getElementById('printTitle');
-    const subTitleEl = document.getElementById('printSubTitle');
-    if (titleEl) titleEl.textContent = `Ukeplan – Uke ${weekNum}`;
-    if (subTitleEl) subTitleEl.textContent = `${startStr} – ${endStr}`;
-
-    if (typeof hideContextMenu === 'function') hideContextMenu();
-    if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
-
-    // Sørg for at FullCalendar har bygget listen før vi rydder duplikater
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        // Hent alle viste hendelser fra FullCalendar sin API
-        const currentEvents = calendar.getEvents();
-        const multiDayTitleSet = new Set();
-
-        // Identifiser hendelser som spenner over mer enn 1 dag
-        currentEvents.forEach(evt => {
-          if (evt.start && evt.end) {
-            const diffDays = (evt.end.getTime() - evt.start.getTime()) / (1000 * 3600 * 24);
-            if (diffDays > 1) {
-              multiDayTitleSet.add(evt.title.trim());
-            }
-          } else if (evt.allDay) {
-            multiDayTitleSet.add(evt.title.trim());
+          // Beregn ISO-ukenummer
+          const target = new Date(start.valueOf());
+          const dayNr = (start.getDay() + 6) % 7;
+          target.setDate(target.getDate() - dayNr + 3);
+          const firstThursday = target.valueOf();
+          target.setMonth(0, 1);
+          if (target.getDay() !== 4) {
+            target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
           }
-        });
+          const weekNum = 1 + Math.ceil((firstThursday - target) / 604800000);
 
-        // Fjern duplikater kun dersom det gjelder en flerdagershendelse
-        const eventRows = document.querySelectorAll('.fc-list-event');
-        const seenMultiDayTitles = new Set();
+          const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+          const startStr = start.toLocaleDateString('no-NO', options);
+          const endStr = end.toLocaleDateString('no-NO', options);
 
-        eventRows.forEach(row => {
-          const titleText = row.querySelector('.fc-list-event-title')?.textContent?.trim();
-          
-          if (titleText && multiDayTitleSet.has(titleText)) {
-            if (seenMultiDayTitles.has(titleText)) {
-              row.style.display = 'none'; // Skjul duplikat fra dag 2, 3 osv.
-            } else {
-              seenMultiDayTitles.add(titleText); // Behold første oppføring (mandag)
-            }
-          }
-        });
+          const titleEl = document.getElementById('printTitle');
+          const subTitleEl = document.getElementById('printSubTitle');
+          if (titleEl) titleEl.textContent = `Ukeplan – Uke ${weekNum}`;
+          if (subTitleEl) subTitleEl.textContent = `${startStr} – ${endStr}`;
 
-        // Kjør utskrift dialog
-        window.print();
+          if (typeof hideContextMenu === 'function') hideContextMenu();
+          if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
 
-        // Tilbakekall opprinnelig visning etter utskrift
-        calendar.changeView(originalView);
-      }, 300);
-    });
-  }
-}
+          // Sørg for at FullCalendar har bygget listen før vi rydder duplikater
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              // Hent alle viste hendelser fra FullCalendar sin API
+              const currentEvents = calendar.getEvents();
+              const multiDayTitleSet = new Set();
+
+              // Identifiser hendelser som spenner over mer enn 1 dag
+              currentEvents.forEach(evt => {
+                if (evt.start && evt.end) {
+                  const diffDays = (evt.end.getTime() - evt.start.getTime()) / (1000 * 3600 * 24);
+                  if (diffDays > 1) {
+                    multiDayTitleSet.add(evt.title.trim());
+                  }
+                } else if (evt.allDay) {
+                  multiDayTitleSet.add(evt.title.trim());
+                }
+              });
+
+              // Fjern duplikater kun dersom det gjelder en flerdagershendelse
+              const eventRows = document.querySelectorAll('.fc-list-event');
+              const seenMultiDayTitles = new Set();
+
+              eventRows.forEach(row => {
+                const titleText = row.querySelector('.fc-list-event-title')?.textContent?.trim();
+                
+                if (titleText && multiDayTitleSet.has(titleText)) {
+                  if (seenMultiDayTitles.has(titleText)) {
+                    row.style.display = 'none'; // Skjul duplikat fra dag 2, 3 osv.
+                  } else {
+                    seenMultiDayTitles.add(titleText); // Behold første oppføring (mandag)
+                  }
+                }
+              });
+
+              // Kjør utskrift dialog
+              window.print();
+
+              // Tilbakekall opprinnelig visning etter utskrift
+              calendar.changeView(originalView);
+            }, 300);
+          });
+        }
+      }
+    },
+
     headerToolbar: {
-      // Lagt til toggleWeekend i venstremenyen ved siden av 'today'
       left: 'prev,next today toggleWeekend',
       center: 'title',
       right: 'printWeekBtn timeGridWeek,dayGridMonth,listMonth'
@@ -566,17 +569,11 @@ printWeekBtn: {
         }
         const weekNum = 1 + Math.ceil((firstThursday - target) / 604800000);
 
-// Oppdater overskriften i kalenderen
+        // Oppdater overskriften i kalenderen
         const titleEl = document.querySelector('.fc-toolbar-title');
         if (titleEl) {
           titleEl.textContent = `Uke ${weekNum}: ${view.title}`;
         }
-      }
-      // Sørg for at knappen beholder riktig tekst når verktøylinjen re-renderes
-      const weekendBtn = document.querySelector('.fc-toggleWeekend-button');
-      if (weekendBtn) {
-        const isWeekendVisible = calendar.getOption('weekends');
-        weekendBtn.textContent = isWeekendVisible ? 'Skjul helg' : 'Vis helg';
       }
     },
     
