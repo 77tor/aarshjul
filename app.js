@@ -635,11 +635,11 @@ onSnapshot(eventsRef, (snapshot) => {
   updateCalendarEvents();
 });
 
-// <-- RETTING 3: Presis filtrering på kategorier og trinn-arrays
+// <-- BRUK DENNE UTGAVEN:
 function isEventInSelectedCategories(event) {
   if (selectedCategories.length === 0) return false;
 
-  const group = event.extendedProps?.group || '';
+  const group = (event.extendedProps?.group || '').toLowerCase();
   const trinnArray = event.extendedProps?.trinn || [];
   
   const title = (event.title || event.extendedProps?.rawTitle || '').toLowerCase();
@@ -647,46 +647,53 @@ function isEventInSelectedCategories(event) {
   const altInnhold = `${group} ${title} ${description}`.toLowerCase();
 
   for (const cat of selectedCategories) {
-    // 1. Sjekk om kilde-modulen leverte en trinn-array som inneholder den valgte kategorien (f.eks. "1. trinn")
-    if (Array.isArray(trinnArray) && trinnArray.length > 0) {
-      if (trinnArray.includes(cat)) {
+    const isTrinnCategory = cat.endsWith('. trinn');
+
+    // A) HVIS MAN FILTRERER PÅ ET TRINN (f.eks. "1. trinn")
+    if (isTrinnCategory) {
+      // 1. Sjekk direkte i trinn-arrayen
+      if (Array.isArray(trinnArray) && trinnArray.length > 0) {
+        if (trinnArray.includes(cat)) return true;
+      }
+
+      // 2. Skoleomfattende hendelser
+      if (altInnhold.includes("alle trinn") || altInnhold.includes("1.-7. trinn") || altInnhold.includes("1-7. trinn")) {
         return true;
       }
+
+      // 3. Fallback for manuelle hendelser uten trinnArray
+      if (!Array.isArray(trinnArray) || trinnArray.length === 0) {
+        const trinnNummer = parseInt(cat.split('.')[0].trim(), 10);
+        
+        if (altInnhold.includes("heståsen") && trinnNummer >= 1 && trinnNummer <= 3) return true;
+        if (altInnhold.includes("brattbakken") && trinnNummer >= 4 && trinnNummer <= 7) return true;
+
+        const trinnRegex = new RegExp(`\\b${trinnNummer}(\\.|a|b|c|d|\\s*-\\s*|\\s*\\.\\s*trinn)`, 'i');
+        if (trinnRegex.test(altInnhold)) return true;
+
+        const rangeMatch = altInnhold.match(/(\d+)\s*[\.\-]\s*(\d+)\.?\s*trinn/i);
+        if (rangeMatch) {
+          const startTrinn = parseInt(rangeMatch[1], 10);
+          const sluttTrinn = parseInt(rangeMatch[2], 10);
+          if (trinnNummer >= startTrinn && trinnNummer <= sluttTrinn) return true;
+        }
+      }
+
+      // Dersom det var et trinn-filter og eventet ikke matchet trinnet, hopp videre
+      continue; 
     }
 
-    // 2. Direkte match på gruppenavn (f.eks. "DKS", "Svømming", "Fellesaktiviteter")
-    if (group.toLowerCase() === cat.toLowerCase()) {
+    // B) HVIS MAN FILTRERER PÅ EN KATEGORI/GRUPPE (f.eks. "Svømming", "DKS")
+    if (group === cat.toLowerCase()) {
       return true;
     }
 
-    // 3. Samlekategorier
+    // C) SAMLEKATEGORIER
     if (cat === "Alle på Heståsen" && (altInnhold.includes("heståsen") || trinnArray.some(t => ["1. trinn", "2. trinn", "3. trinn"].includes(t)))) {
       return true;
     }
     if (cat === "Alle på Brattbakken" && (altInnhold.includes("brattbakken") || trinnArray.some(t => ["4. trinn", "5. trinn", "6. trinn", "7. trinn"].includes(t)))) {
       return true;
-    }
-
-    // 4. Fallback: Trinn-sjekk via fritekst dersom trinn-array mangler på eldre/manuelle events
-    if (cat.endsWith('. trinn')) {
-      const trinnNummer = parseInt(cat.split('.')[0].trim(), 10);
-
-      if (altInnhold.includes("alle trinn") || altInnhold.includes("1.-7. trinn") || altInnhold.includes("felles")) {
-        return true;
-      }
-
-      if (altInnhold.includes("heståsen") && trinnNummer >= 1 && trinnNummer <= 3) return true;
-      if (altInnhold.includes("brattbakken") && trinnNummer >= 4 && trinnNummer <= 7) return true;
-
-      const trinnRegex = new RegExp(`\\b${trinnNummer}(\\.|a|b|c|d|\\s*-\\s*|\\s*\\.\\s*trinn)`, 'i');
-      if (trinnRegex.test(altInnhold)) return true;
-
-      const rangeMatch = altInnhold.match(/(\d+)\s*[\.\-]\s*(\d+)\.?\s*trinn/i);
-      if (rangeMatch) {
-        const startTrinn = parseInt(rangeMatch[1], 10);
-        const sluttTrinn = parseInt(rangeMatch[2], 10);
-        if (trinnNummer >= startTrinn && trinnNummer <= sluttTrinn) return true;
-      }
     }
   }
 
