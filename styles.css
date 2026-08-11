@@ -70,7 +70,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 @media print {
   @page { 
     size: A4 portrait; 
-    margin: 8mm 10mm; /* Litt mindre topp/bunn-margin for å forhindre marginal avskjæring */
+    margin: 8mm 10mm; 
   }
 
   html, body { 
@@ -79,12 +79,12 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     color: #0f172a !important; 
     margin: 0 !important; 
     padding: 0 !important; 
-    height: 100% !important; /* Tvinger eksakt ramme istedenfor uendelig auto */
+    height: 100% !important; 
     max-height: 100% !important;
-    overflow: hidden !important; /* Stopper at ekstra marginer oppretter ny side */
+    overflow: hidden !important; 
   }
 
-  /* Skjul uviktige UI-elementer og tving dem til å IKKE ta opp plass */
+  /* Skjul uviktige UI-elementer */
   .sidebar, 
   .fc-header-toolbar, 
   .popover, 
@@ -100,10 +100,11 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     overflow: hidden !important;
   }
 
-  /* Tilpass layoutholderne så de ikke har bunn-marginer */
+  /* Tving alt innhold i en ryddig vertikal rekkefølge uten overlapping */
   .app-layout, 
   .main-content { 
-    display: block !important; 
+    display: flex !important; 
+    flex-direction: column !important;
     padding: 0 !important; 
     margin: 0 !important; 
     width: 100% !important; 
@@ -112,13 +113,16 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     overflow: visible !important; 
   }
 
-  /* Kompakt overskrift */
+  /* Tving overskriften til å ligge øverst med klar avstand */
   #printHeader { 
     display: block !important; 
+    position: relative !important;
+    z-index: 9999 !important;
     text-align: center; 
     border-bottom: 2px solid #0f172a; 
     padding-bottom: 4px; 
-    margin-bottom: 8px; 
+    margin-bottom: 16px !important; /* Gir god plass ned til listen */
+    background: #ffffff !important;
   }
 
   #printTitle { 
@@ -134,8 +138,10 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     color: #64748b; 
   }
 
+  /* Tving FullCalendar til å starte ETTER overskriften */
   #calendar, .fc { 
     display: block !important; 
+    position: relative !important;
     width: 100% !important; 
     height: auto !important; 
     box-shadow: none !important; 
@@ -144,10 +150,13 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     margin: 0 !important;
   }
 
+  /* Fjern absolutt posisjonering fra FullCalendar-internerammer */
+  .fc-view-harness,
+  .fc-view-harness-active,
   .fc-scroller, 
   .fc-scroller-liquid-absolute,
-  .fc-scroller-harness,
-  .fc-view-harness { 
+  .fc-scroller-harness { 
+    display: block !important;
     height: auto !important; 
     max-height: none !important; 
     overflow: visible !important; 
@@ -172,7 +181,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
   }
 
   .fc-list-event td { 
-    padding: 2.5px 4px !important; /* Marginalt tattere spacing som sikrer at 25-30 rader går på 1 side */
+    padding: 2.5px 4px !important; 
   }
 
   .fc-list-event-time { 
@@ -193,13 +202,8 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     line-height: 1.15 !important;
   }
 
-  /* Forhindrer at tabellen skyver ut ekstra blank side på slutten */
   tr { 
     page-break-inside: avoid !important; 
     break-inside: avoid !important; 
-  }
-
-  .fc-list-empty {
-    padding: 10px !important;
   }
 }
