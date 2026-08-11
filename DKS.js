@@ -353,6 +353,27 @@ export function getDKSAktiviteterSomEvents() {
   const liste = getDKSAktiviteter();
 
   return liste.map(a => {
+    const trinnSet = new Set();
+    const text = a.deltakere || '';
+
+    // Sjekk etter intervaller som "5.-6. trinn" eller "1.-3. trinn"
+    const rangeMatch = text.match(/\b([1-7])\s*\.\s*-\s*([1-7])\s*\.\s*trinn\b/i);
+    if (rangeMatch) {
+      const startNum = parseInt(rangeMatch[1], 10);
+      const endNum = parseInt(rangeMatch[2], 10);
+      for (let i = startNum; i <= endNum; i++) {
+        trinnSet.add(`${i}. trinn`);
+      }
+    }
+
+    // Ekstraher enkeltklasser (f.eks. "1A", "6b", "2C") eller enkelt-tall foran trinn
+    const singleMatches = text.match(/\b([1-7])(?=[a-d]|\.|\s*trinn|\b)/gi);
+    if (singleMatches) {
+      singleMatches.forEach(num => trinnSet.add(`${num}. trinn`));
+    }
+
+    const trinnListe = Array.from(trinnSet);
+
     return {
       id: a.id,
       title: `[DKS] ${a.tittel} (${a.deltakere})`,
@@ -367,6 +388,7 @@ export function getDKSAktiviteterSomEvents() {
         sted: a.sted,
         arrangor: a.arrangor,
         deltakere: a.deltakere,
+        trinn: trinnListe, // Eksplisitt trinn-liste for filtrering
         description: `Sted: ${a.sted} | Arrangør: ${a.arrangor} | Deltakere: ${a.deltakere}`
       }
     };

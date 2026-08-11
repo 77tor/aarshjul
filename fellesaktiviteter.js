@@ -423,8 +423,8 @@ const FELLESAKTIVITETER_REGISTER = {
     }
   ],
 
-// =========================================================================
-  // EKSEMPEL: SKOLEÅRET 2027 / 2028 (Kan fylles ut senere)
+  // =========================================================================
+  // SKOLEÅRET 2027 / 2028 (Kan fylles ut senere)
   // =========================================================================
   "2027-2028": [
     /* Nye aktiviteter legges til her */
@@ -463,6 +463,42 @@ export function getFellesaktiviteterSomEvents(skoleaar) {
         end = d.toISOString().split('T')[0];
       }
 
+      // Håndterer mapping av trinn fra deltakere-feltet
+      let trinnListe = [];
+      const text = (a.deltakere || '').toLowerCase();
+
+      if (text.includes('alle trinn')) {
+        trinnListe = ['1. trinn', '2. trinn', '3. trinn', '4. trinn', '5. trinn', '6. trinn', '7. trinn'];
+      } else {
+        const trinnSet = new Set();
+
+        // Sjekk for spesifikke skolenavn
+        if (text.includes('heståsen')) {
+          ['1. trinn', '2. trinn', '3. trinn'].forEach(t => trinnSet.add(t));
+        }
+        if (text.includes('brattbakken')) {
+          ['4. trinn', '5. trinn', '6. trinn', '7. trinn'].forEach(t => trinnSet.add(t));
+        }
+
+        // Ekstraher intervaller som "1.-6. trinn" eller "4.-7. trinn"
+        const rangeMatch = text.match(/\b([1-7])\s*\.\s*-\s*([1-7])\s*\.\s*trinn\b/);
+        if (rangeMatch) {
+          const startNum = parseInt(rangeMatch[1], 10);
+          const endNum = parseInt(rangeMatch[2], 10);
+          for (let i = startNum; i <= endNum; i++) {
+            trinnSet.add(`${i}. trinn`);
+          }
+        }
+
+        // Ekstraher enkeltstående trinn (f.eks. "6. trinn" eller "4. trinn")
+        const singleMatches = text.match(/\b([1-7])(?=\.|\s*trinn|\b)/g);
+        if (singleMatches) {
+          singleMatches.forEach(num => trinnSet.add(`${num}. trinn`));
+        }
+
+        trinnListe = Array.from(trinnSet);
+      }
+
       return {
         id: a.id,
         title: `[Felles] ${a.tittel}`,
@@ -472,10 +508,11 @@ export function getFellesaktiviteterSomEvents(skoleaar) {
         backgroundColor: '#8b5cf6',
         borderColor: '#7c3aed',
         extendedProps: {
-          group: 'Fellesaktiviteter', // <-- Endret fra 'Felles' til 'Fellesaktiviteter'
+          group: 'Fellesaktiviteter',
           rawTitle: a.tittel,
           deltakere: a.deltakere,
           ansvar: a.ansvar,
+          trinn: trinnListe, // Eksplisitt trinn-liste for filtrering og utskrift
           description: `Deltakere: ${a.deltakere} | Ansvar: ${a.ansvar}`
         }
       };

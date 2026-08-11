@@ -57,6 +57,10 @@ export function getSvommeAktiviteter() {
 
 export function getSvommeAktiviteterSomEvents() {
   return SVOMMING_REGISTER.map(a => {
+    // Ekstraherer trinn-tall fra deltakere-feltet (f.eks. "7" fra "Brattbakken 7a-b")
+    const match = a.deltakere ? a.deltakere.match(/\b([1-7])(?=[a-c]|\.|\s*trinn|\b)/gi) : [];
+    const trinnListe = match ? [...new Set(match.map(t => `${t}. trinn`))] : [];
+
     return {
       id: a.id,
       title: `[Svømming] ${a.tittel} (${a.deltakere})`,
@@ -71,6 +75,7 @@ export function getSvommeAktiviteterSomEvents() {
         sted: a.sted,
         arrangor: a.arrangor,
         deltakere: a.deltakere,
+        trinn: trinnListe, // Inneholder f.eks. ["7. trinn"], ["3. trinn"], ["4. trinn"] eller ["2. trinn"]
         description: `Sted: ${a.sted} | Deltakere: ${a.deltakere}`
       }
     };
