@@ -486,19 +486,34 @@ printWeekBtn: {
     // Sørg for at FullCalendar har bygget listen før vi rydder duplikater
     requestAnimationFrame(() => {
       setTimeout(() => {
-        // --- FJERN DUPLIKATER FRA NORD-TIL-SØR I LISTEN ---
+        // Hent alle viste hendelser fra FullCalendar sin API
+        const currentEvents = calendar.getEvents();
+        const multiDayTitleSet = new Set();
+
+        // Identifiser hendelser som spenner over mer enn 1 dag
+        currentEvents.forEach(evt => {
+          if (evt.start && evt.end) {
+            const diffDays = (evt.end.getTime() - evt.start.getTime()) / (1000 * 3600 * 24);
+            if (diffDays > 1) {
+              multiDayTitleSet.add(evt.title.trim());
+            }
+          } else if (evt.allDay) {
+            multiDayTitleSet.add(evt.title.trim());
+          }
+        });
+
+        // Fjern duplikater kun dersom det gjelder en flerdagershendelse
         const eventRows = document.querySelectorAll('.fc-list-event');
-        const seenTitles = new Set();
+        const seenMultiDayTitles = new Set();
 
         eventRows.forEach(row => {
           const titleText = row.querySelector('.fc-list-event-title')?.textContent?.trim();
           
-          if (titleText) {
-            if (seenTitles.has(titleText)) {
-              // Hvis vi har sett denne tittelen før i ukeutskriften, skjul raden
-              row.style.display = 'none';
+          if (titleText && multiDayTitleSet.has(titleText)) {
+            if (seenMultiDayTitles.has(titleText)) {
+              row.style.display = 'none'; // Skjul duplikat fra dag 2, 3 osv.
             } else {
-              seenTitles.add(titleText);
+              seenMultiDayTitles.add(titleText); // Behold første oppføring (mandag)
             }
           }
         });
@@ -512,7 +527,6 @@ printWeekBtn: {
     });
   }
 }
-
     headerToolbar: {
       // Lagt til toggleWeekend i venstremenyen ved siden av 'today'
       left: 'prev,next today toggleWeekend',

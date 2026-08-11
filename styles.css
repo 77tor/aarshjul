@@ -110,9 +110,8 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     color: #0f172a !important; 
     margin: 0 !important; 
     padding: 0 !important; 
-    height: 100% !important; 
-    max-height: 100% !important;
-    overflow: hidden !important; 
+    height: auto !important; 
+    overflow: visible !important; 
   }
 
   /* Skjul uviktige UI-elementer */
@@ -131,7 +130,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     overflow: hidden !important;
   }
 
-  /* Tving alt innhold i en ryddig vertikal rekkefølge uten overlapping */
+  /* Tving alt innhold i en ryddig vertikal rekkefølge */
   .app-layout, 
   .main-content { 
     display: flex !important; 
@@ -144,7 +143,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     overflow: visible !important; 
   }
 
-  /* Tving overskriften til å ligge øverst med klar avstand */
+  /* Tving overskriften til å ligge øverst */
   #printHeader { 
     display: block !important; 
     position: relative !important;
@@ -152,7 +151,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     text-align: center; 
     border-bottom: 2px solid #0f172a; 
     padding-bottom: 4px; 
-    margin-bottom: 16px !important; /* Gir god plass ned til listen */
+    margin-bottom: 16px !important; 
     background: #ffffff !important;
   }
 
@@ -169,7 +168,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     color: #64748b; 
   }
 
-  /* Tving FullCalendar til å starte ETTER overskriften */
+  /* FullCalendar beholder sin plass i layouten */
   #calendar, .fc { 
     display: block !important; 
     position: relative !important;
@@ -181,7 +180,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     margin: 0 !important;
   }
 
-  /* Fjern absolutt posisjonering fra FullCalendar-internerammer */
+  /* Fjern absolutt posisjonering fra FullCalendar-rammer */
   .fc-view-harness,
   .fc-view-harness-active,
   .fc-scroller, 
@@ -194,29 +193,44 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     position: static !important; 
   }
 
-  /* SKJUL egne datorader fra FullCalendar for å spare plass */
-  .fc-list-day { 
-    display: none !important; 
-  }
-
-  /* Tett og kompakt tabelloppsett */
+  /* Tabelloppsett */
   .fc-list-table { 
     width: 100% !important; 
     border-collapse: collapse !important; 
     margin: 0 !important;
   }
 
+  /* Datorader (vises for struktur) */
+  .fc-list-day { 
+    display: table-row !important; 
+    background-color: #f1f5f9 !important;
+    font-weight: 700 !important;
+  }
+
+  .fc-list-day-text, 
+  .fc-list-day-side-text {
+    padding: 4px 6px !important;
+    font-size: 9pt !important;
+    color: #0f172a !important;
+  }
+
+  /* Hendelsesrader */
   .fc-list-event { 
     font-size: 8.5pt !important; 
     border-bottom: 1px solid #e2e8f0 !important; 
   }
 
   .fc-list-event td { 
-    padding: 2.5px 4px !important; 
+    padding: 3px 4px !important; 
   }
 
+  /* Tidspunkt for hendelser */
   .fc-list-event-time { 
-    display: none !important; 
+    display: table-cell !important; 
+    font-size: 8pt !important;
+    white-space: nowrap !important;
+    width: 110px !important;
+    color: #475569 !important;
   }
 
   .fc-list-event-graphic { 
@@ -230,7 +244,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
   .fc-list-event-title { 
     font-weight: 600 !important; 
     color: #0f172a !important; 
-    line-height: 1.15 !important;
+    line-height: 1.2 !important;
   }
 
   tr { 
