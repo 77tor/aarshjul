@@ -540,7 +540,7 @@ printWeekBtn: {
             }, 300);
           });
         }
-      }
+      },
 
     headerToolbar: {
       left: 'prev,next today toggleWeekend',
