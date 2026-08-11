@@ -409,9 +409,12 @@ document.getElementById('miniNextBtn').addEventListener('click', () => {
 
 /* Oppstart & FullCalendar */
 document.addEventListener('DOMContentLoaded', () => {
-  populateGroupDropdown();
+  if (typeof populateGroupDropdown === 'function') {
+    populateGroupDropdown();
+  }
 
   const calendarEl = document.getElementById('calendar');
+  if (!calendarEl) return;
 
   calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'timeGridWeek',
@@ -450,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       },
 
-printWeekBtn: {
+      printWeekBtn: {
         text: '🖨️ Skriv ut uke',
         click: function() {
           const originalView = calendar.view.type;
@@ -540,7 +543,8 @@ printWeekBtn: {
             }, 300);
           });
         }
-      },
+      }
+    },
 
     headerToolbar: {
       left: 'prev,next today toggleWeekend',
@@ -554,10 +558,12 @@ printWeekBtn: {
     slotDuration: '00:30:00',
 
     datesSet: function(info) {
-      miniCalCurrentDate = new Date(info.view.currentStart);
-      renderMiniCalendar();
+      if (typeof miniCalCurrentDate !== 'undefined') {
+        miniCalCurrentDate = new Date(info.view.currentStart);
+      }
+      if (typeof renderMiniCalendar === 'function') renderMiniCalendar();
       
-      if (calendar) {
+      if (calendar && typeof formatDate === 'function' && typeof highlightDateInHeader === 'function') {
         const currentSelectedStr = formatDate(calendar.getDate());
         setTimeout(() => {
           highlightDateInHeader(currentSelectedStr);
@@ -589,9 +595,10 @@ printWeekBtn: {
     },
     
     dayCellClassNames: function(arg) {
+      if (typeof formatDate !== 'function') return [];
       const dateStr = formatDate(arg.date);
-      if (redDateSet.has(dateStr)) return ['day-red-day'];
-      if (offDateSet.has(dateStr)) return ['day-off-day'];
+      if (typeof redDateSet !== 'undefined' && redDateSet.has(dateStr)) return ['day-red-day'];
+      if (typeof offDateSet !== 'undefined' && offDateSet.has(dateStr)) return ['day-off-day'];
       return [];
     },
 
@@ -603,17 +610,18 @@ printWeekBtn: {
 
     select: function(info) {
       currentSelection = info;
-      hideContextMenu();
-      showSelectionPopover(info.jsEvent);
+      if (typeof hideContextMenu === 'function') hideContextMenu();
+      if (typeof showSelectionPopover === 'function') showSelectionPopover(info.jsEvent);
     },
 
     unselect: function() {
-      hideContextMenu();
+      if (typeof hideContextMenu === 'function') hideContextMenu();
     },
 
     eventClick: function(info) {
-      hideContextMenu();
-      hideSelectionPopover();
+      if (typeof hideContextMenu === 'function') hideContextMenu();
+      if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
+
       activeEvent = {
         id: info.event.id,
         title: info.event.extendedProps.rawTitle || info.event.title,
@@ -628,36 +636,44 @@ printWeekBtn: {
         isSchoolRoute: info.event.extendedProps.isSchoolRoute || false
       };
 
-      document.getElementById('viewTitle').textContent = activeEvent.title;
-      document.getElementById('viewGroup').textContent = activeEvent.group;
+      const viewTitle = document.getElementById('viewTitle');
+      const viewGroup = document.getElementById('viewGroup');
+      const viewTime = document.getElementById('viewTime');
+      const viewDescription = document.getElementById('viewDescription');
+
+      if (viewTitle) viewTitle.textContent = activeEvent.title;
+      if (viewGroup) viewGroup.textContent = activeEvent.group;
       
-      let timeText = formatNorwegianDate(activeEvent.startDate);
+      let timeText = typeof formatNorwegianDate === 'function' ? formatNorwegianDate(activeEvent.startDate) : activeEvent.startDate;
       if (activeEvent.startTime) timeText += ` kl. ${activeEvent.startTime}`;
       if (activeEvent.endTime) timeText += ` - ${activeEvent.endTime}`;
       if (activeEvent.endDate && activeEvent.endDate !== activeEvent.startDate) {
-        timeText += ` til ${formatNorwegianDate(activeEvent.endDate)}`;
+        timeText += ` til ${typeof formatNorwegianDate === 'function' ? formatNorwegianDate(activeEvent.endDate) : activeEvent.endDate}`;
       }
-      document.getElementById('viewTime').textContent = timeText;
+      if (viewTime) viewTime.textContent = timeText;
 
       const recurringRow = document.getElementById('viewRecurringRow');
-      if (activeEvent.repeatPattern && repeatLabels[activeEvent.repeatPattern]) {
-        document.getElementById('viewRecurring').textContent = `🔁 ${repeatLabels[activeEvent.repeatPattern]}`;
-        recurringRow.style.display = 'block';
-      } else {
-        recurringRow.style.display = 'none';
+      const viewRecurring = document.getElementById('viewRecurring');
+      if (recurringRow && viewRecurring) {
+        if (activeEvent.repeatPattern && typeof repeatLabels !== 'undefined' && repeatLabels[activeEvent.repeatPattern]) {
+          viewRecurring.textContent = `🔁 ${repeatLabels[activeEvent.repeatPattern]}`;
+          recurringRow.style.display = 'block';
+        } else {
+          recurringRow.style.display = 'none';
+        }
       }
 
-      document.getElementById('viewDescription').textContent = activeEvent.description || "Ingen beskrivelse oppgitt.";
+      if (viewDescription) viewDescription.textContent = activeEvent.description || "Ingen beskrivelse oppgitt.";
 
-      showViewMode();
+      if (typeof showViewMode === 'function') showViewMode();
     },
 
     events: []
   });
 
   calendar.render();
-  renderFilters();
-  renderMiniCalendar();
+  if (typeof renderFilters === 'function') renderFilters();
+  if (typeof renderMiniCalendar === 'function') renderMiniCalendar();
 
   // Tvinger hendelsene inn i kalenderen ved oppstart
   if (typeof updateCalendarEvents === 'function') {
@@ -686,54 +702,70 @@ printWeekBtn: {
   }
 
   calendarEl.addEventListener('contextmenu', (e) => {
-    if (currentSelection) {
+    if (typeof currentSelection !== 'undefined' && currentSelection) {
       e.preventDefault();
       
+      const menu = document.getElementById('contextMenu');
+      if (!menu) return;
+
       const rect = calendarEl.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
-      contextMenu.style.left = `${x}px`;
-      contextMenu.style.top = `${y}px`;
-      contextMenu.style.display = 'block';
+      menu.style.left = `${x}px`;
+      menu.style.top = `${y}px`;
+      menu.style.display = 'block';
     }
   });
 
   document.addEventListener('click', (e) => {
     const popover = document.getElementById('selectionPopover');
+    const menu = document.getElementById('contextMenu');
     
-    if (contextMenu && !contextMenu.contains(e.target)) {
+    if (menu && !menu.contains(e.target) && typeof hideContextMenu === 'function') {
       hideContextMenu();
     }
 
-    if (popover && !popover.contains(e.target) && !e.target.closest('.fc')) {
+    if (popover && !popover.contains(e.target) && !e.target.closest('.fc') && typeof hideSelectionPopover === 'function') {
       hideSelectionPopover();
     }
   });
 
-  document.getElementById('menuNewEvent').addEventListener('click', () => {
-    populateFormFromSelection();
-    showFormMode("Ny avtale", false);
-  });
+  const menuNewEvent = document.getElementById('menuNewEvent');
+  if (menuNewEvent) {
+    menuNewEvent.addEventListener('click', () => {
+      if (typeof populateFormFromSelection === 'function') populateFormFromSelection();
+      if (typeof showFormMode === 'function') showFormMode("Ny avtale", false);
+    });
+  }
 
-  document.getElementById('menuNewRecurringEvent').addEventListener('click', () => {
-    populateFormFromSelection();
-    showFormMode("Ny regelmessig avtale", true);
-  });
+  const menuNewRecurringEvent = document.getElementById('menuNewRecurringEvent');
+  if (menuNewRecurringEvent) {
+    menuNewRecurringEvent.addEventListener('click', () => {
+      if (typeof populateFormFromSelection === 'function') populateFormFromSelection();
+      if (typeof showFormMode === 'function') showFormMode("Ny regelmessig avtale", true);
+    });
+  }
 
-  document.getElementById('btnQuickNewEvent').addEventListener('click', (e) => {
-    e.stopPropagation();
-    hideSelectionPopover();
-    populateFormFromSelection();
-    showFormMode("Ny avtale", false);
-  });
+  const btnQuickNewEvent = document.getElementById('btnQuickNewEvent');
+  if (btnQuickNewEvent) {
+    btnQuickNewEvent.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
+      if (typeof populateFormFromSelection === 'function') populateFormFromSelection();
+      if (typeof showFormMode === 'function') showFormMode("Ny avtale", false);
+    });
+  }
 
-  document.getElementById('btnQuickNewRecurring').addEventListener('click', (e) => {
-    e.stopPropagation();
-    hideSelectionPopover();
-    populateFormFromSelection();
-    showFormMode("Ny regelmessig avtale", true);
-  });
+  const btnQuickNewRecurring = document.getElementById('btnQuickNewRecurring');
+  if (btnQuickNewRecurring) {
+    btnQuickNewRecurring.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
+      if (typeof populateFormFromSelection === 'function') populateFormFromSelection();
+      if (typeof showFormMode === 'function') showFormMode("Ny regelmessig avtale", true);
+    });
+  }
 
 });
 
