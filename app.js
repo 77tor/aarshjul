@@ -583,9 +583,9 @@ document.addEventListener('DOMContentLoaded', () => {
     locale: 'no',
     firstDay: 1,
     scrollTime: '08:00:00',
-    slotDuration: '00:30:00',
+    slotDuration: '00:30:00', // <-- Komma må være her!
 
-datesSet: function(info) {
+    datesSet: function(info) {
       if (typeof miniCalCurrentDate !== 'undefined') {
         miniCalCurrentDate = new Date(info.view.currentStart);
       }
@@ -805,6 +805,8 @@ datesSet: function(info) {
 
 // Firestore Realtime Lytter
 onSnapshot(eventsRef, (snapshot) => {
+  const colors = (typeof categoryColors !== 'undefined') ? categoryColors : {};
+
   rawEvents = snapshot.docs.map(doc => {
     const data = doc.data();
     
@@ -814,16 +816,20 @@ onSnapshot(eventsRef, (snapshot) => {
     let endIso = data.endDate || data.startDate;
     if (data.endTime) endIso += `T${data.endTime}`;
 
+    const isAllDay = !data.startTime;
     const isRecurring = Boolean(data.repeatPattern || data.recurringSeriesId);
     const iconPrefix = isRecurring ? "🔁 " : "";
+    const color = colors[data.group] || '#3788d8';
 
     return {
       id: doc.id,
       title: `${iconPrefix}[${data.group}] ${data.title}`,
       start: startIso,
-      end: endIso,
-      backgroundColor: categoryColors[data.group] || '#3788d8',
-      borderColor: categoryColors[data.group] || '#3788d8',
+      // Hvis heledagshendelse på samme dag, dropp 'end' så FullCalendar viser den riktig
+      end: (isAllDay && endIso === data.startDate) ? undefined : endIso,
+      allDay: isAllDay,
+      backgroundColor: color,
+      borderColor: color,
       extendedProps: { 
         group: data.group,
         rawTitle: data.title,
@@ -834,11 +840,14 @@ onSnapshot(eventsRef, (snapshot) => {
         description: data.description || '',
         repeatPattern: data.repeatPattern || null,
         recurringSeriesId: data.recurringSeriesId || null,
-        trinn: Array.isArray(data.trinn) ? data.trinn : [] // Støtte for trinn-array i Firestore
+        trinn: Array.isArray(data.trinn) ? data.trinn : []
       }
     };
   });
-  updateCalendarEvents();
+
+  if (typeof updateCalendarEvents === 'function') {
+    updateCalendarEvents();
+  }
 });
 
 // <-- BRUK DENNE UTGAVEN:
