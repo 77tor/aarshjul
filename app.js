@@ -431,14 +431,21 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     },
 
-    customButtons: {
-      // --- NYTT: Knapp for å veksle mellom å vise/skjule helg ---
+customButtons: {
       toggleWeekend: {
         text: 'Vis helg',
-        click: function() {
+        click: function(mouseEvent, htmlElement) {
           const showWeekends = calendar.getOption('weekends');
+          
+          // Veksle status i kalenderen
           calendar.setOption('weekends', !showWeekends);
-          this.innerText = showWeekends ? 'Vis helg' : 'Skjul helg';
+          
+          // Finn selve knappe-elementet presist
+          const btn = htmlElement || mouseEvent.currentTarget;
+          if (btn) {
+            // Bruk textContent i stedet for innerText, og sett kun riktig tekst
+            btn.textContent = showWeekends ? 'Vis helg' : 'Skjul helg';
+          }
         }
       },
       printWeekBtn: {
