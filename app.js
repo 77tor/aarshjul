@@ -963,7 +963,7 @@ function checkSingleCategorySelection() {
 }
 
 
-// Lytter på utskriftsknappen for valgt kategori (Med trinn-filtrering for svømming/DKS)
+// Lytter på utskriftsknappen for valgt kategori (Eksakt trinn-mating for svømming og DKS)
 document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (selectedCategories.length !== 1) return;
 
@@ -980,35 +980,44 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   calendar.changeView('schoolYearList');
   calendar.gotoDate(schoolYearStart);
 
-  // 3. Sjekk om valgt kategori er et trinn (f.eks. "1. trinn", "4. trinn")
+  // 3. Identifiser om vi skrives ut for et trinn (1–7)
   const trinnMatch = selectedCategory.match(/^(\d+)\.\s*trinn/i);
   const selectedTrinnNum = trinnMatch ? trinnMatch[1] : null;
 
-  // Hjelpefunksjon for å verifisere at en svømme/DKS-hendelse faktisk tilhører valgt trinn
-  const matchesTrinnText = (event) => {
-    if (!selectedTrinnNum) return true; // Hvis det ikke er et trinn som skrives ut, behold alt
-    
-    // Hvis hendelsen allerede er merket direkte med kategorien (f.eks. "4. trinn")
-    if (isEventInSelectedCategories(event)) return true;
+  // Presis sjekk for om en Svømme- eller DKS-hendelse faktisk tilhører valgt trinn
+  const isEventMatchingTrinn = (event) => {
+    if (!selectedTrinnNum) return true; // Ikke utskrift for et spesifikt trinn
 
     const title = (event.title || '').toLowerCase();
     
-    // Regex som matcher tallet etterfulgt av 'a', 'b', 'c', 'trinn' eller i en parentes/tekst (f.eks. "7a", "3c", "2a-b")
-    const trinnRegex = new RegExp(`\\b${selectedTrinnNum}([a-c]|\\.||\\s*trinn|\\s*a-b|\\s*b-c)\\b`, 'i');
-    return trinnRegex.test(title);
+    // Sjekk om tittelen explicit nevner det valgte trinnet (f.eks. "1a", "1b", "1c", "1a-b", "1. trinn")
+    // Eksempler på match for 1. trinn: "1a", "1b", "1.trinn", "1a-b", " 1 "
+    const currentTrinnRegex = new RegExp(`(?:\\b|\\s|\\()${selectedTrinnNum}(?:[a-c]|\\.||\\s*trinn|\\s*a-b|\\s*b-c)?(?:\\b|\\s|\\))`, 'i');
+    
+    // Hvis tittelen matcher det valgte trinnet, godkjenn
+    if (currentTrinnRegex.test(title)) {
+      return true;
+    }
+
+    // Hvis tittelen nevner ET ANNET trinn (f.eks. 2, 3, 4, 5, 6, 7), skal den AVVISES
+    const otherTrinnRegex = /(?:\b|\s|\()(1|2|3|4|5|6|7)(?:[a-c]|\.|\s*trinn|\s*a-b|\s*b-c)?(?:\b|\s|\))/i;
+    const matchOther = title.match(otherTrinnRegex);
+    
+    if (matchOther && matchOther[1] !== selectedTrinnNum) {
+      return false; // Tilhører et annet trinn
+    }
+
+    // Sjekk om kategorifeltet på selve eventet har direkte referanse til valgt trinn
+    return isEventInSelectedCategories(event);
   };
 
-  // 4. Hent og filtrer hendelser basert på kategori OG tekstmatch for trinn
+  // 4. Hent og filtrer hendelser
   const filteredUserEvents = rawEvents.filter(event => isEventInSelectedCategories(event));
   const filteredFellesEvents = (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
   
-  // Svømming og DKS sjekkes ekstra godt dersom vi printer ut for et trinn
-  const filteredDksEvents = (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []).filter(event => 
-    isEventInSelectedCategories(event) || matchesTrinnText(event)
-  );
-  const filteredSvommeEvents = (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []).filter(event => 
-    isEventInSelectedCategories(event) || matchesTrinnText(event)
-  );
+  // Svømming og DKS filtreres med den strengere trinn-sjekken
+  const filteredDksEvents = (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []).filter(event => isEventMatchingTrinn(event));
+  const filteredSvommeEvents = (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []).filter(event => isEventMatchingTrinn(event));
 
   const allRawEvents = [
     ...filteredFellesEvents, 
@@ -1026,8 +1035,6 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
     const rawTitle = (evt.title || evt.extendedProps?.rawTitle || '').trim();
     if (!rawTitle) return;
 
-    // Hvis kun Fellesaktiviteter: Slå sammen på tittel.
-    // Ellers: Unik nøkkel basert på tittel og startdato.
     const evtStart = new Date(evt.start);
     const evtEnd = evt.end ? new Date(evt.end) : evtStart;
 
@@ -1053,7 +1060,7 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   // Sorter kronologisk etter startdato
   const sortedItems = Array.from(consolidatedMap.values()).sort((a, b) => a.minStart - b.minStart);
 
-  // 5. Bygg kompakte rader uten dupliseringer
+  // 5. Bygg kompakte rader (1 linje per aktivitet)
   const singleRowEvents = sortedItems.map((item, index) => {
     const startStr = item.minStart.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
     const endStr = item.maxEnd.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
