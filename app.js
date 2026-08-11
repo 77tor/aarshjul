@@ -448,48 +448,70 @@ customButtons: {
           }
         }
       },
-      printWeekBtn: {
-        text: '🖨️ Skriv ut uke',
-        click: function() {
-          const originalView = calendar.view.type;
+printWeekBtn: {
+  text: '🖨️ Skriv ut uke',
+  click: function() {
+    const originalView = calendar.view.type;
 
-          calendar.changeView('listWeek');
+    // Bytt til listevisning for uken
+    calendar.changeView('listWeek');
 
-          const view = calendar.view;
-          const start = view.currentStart;
-          const end = new Date(view.currentEnd.getTime() - 1);
+    const view = calendar.view;
+    const start = view.currentStart;
+    const end = new Date(view.currentEnd.getTime() - 1);
 
-          const target = new Date(start.valueOf());
-          const dayNr = (start.getDay() + 6) % 7;
-          target.setDate(target.getDate() - dayNr + 3);
-          const firstThursday = target.valueOf();
-          target.setMonth(0, 1);
-          if (target.getDay() !== 4) {
-            target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
+    // Beregn ISO-ukenummer
+    const target = new Date(start.valueOf());
+    const dayNr = (start.getDay() + 6) % 7;
+    target.setDate(target.getDate() - dayNr + 3);
+    const firstThursday = target.valueOf();
+    target.setMonth(0, 1);
+    if (target.getDay() !== 4) {
+      target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
+    }
+    const weekNum = 1 + Math.ceil((firstThursday - target) / 604800000);
+
+    const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+    const startStr = start.toLocaleDateString('no-NO', options);
+    const endStr = end.toLocaleDateString('no-NO', options);
+
+    const titleEl = document.getElementById('printTitle');
+    const subTitleEl = document.getElementById('printSubTitle');
+    if (titleEl) titleEl.textContent = `Ukeplan – Uke ${weekNum}`;
+    if (subTitleEl) subTitleEl.textContent = `${startStr} – ${endStr}`;
+
+    if (typeof hideContextMenu === 'function') hideContextMenu();
+    if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
+
+    // Sørg for at FullCalendar har bygget listen før vi rydder duplikater
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        // --- FJERN DUPLIKATER FRA NORD-TIL-SØR I LISTEN ---
+        const eventRows = document.querySelectorAll('.fc-list-event');
+        const seenTitles = new Set();
+
+        eventRows.forEach(row => {
+          const titleText = row.querySelector('.fc-list-event-title')?.textContent?.trim();
+          
+          if (titleText) {
+            if (seenTitles.has(titleText)) {
+              // Hvis vi har sett denne tittelen før i ukeutskriften, skjul raden
+              row.style.display = 'none';
+            } else {
+              seenTitles.add(titleText);
+            }
           }
-          const weekNum = 1 + Math.ceil((firstThursday - target) / 604800000);
+        });
 
-          const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
-          const startStr = start.toLocaleDateString('no-NO', options);
-          const endStr = end.toLocaleDateString('no-NO', options);
+        // Kjør utskrift dialog
+        window.print();
 
-          const titleEl = document.getElementById('printTitle');
-          const subTitleEl = document.getElementById('printSubTitle');
-          if (titleEl) titleEl.textContent = `Ukeplan – Uke ${weekNum}`;
-          if (subTitleEl) subTitleEl.textContent = `${startStr} – ${endStr}`;
-
-          if (typeof hideContextMenu === 'function') hideContextMenu();
-          if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
-
-          requestAnimationFrame(() => {
-            setTimeout(() => {
-              window.print();
-              calendar.changeView(originalView);
-            }, 300);
-          });
-        }
-      }
-    },
+        // Tilbakekall opprinnelig visning etter utskrift
+        calendar.changeView(originalView);
+      }, 300);
+    });
+  }
+}
 
     headerToolbar: {
       // Lagt til toggleWeekend i venstremenyen ved siden av 'today'
