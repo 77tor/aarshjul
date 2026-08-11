@@ -12,39 +12,8 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .mini-cal-header { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; }
 .mini-cal-header button { background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
 .mini-cal-header button:hover { background-color: #e2e8f0; }
-
-/* Endret til 8 kolonner: 26px for ukenummer + 7 like dags-kolonner */
-.mini-cal-grid { 
-  display: grid; 
-  grid-template-columns: 26px repeat(7, 1fr); 
-  gap: 2px; 
-  text-align: center; 
-  font-size: 0.75rem; 
-}
-
+.mini-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; font-size: 0.75rem; }
 .mini-day-name { font-weight: 600; color: #64748b; padding: 4px 0; }
-
-/* Styling for ukenummer-overskriften (#) */
-.mini-week-header {
-  color: #94a3b8;
-  border-right: 1px solid #cbd5e1;
-  padding-right: 2px;
-}
-
-/* Styling for ukenumrene i venstre kolonne */
-.mini-week-num {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #64748b;
-  padding: 6px 0;
-  border-right: 1px solid #cbd5e1; /* Vertikal skillelinje som i Outlook */
-  margin-right: 2px;
-  user-select: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .mini-day-cell { padding: 6px 0; border-radius: 4px; cursor: pointer; color: #334155; }
 .mini-day-cell:hover { background-color: #e2e8f0; }
 .mini-day-cell.other-month { color: #cbd5e1; }
@@ -101,7 +70,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 @media print {
   @page { 
     size: A4 portrait; 
-    margin: 8mm 10mm; 
+    margin: 10mm; 
   }
 
   html, body { 
@@ -120,121 +89,83 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
   .popover, 
   .context-menu, 
   .modal-overlay,
-  .modal,
   #selectionPopover, 
-  #contextMenu,
-  #eventModal { 
+  #contextMenu { 
     display: none !important; 
-    height: 0 !important;
-    width: 0 !important;
-    overflow: hidden !important;
   }
 
-  /* Tving alt innhold i en ryddig vertikal rekkefølge */
   .app-layout, 
   .main-content { 
-    display: flex !important; 
-    flex-direction: column !important;
+    display: block !important; 
     padding: 0 !important; 
     margin: 0 !important; 
     width: 100% !important; 
     height: auto !important; 
-    min-height: 0 !important;
     overflow: visible !important; 
   }
 
-  /* Utskriftsoverskrift øverst */
+  /* Kompakt overskrift */
   #printHeader { 
     display: block !important; 
-    position: relative !important;
-    z-index: 9999 !important;
     text-align: center; 
     border-bottom: 2px solid #0f172a; 
     padding-bottom: 4px; 
-    margin-bottom: 12px !important; 
-    background: #ffffff !important;
+    margin-bottom: 12px; 
   }
 
   #printTitle { 
     margin: 0; 
-    font-size: 15pt; 
+    font-size: 16pt; 
     font-weight: 800; 
     color: #0f172a; 
   }
 
   #printSubTitle { 
     margin: 2px 0 0 0; 
-    font-size: 8.5pt; 
+    font-size: 9pt; 
     color: #64748b; 
   }
 
-  /* FullCalendar tilpasset utskrift */
   #calendar, .fc { 
     display: block !important; 
-    position: relative !important;
     width: 100% !important; 
     height: auto !important; 
     box-shadow: none !important; 
     border: none !important; 
     padding: 0 !important; 
-    margin: 0 !important;
   }
 
-  .fc-view-harness,
-  .fc-view-harness-active,
   .fc-scroller, 
   .fc-scroller-liquid-absolute,
   .fc-scroller-harness { 
-    display: block !important;
     height: auto !important; 
     max-height: none !important; 
     overflow: visible !important; 
     position: static !important; 
   }
 
-  /* Tabelloppsett */
+  /* SKJUL egne datorader fra FullCalendar for å spare plass */
+  .fc-list-day { 
+    display: none !important; 
+  }
+
+  /* Tett og kompakt tabelloppsett */
   .fc-list-table { 
     width: 100% !important; 
     border-collapse: collapse !important; 
-    margin: 0 !important;
   }
 
-  /* --- KUN DE GRÅ DATORADENE GJØRES KOMPAKTE --- */
-  .fc-list-day { 
-    display: table-row !important; 
-    background-color: #f1f5f9 !important;
-  }
-
-  .fc-list-day th,
-  .fc-list-day td,
-  .fc-list-day-cushion {
-    padding: 2px 6px !important; /* Smalere høyde på de grå feltene */
-    line-height: 1.1 !important;
-  }
-
-  .fc-list-day-text, 
-  .fc-list-day-side-text {
-    font-size: 8.5pt !important;
-    font-weight: 700 !important;
-    color: #0f172a !important;
-  }
-
-  /* --- ORDINÆRE HENDELSER (Trinn, DKS, Svømming osv.) BEHOLDES SOM FØR --- */
   .fc-list-event { 
     font-size: 8.5pt !important; 
     border-bottom: 1px solid #e2e8f0 !important; 
   }
 
   .fc-list-event td { 
-    padding: 3px 4px !important; 
+    padding: 3px 6px !important; 
   }
 
   .fc-list-event-time { 
-    display: table-cell !important; 
-    font-size: 8pt !important;
-    white-space: nowrap !important;
-    width: 110px !important;
-    color: #475569 !important;
+    display: none !important; /* Tidspunkt er bakdatiert i tittelen */
   }
 
   .fc-list-event-graphic { 
@@ -242,7 +173,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
   }
 
   .fc-list-event-dot { 
-    border-width: 3.5px !important; 
+    border-width: 4px !important; 
   }
 
   .fc-list-event-title { 
