@@ -281,6 +281,16 @@ function highlightDateInHeader(selectedDateStr) {
   }
 }
 
+
+// Hjelpefunksjon for å beregne ISO-ukenummer
+function getISOWeekNumber(d) {
+  const date = new Date(d.getTime());
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+  const week1 = new Date(date.getFullYear(), 0, 4);
+  return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+}
+
 function renderMiniCalendar() {
   const grid = document.getElementById('miniCalGrid');
   const title = document.getElementById('miniCalTitle');
@@ -292,10 +302,11 @@ function renderMiniCalendar() {
 
   title.textContent = `${monthNamesNorwegian[month]} ${year}`;
 
-  const dayHeaders = ['M', 'T', 'O', 'T', 'F', 'L', 'S'];
-  dayHeaders.forEach(dh => {
+  // 1. Overskrifter: Ekstra `#` i starten for ukenummer-kolonnen
+  const dayHeaders = ['#', 'M', 'T', 'O', 'T', 'F', 'L', 'S'];
+  dayHeaders.forEach((dh, index) => {
     const div = document.createElement('div');
-    div.className = 'mini-day-name';
+    div.className = index === 0 ? 'mini-day-name mini-week-header' : 'mini-day-name';
     div.textContent = dh;
     grid.appendChild(div);
   });
@@ -310,45 +321,80 @@ function renderMiniCalendar() {
   const todayStr = formatDate(new Date());
   const selectedStr = calendar ? formatDate(calendar.getDate()) : todayStr;
 
+  // Samle alle dagene som skal inn i rutenettet (forrige mnd, denne mnd, neste mnd)
+  const allDays = [];
+
+  // Dager fra forrige måned
   for (let i = startingDay - 1; i >= 0; i--) {
     const dayNum = prevMonthDays - i;
-    const div = document.createElement('div');
-    div.className = 'mini-day-cell other-month';
-    div.textContent = dayNum;
-    grid.appendChild(div);
+    const dateObj = new Date(year, month - 1, dayNum);
+    allDays.push({ dayNum, type: 'other-month', dateObj });
   }
 
+  // Dager fra denne måneden
   for (let day = 1; day <= daysInMonth; day++) {
-    const div = document.createElement('div');
-    div.className = 'mini-day-cell';
-    div.textContent = day;
-
     const dateObj = new Date(year, month, day);
-    const dateStr = formatDate(dateObj);
+    allDays.push({ dayNum: day, type: 'current', dateObj });
+  }
 
-    if (dateStr === todayStr) div.classList.add('today');
-    if (dateStr === selectedStr) div.classList.add('selected-day');
+  // Fyll ut med neste måneds dager slik at alle uker (rader) blir komplette (multipler av 7)
+  let nextMonthDay = 1;
+  while (allDays.length % 7 !== 0) {
+    const dateObj = new Date(year, month + 1, nextMonthDay);
+    allDays.push({ dayNum: nextMonthDay, type: 'other-month', dateObj });
+    nextMonthDay++;
+  }
 
-    if (redDateSet.has(dateStr) || dateObj.getDay() === 0) {
-      div.classList.add('red-day');
-    } else if (offDateSet.has(dateStr)) {
-      div.classList.add('off-day');
-    }
+  // 2. Bygg rutenettet uke for uke (7 dager av gangen)
+  for (let i = 0; i < allDays.length; i += 7) {
+    const weekDays = allDays.slice(i, i + 7);
+    
+    // Beregn ukenummer ut fra mandagen i denne uken (første element i uken)
+    const mondayDate = weekDays[0].dateObj;
+    const weekNum = getISOWeekNumber(mondayDate);
 
-    div.addEventListener('click', () => {
-      if (calendar) {
-        calendar.gotoDate(dateObj);
-        renderMiniCalendar();
-        
-        setTimeout(() => {
-          highlightDateInHeader(dateStr);
-        }, 50);
+    // Legg til ukenummer-celle helt først i raden
+    const weekDiv = document.createElement('div');
+    weekDiv.className = 'mini-week-num';
+    weekDiv.textContent = weekNum;
+    grid.appendChild(weekDiv);
+
+    // Legg til de 7 dagene for denne uken
+    weekDays.forEach(item => {
+      const div = document.createElement('div');
+      div.textContent = item.dayNum;
+
+      if (item.type === 'other-month') {
+        div.className = 'mini-day-cell other-month';
+      } else {
+        div.className = 'mini-day-cell';
+        const dateStr = formatDate(item.dateObj);
+
+        if (dateStr === todayStr) div.classList.add('today');
+        if (dateStr === selectedStr) div.classList.add('selected-day');
+
+        if (redDateSet.has(dateStr) || item.dateObj.getDay() === 0) {
+          div.classList.add('red-day');
+        } else if (offDateSet.has(dateStr)) {
+          div.classList.add('off-day');
+        }
+
+        div.addEventListener('click', () => {
+          if (calendar) {
+            calendar.gotoDate(item.dateObj);
+            renderMiniCalendar();
+            
+            setTimeout(() => {
+              highlightDateInHeader(dateStr);
+            }, 50);
+          }
+        });
       }
+      grid.appendChild(div);
     });
-
-    grid.appendChild(div);
   }
 }
+
 
 document.getElementById('miniPrevBtn').addEventListener('click', () => {
   miniCalCurrentDate.setMonth(miniCalCurrentDate.getMonth() - 1);

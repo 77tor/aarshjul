@@ -12,8 +12,39 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .mini-cal-header { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; }
 .mini-cal-header button { background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
 .mini-cal-header button:hover { background-color: #e2e8f0; }
-.mini-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; font-size: 0.75rem; }
+
+/* Endret til 8 kolonner: 26px for ukenummer + 7 like dags-kolonner */
+.mini-cal-grid { 
+  display: grid; 
+  grid-template-columns: 26px repeat(7, 1fr); 
+  gap: 2px; 
+  text-align: center; 
+  font-size: 0.75rem; 
+}
+
 .mini-day-name { font-weight: 600; color: #64748b; padding: 4px 0; }
+
+/* Styling for ukenummer-overskriften (#) */
+.mini-week-header {
+  color: #94a3b8;
+  border-right: 1px solid #cbd5e1;
+  padding-right: 2px;
+}
+
+/* Styling for ukenumrene i venstre kolonne */
+.mini-week-num {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #64748b;
+  padding: 6px 0;
+  border-right: 1px solid #cbd5e1; /* Vertikal skillelinje som i Outlook */
+  margin-right: 2px;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .mini-day-cell { padding: 6px 0; border-radius: 4px; cursor: pointer; color: #334155; }
 .mini-day-cell:hover { background-color: #e2e8f0; }
 .mini-day-cell.other-month { color: #cbd5e1; }
