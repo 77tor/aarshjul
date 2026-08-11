@@ -175,21 +175,9 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     position: static !important; 
   }
 
-  /* Kompakte og ryddige datorader */
+  /* SKJUL egne datorader fra FullCalendar for å spare plass */
   .fc-list-day { 
-    display: table-row !important; 
-    background-color: #f1f5f9 !important;
-  }
-
-  .fc-list-day-cushion {
-    padding: 2px 6px !important;
-  }
-
-  .fc-list-day-text, 
-  .fc-list-day-side-text {
-    font-size: 8.5pt !important;
-    font-weight: 700 !important;
-    color: #0f172a !important;
+    display: none !important; 
   }
 
   /* Tett og kompakt tabelloppsett */
@@ -207,13 +195,8 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     padding: 3px 6px !important; 
   }
 
-  /* KORRIGERT: Vis klokkeslett-kolonnen igjen */
   .fc-list-event-time { 
-    display: table-cell !important; 
-    font-size: 8pt !important;
-    white-space: nowrap !important;
-    width: 110px !important;
-    color: #475569 !important;
+    display: none !important; /* Tidspunkt er bakdatiert i tittelen */
   }
 
   .fc-list-event-graphic { 
