@@ -1132,11 +1132,14 @@ function getCategoryColor(groupName) {
   return categoryColors[matchedKey] || categoryColors[groupName] || '#3788d8';
 }
 
+
 // Sjekker om en hendelse tilhører de valgte kategoriene
 function isEventInSelectedCategories(event) {
   if (!selectedCategories || selectedCategories.length === 0) return false;
 
   const rawGroup = (event.extendedProps?.group || event.group || '').trim();
+  
+  // Sørger for at "kartlegging" og "kartlegginger" blir behandlet likt i categoryAliases
   const mappedGroup = (categoryAliases[rawGroup.toLowerCase()] || rawGroup).toLowerCase();
   
   const trinnArray = event.extendedProps?.trinn || event.trinn || [];
@@ -1148,8 +1151,14 @@ function isEventInSelectedCategories(event) {
     const catLower = cat.toLowerCase().trim();
     const isTrinnCategory = catLower.endsWith('. trinn');
 
-    // 1. Direkte match på Kategori/Gruppe (f.eks. "Fellesaktiviteter" eller "Svømming")
+    // 1. Direkte match på Kategori/Gruppe (f.eks. "Fellesaktiviteter", "Svømming" eller "Kartlegginger")
     if (mappedGroup === catLower) {
+      return true;
+    }
+
+    // SPESIALHÅNDTERING: Entall vs. flertall for Kartlegging(er)
+    if ((mappedGroup === 'kartlegging' || mappedGroup === 'kartlegginger') && 
+        (catLower === 'kartlegging' || catLower === 'kartlegginger')) {
       return true;
     }
 
