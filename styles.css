@@ -3,9 +3,15 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 
 /* Layout */
 .app-layout { display: flex; height: 100vh; overflow: hidden; }
-.sidebar { width: 280px; background-color: #ffffff; border-right: 1px solid #e2e8f0; padding: 20px; display: flex; flex-direction: column; gap: 24px; overflow-y: auto; }
+.sidebar { width: 280px; background-color: #ffffff; border-right: 1px solid #e2e8f0; padding: 20px; display: flex; flex-direction: column; gap: 24px; overflow-y: auto; flex-shrink: 0; }
 .sidebar-header h2 { font-size: 1.25rem; font-weight: 700; color: #0f172a; }
 .main-content { flex: 1; padding: 20px; overflow-y: auto; }
+
+/* Responsive layout for mindre skjermer */
+@media (max-width: 768px) {
+  .app-layout { flex-direction: column; height: auto; overflow: visible; }
+  .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e2e8f0; }
+}
 
 /* Mini-kalender */
 .mini-calendar { background: #f8fafc; border-radius: 8px; padding: 12px; border: 1px solid #e2e8f0; }
@@ -24,62 +30,11 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .mini-day-cell.red-day { color: #ef4444; font-weight: 600; }
 .mini-day-cell.off-day { color: #94a3b8; }
 
-/* Kategorifilter */
+/* Kategorifilter header og container */
 .filter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .filter-header h3 { font-size: 0.95rem; font-weight: 600; }
 .btn-text { background: none; border: none; color: #2563eb; font-size: 0.8rem; cursor: pointer; }
-.filter-list { display: flex; flex-direction: column; gap: 4px; }
-
-/* Rad-oppsett for hver kategori */
-.filter-item-vert {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 8px;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.filter-item-vert:hover {
-  background-color: #f1f5f9;
-}
-
-.filter-item-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.color-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  display: inline-block;
-  flex-shrink: 0;
-}
-
-/* Forstørrelsesglass-knapp (vises kun på hover) */
-.btn-category-preview {
-  background: none;
-  border: none;
-  font-size: 0.85rem;
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
-  opacity: 0;
-  transition: opacity 0.15s ease, background-color 0.15s ease, transform 0.1s ease;
-}
-
-.filter-item-vert:hover .btn-category-preview {
-  opacity: 1;
-}
-
-.btn-category-preview:hover {
-  background-color: #cbd5e1;
-  transform: scale(1.1);
-}
+.filter-list { display: flex; flex-direction: column; gap: 2px; }
 
 /* FullCalendar Tilpassinger */
 .fc { background: #ffffff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); height: 100%; }
@@ -130,7 +85,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 /* Stor modal for kategorivisning */
 .modal-large { max-width: 650px; }
 .category-events-list { display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow-y: auto; padding-right: 4px; }
-.category-event-card { padding: 10px 14px; border-radius: 6px; border-left: 4px solid #2563eb; background: #f8fafc; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
+.category-event-card { padding: 10px 14px; border-radius: 6px; border-left: 4px solid #2563eb; background: #f8fafc; border: 1px solid #e2e8f0; }
 .category-event-card .event-title { font-weight: 600; font-size: 0.95rem; color: #0f172a; margin-bottom: 2px; }
 .category-event-card .event-time { font-size: 0.8rem; color: #64748b; }
 .category-event-card .event-desc { font-size: 0.85rem; color: #334155; margin-top: 4px; white-space: pre-line; }
@@ -146,7 +101,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
   body.printing-category .category-events-list { max-height: none !important; overflow: visible !important; }
 }
 
-/* Utskriftstil */
+/* Utskriftstil for hovedkalender */
 .print-only-header { display: none; }
 
 @media print {
