@@ -501,7 +501,7 @@ export function getFellesaktiviteterSomEvents(skoleaar) {
 
       return {
         id: a.id,
-        title: `[Felles] ${a.tittel}`,
+        title: `🌟 Fellesaktiviteter ${a.tittel}`,
         start: start,
         end: end,
         allDay: true,
