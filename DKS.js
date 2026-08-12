@@ -376,7 +376,7 @@ export function getDKSAktiviteterSomEvents() {
 
     return {
       id: a.id,
-      title: `[DKS] ${a.tittel} (${a.deltakere})`,
+      title: `🎭 ${a.tittel} (${a.deltakere})`,
       start: `${a.dato}T${a.startTid}:00`,
       end: `${a.dato}T${a.sluttTid}:00`,
       allDay: false,
