@@ -951,7 +951,20 @@ document.addEventListener('DOMContentLoaded', () => {
       if (typeof showViewMode === 'function') showViewMode(activeEvent);
     },
 
-    events: []
+// ERSTATT events: [] MED DETTE:
+    events: function(fetchInfo, successCallback, failureCallback) {
+      if (typeof getCombinedEvents === 'function') {
+        const events = getCombinedEvents();
+        const filtered = typeof isEventInSelectedCategories === 'function' 
+          ? events.filter(isEventInSelectedCategories)
+          : events;
+        successCallback(filtered);
+      } else if (typeof allRawEvents !== 'undefined') {
+        successCallback(allRawEvents);
+      } else {
+        successCallback([]);
+      }
+    }
   });
 
   calendar.render();
