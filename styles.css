@@ -157,18 +157,25 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
   }
 
   /* =========================================================
-     MODUS 1: Utskrift av KATEGORIMODAL (Ren oppramsing)
+     MODUS 1: Utskrift av KATEGORIMODAL & UKEPLAN (Ren oppramsing)
      ========================================================= */
   body.printing-category .app-layout,
   body.printing-category .main-content,
   body.printing-category #calendar,
   body.printing-category .fc,
   body.printing-category #printHeader,
-  body.printing-category .modal-overlay:not(#categoryModal) {
+  body.printing-category .modal-overlay:not(#categoryModal),
+  body.printing-week .app-layout,
+  body.printing-week .main-content,
+  body.printing-week #calendar,
+  body.printing-week .fc,
+  body.printing-week #printHeader,
+  body.printing-week .modal-overlay:not(#categoryModal) {
     display: none !important;
   }
 
-  body.printing-category #categoryModal {
+  body.printing-category #categoryModal,
+  body.printing-week #categoryModal {
     display: block !important;
     position: static !important;
     background: none !important;
@@ -176,7 +183,8 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     margin: 0 !important;
   }
 
-  body.printing-category #categoryModal .modal-card {
+  body.printing-category #categoryModal .modal-card,
+  body.printing-week #categoryModal .modal-card {
     max-width: 100% !important;
     width: 100% !important;
     box-shadow: none !important;
@@ -185,13 +193,15 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     background: transparent !important;
   }
 
-  body.printing-category #categoryModal .modal-header {
+  body.printing-category #categoryModal .modal-header,
+  body.printing-week #categoryModal .modal-header {
     border-bottom: 1.5px solid #0f172a !important;
     padding: 0 0 2px 0 !important;
     margin-bottom: 4px !important;
   }
 
-body.printing-category #categoryModalTitle {
+  body.printing-category #categoryModalTitle,
+  body.printing-week #categoryModalTitle {
     font-size: 14pt !important;
     font-weight: 800 !important;
     color: #0f172a !important;
@@ -201,7 +211,8 @@ body.printing-category #categoryModalTitle {
   }
 
   /* Liste-visning for oppramsing */
-  body.printing-category .category-events-list {
+  body.printing-category .category-events-list,
+  body.printing-week .category-events-list {
     display: flex !important;
     flex-direction: column !important;
     gap: 1px !important;
@@ -210,7 +221,8 @@ body.printing-category #categoryModalTitle {
   }
 
   /* Hvert enkelt kort i den oppramsede lista */
-body.printing-category .category-event-card {
+  body.printing-category .category-event-card,
+  body.printing-week .category-event-card {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     background: #ffffff !important;
@@ -225,14 +237,16 @@ body.printing-category .category-event-card {
     gap: 8px !important;
   }
 
-body.printing-category .category-event-card .event-title {
+  body.printing-category .category-event-card .event-title,
+  body.printing-week .category-event-card .event-title {
     font-size: 8.5pt !important;
     font-weight: 700 !important;
     color: #0f172a !important;
     white-space: nowrap !important; /* Hindrer at tittelen brekker over flere linjer */
   }
 
-body.printing-category .category-event-card .event-time {
+  body.printing-category .category-event-card .event-time,
+  body.printing-week .category-event-card .event-time {
     font-size: 8pt !important;
     color: #475569 !important;
     margin: 0 !important;
@@ -240,7 +254,8 @@ body.printing-category .category-event-card .event-time {
     flex-shrink: 0 !important;
   }
 
-body.printing-category .category-event-card .event-desc {
+  body.printing-category .category-event-card .event-desc,
+  body.printing-week .category-event-card .event-desc {
     font-size: 8pt !important;
     color: #334155 !important;
     margin: 0 !important;
@@ -251,14 +266,14 @@ body.printing-category .category-event-card .event-desc {
 
 
   /* =========================================================
-     MODUS 2: Utskrift av HOVEDKALENDER (Når modal IKKE skrives ut)
+     MODUS 2: Utskrift av HOVEDKALENDER (Når verken kategori eller uke skrives ut)
      ========================================================= */
-  body:not(.printing-category) .modal-overlay {
+  body:not(.printing-category):not(.printing-week) .modal-overlay {
     display: none !important;
   }
 
-  body:not(.printing-category) .app-layout, 
-  body:not(.printing-category) .main-content { 
+  body:not(.printing-category):not(.printing-week) .app-layout, 
+  body:not(.printing-category):not(.printing-week) .main-content { 
     display: block !important; 
     padding: 0 !important; 
     margin: 0 !important; 
