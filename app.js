@@ -144,7 +144,8 @@ const contextMenu = document.getElementById('contextMenu');
 
 let miniCalCurrentDate = new Date();
 
-// GENERER KATEGORI-LISTE I SIDEPANELET
+
+// GENERER KATEGORI-LISTE I SIDEPANELET (Garantert synlig 🔍)
 function renderCategoryFilters() {
   const filterList = document.getElementById('filterList');
   if (!filterList) return;
@@ -153,20 +154,41 @@ function renderCategoryFilters() {
 
   Object.entries(categoryColors).forEach(([categoryName, color]) => {
     const catItem = document.createElement('div');
-    catItem.className = 'filter-item-vert';
+    
+    // Bruker ren flexbox direkte i JS for at oppstillingen ALDRI skal bli rotete
+    catItem.style.display = 'flex';
+    catItem.style.alignItems = 'center';
+    catItem.style.justifyContent = 'space-between';
+    catItem.style.padding = '4px 2px';
+    catItem.style.marginBottom = '2px';
+    catItem.style.borderRadius = '4px';
 
     const safeId = categoryName.replace(/[^a-zA-Z0-9]/g, '_');
 
     catItem.innerHTML = `
-      <div class="filter-item-left">
-        <input type="checkbox" id="cat_${safeId}" value="${categoryName}" checked />
-        <span class="color-dot" style="background-color: ${color};"></span>
-        <label for="cat_${safeId}">${categoryName}</label>
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem;">
+        <input type="checkbox" id="cat_${safeId}" value="${categoryName}" checked style="cursor: pointer;" />
+        <span style="background-color: ${color}; width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0;"></span>
+        <label for="cat_${safeId}" style="cursor: pointer; user-select: none;">${categoryName}</label>
       </div>
-      <button type="button" class="btn-category-preview" title="Se hele ${categoryName}">🔍</button>
+      <button type="button" class="btn-category-preview" title="Se alle avtaler for ${categoryName}" style="background: none; border: none; cursor: pointer; padding: 2px 4px; font-size: 0.85rem; opacity: 0.7;">
+        🔍
+      </button>
     `;
 
-    // Sjekkboks-endring (filtrering)
+    // Visuell hover-effekt på selve raden og knappen
+    catItem.addEventListener('mouseenter', () => {
+      catItem.style.backgroundColor = '#f1f5f9';
+      const btn = catItem.querySelector('.btn-category-preview');
+      if (btn) btn.style.opacity = '1';
+    });
+    catItem.addEventListener('mouseleave', () => {
+      catItem.style.backgroundColor = 'transparent';
+      const btn = catItem.querySelector('.btn-category-preview');
+      if (btn) btn.style.opacity = '0.7';
+    });
+
+    // Sjekkboks-endring (filtrering i kalender)
     catItem.querySelector('input').addEventListener('change', (e) => {
       if (e.target.checked) {
         if (!selectedCategories.includes(categoryName)) selectedCategories.push(categoryName);
