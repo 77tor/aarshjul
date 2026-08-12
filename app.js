@@ -146,8 +146,8 @@ let miniCalCurrentDate = new Date();
 
 
 
-// GENERER KATEGORI-LISTE I SIDEPANELET (Vanntett versjon uten button-konflikter)
-// GENERER KATEGORI-LISTE I SIDEPANELET (Korrigert oppstilling og forstørrelsesglass)
+
+// GENERER KATEGORI-LISTE I SIDEPANELET (Med synlige farger og 🔍)
 function renderCategoryFilters() {
   const filterList = document.getElementById('filterList');
   if (!filterList) return;
@@ -158,16 +158,16 @@ function renderCategoryFilters() {
     const catItem = document.createElement('div');
     catItem.className = 'category-row';
     
-    // Tvinger en ren 3-kolonners layout med flexbox
-    catItem.style.cssText = 'display: flex !important; align-items: center !important; justify-content: space-between !important; width: 100% !important; padding: 4px 6px; margin-bottom: 2px; border-radius: 4px; cursor: pointer;';
+    // Tvinger en ren layout med spredning
+    catItem.style.cssText = 'display: flex !important; align-items: center !important; justify-content: space-between !important; width: 100% !important; padding: 4px 6px; margin-bottom: 3px; border-radius: 4px; cursor: pointer;';
 
     const safeId = categoryName.replace(/[^a-zA-Z0-9]/g, '_');
 
-    // Kolonne 1 & 2 til venstre, Kolonne 3 (🔍) helt til høyre
+    // Farge-sirkelen er tvingt med background-color: ${color} !important
     catItem.innerHTML = `
       <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
         <input type="checkbox" id="cat_${safeId}" value="${categoryName}" checked style="cursor: pointer; margin: 0;" />
-        <span style="background-color: ${color}; width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0;"></span>
+        <span style="background-color: ${color} !important; width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0;"></span>
         <label for="cat_${safeId}" style="cursor: pointer; font-size: 0.85rem; color: #334155; margin: 0; user-select: none;">${categoryName}</label>
       </div>
       <span class="preview-btn" title="Se alle avtaler for ${categoryName}" style="cursor: pointer; font-size: 14px; padding: 2px 4px; user-select: none; line-height: 1;">
@@ -175,7 +175,7 @@ function renderCategoryFilters() {
       </span>
     `;
 
-    // Visuell hover-bakgrunn på raden
+    // Visuell hover-effekt på bakgrunnen
     catItem.addEventListener('mouseenter', () => {
       catItem.style.backgroundColor = '#f1f5f9';
     });
@@ -183,7 +183,7 @@ function renderCategoryFilters() {
       catItem.style.backgroundColor = 'transparent';
     });
 
-    // Endring i sjekkboks (filtrer i kalender)
+    // Sjekkboks-filtrering
     catItem.querySelector('input').addEventListener('change', (e) => {
       if (e.target.checked) {
         if (!selectedCategories.includes(categoryName)) selectedCategories.push(categoryName);
@@ -193,7 +193,7 @@ function renderCategoryFilters() {
       if (calendar) calendar.refetchEvents();
     });
 
-    // Klikk på forstørrelsesglasset -> Åpne modalen din
+    // Åpne modalen ved klikk på 🔍
     catItem.querySelector('.preview-btn').addEventListener('click', (e) => {
       e.stopPropagation();
       e.preventDefault();
