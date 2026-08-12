@@ -51,9 +51,6 @@
           <button id="btnToggleAllCategories" type="button" class="btn-text">Velg ingen</button>
         </div>
         <div id="filterList" class="filter-list"></div>
-        <button id="btnPrintCategory" type="button" class="btn btn-primary" style="display: none; margin-top: 12px; width: 100%;">
-          🖨️ Skriv ut kategori
-        </button>
       </div>
     </aside>
 
@@ -171,6 +168,25 @@
         <button id="formSubmitBtn" type="submit" form="eventForm" class="btn btn-primary">Lagre</button>
       </div>
 
+    </div>
+  </div>
+
+  <!-- Modal for Visning og Utskrift av Kategori -->
+  <div id="categoryModal" class="modal-overlay">
+    <div class="modal-card modal-large">
+      <div class="modal-header">
+        <h3 id="categoryModalTitle">Kategorioversikt</h3>
+        <button id="categoryModalCloseX" type="button" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="categoryEventsList" class="category-events-list">
+          <!-- Innholdet genereres dynamisk av JS -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCategoryModalClose" type="button" class="btn btn-secondary">Lukk</button>
+        <button id="btnCategoryModalPrint" type="button" class="btn btn-primary">🖨️ Skriv ut</button>
+      </div>
     </div>
   </div>
 

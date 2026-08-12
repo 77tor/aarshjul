@@ -3,12 +3,12 @@ import {
   getFirestore, 
   collection, 
   addDoc, 
-  updateDoc,
-  deleteDoc,
-  doc,
-  getDocs,
-  query,
-  where,
+  updateDoc, 
+  deleteDoc, 
+  doc, 
+  getDocs, 
+  query, 
+  where, 
   onSnapshot 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -29,6 +29,11 @@ const firebaseConfig = {
   appId: "1:186927305986:web:c8534d5733dcfd2f2c9e1b",
   measurementId: "G-M02DFGGH3R"
 };
+
+// Initialiser Firebase og Firestore
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const eventsRef = collection(db, "school_events");
 
 const ALLOWED_ADMINS = [
   "77tor@ikrs.no",
