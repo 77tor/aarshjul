@@ -330,6 +330,7 @@ function showFormMode(title = "Ny avtale", isRecurring = false) {
 }
 
 function showViewMode() {
+console.log("Aktiv hendelse:", activeEvent.id, activeEvent.extendedProps);
   hideContextMenu();
   document.getElementById('modalHeaderTitle').textContent = "Avtaledetaljer";
   document.getElementById('eventForm').style.display = 'none';
