@@ -653,6 +653,7 @@ document.getElementById('miniNextBtn').addEventListener('click', () => {
 });
 
 
+
 /* Oppstart & FullCalendar */
 document.addEventListener('DOMContentLoaded', () => {
   if (typeof populateGroupDropdown === 'function') {
@@ -891,7 +892,9 @@ document.addEventListener('DOMContentLoaded', () => {
         recurringSeriesId: ext.recurringSeriesId || null,
         isSchoolRoute: isSchoolRoute,
         isReadOnly: isReadOnly,
-        url: ext.url || null // <-- LEGGER TIL URL HER
+        url: ext.url || null,
+        regUrl: ext.regUrl || null,
+        regTekst: ext.regTekst || null
       };
 
       const viewTitle = document.getElementById('viewTitle');
@@ -921,22 +924,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-// Viser beskrivelse + lenke dersom den finnes
-if (viewDescription) {
+      // Viser beskrivelse + lenker dersom de finnes
+      if (viewDescription) {
         let content = activeEvent.description || "Ingen beskrivelse oppgitt.";
         
         // Hovedlenke (Informasjonsside)
         if (activeEvent.url) {
-          content += `<br><br>🔗 <strong>Informasjon:</strong> <a href="${activeEvent.url}" target="_blank" rel="noopener noreferrer" style="color: #0284c7; font-weight: 600; text-decoration: underline;">Les mer om kartleggingen ↗</a>`;
+          content += `<br><br>🔗 <strong>Informasjon:</strong> <a href="${activeEvent.url}" target="_blank" rel="noopener noreferrer" style="color: #0284c7; font-weight: 600; text-decoration: underline;">Les mer ↗</a>`;
         }
         
         // Registreringslenke (f.eks. Conexus eller GitHub)
-        if (ext.regUrl) {
-          content += `<br>📝 <strong>Registrering:</strong> <a href="${ext.regUrl}" target="_blank" rel="noopener noreferrer" style="color: #059669; font-weight: 600; text-decoration: underline;">${ext.regTekst || 'Åpne registrering ↗'}</a>`;
+        if (activeEvent.regUrl) {
+          content += `<br>📝 <strong>Registrering:</strong> <a href="${activeEvent.regUrl}" target="_blank" rel="noopener noreferrer" style="color: #059669; font-weight: 600; text-decoration: underline;">${activeEvent.regTekst || 'Åpne registrering ↗'}</a>`;
         }
 
         viewDescription.innerHTML = content;
-        }
       }
 
       if (typeof showViewMode === 'function') showViewMode(activeEvent);
@@ -1039,8 +1041,7 @@ if (viewDescription) {
       if (typeof showFormMode === 'function') showFormMode("Ny regelmessig avtale", true);
     });
   }
-}); // <-- Riktig avslutning her
-
+});
 
 
 // Firestore Realtime Lytter
