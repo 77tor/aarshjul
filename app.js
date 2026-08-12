@@ -1065,37 +1065,51 @@ function isEventInSelectedCategories(event) {
     const catLower = cat.toLowerCase().trim();
     const isTrinnCategory = catLower.endsWith('. trinn');
 
-    // 1. Direkte match på Kategori/Gruppe (f.eks "Felles" -> "Fellesaktiviteter")
+    // 1. Direkte match på Kategori/Gruppe (f.eks. "Fellesaktiviteter" eller "Svømming")
     if (mappedGroup === catLower) {
       return true;
     }
 
-    // 2. Sjekk om hendelsen matcher valgt TRINN (f.eks "7. trinn")
+    // 2. Sjekk om hendelsen matcher et spesifikt TRINN (f.eks. "3. trinn")
     if (isTrinnCategory) {
-      // Match i trinn-array
+      // A) Eksplisitt trinn satt i datastrukturen
       if (Array.isArray(trinnArray) && trinnArray.some(t => t.toLowerCase() === catLower)) {
         return true;
       }
 
-      // Felles for hele skolen
+      // B) Felles for absolutt alle trinn
       if (altInnhold.includes("alle trinn") || altInnhold.includes("1.-7. trinn") || altInnhold.includes("1-7. trinn") || mappedGroup === "fellesaktiviteter") {
         return true;
       }
 
-      // Tekstsøk etter trinn/klasser i tittel (f.eks "7a-b", "7. trinn")
       const trinnNummer = parseInt(cat.split('.')[0].trim(), 10);
+
       if (!isNaN(trinnNummer)) {
-        if (altInnhold.includes("heståsen") && trinnNummer >= 1 && trinnNummer <= 3) return true;
-        if (altInnhold.includes("brattbakken") && trinnNummer >= 4 && trinnNummer <= 7) return true;
+        // C) Sjekk om teksten inneholder et SPESIFIKT trinn eller klasse (f.eks. "3. trinn", "3a", "7a-b", "3.trinn")
+        const spesifiktTrinnRegex = new RegExp(`\\b${trinnNummer}(\\.|a|b|c|d|\\s*-\\s*|\\s*\\.\\s*trinn|\\s*trinn)`, 'i');
+        const harSpesifiktTrinnITekst = spesifiktTrinnRegex.test(altInnhold);
 
-        const trinnRegex = new RegExp(`\\b${trinnNummer}(\\.|a|b|c|d|\\s*-\\s*|\\s*\\.\\s*trinn)`, 'i');
-        if (trinnRegex.test(altInnhold)) return true;
-
+        // Sjekk om teksten matcher et tallområde (f.eks "1.-3. trinn" eller "1-3. trinn")
+        let matcherOmrade = false;
         const rangeMatch = altInnhold.match(/(\d+)\s*[\.\-]\s*(\d+)\.?\s*trinn/i);
         if (rangeMatch) {
           const startTrinn = parseInt(rangeMatch[1], 10);
           const sluttTrinn = parseInt(rangeMatch[2], 10);
-          if (trinnNummer >= startTrinn && trinnNummer <= sluttTrinn) return true;
+          if (trinnNummer >= startTrinn && trinnNummer <= sluttTrinn) {
+            matcherOmrade = true;
+          }
+        }
+
+        if (harSpesifiktTrinnITekst || matcherOmrade) {
+          return true; // Matcher nøyaktig det trinnet eller et definert intervall
+        }
+
+        // D) FALLBACK: Bruk Heståsen / Brattbakken KUN dersom INGEN andre spesifikke trinn er nevnt i teksten
+        const harAndreTrinnTekst = /\b[1-7](\.|a|b|c|d|\s*trinn)/i.test(altInnhold);
+
+        if (!harAndreTrinnTekst) {
+          if (altInnhold.includes("heståsen") && trinnNummer >= 1 && trinnNummer <= 3) return true;
+          if (altInnhold.includes("brattbakken") && trinnNummer >= 4 && trinnNummer <= 7) return true;
         }
       }
     }
@@ -1111,7 +1125,6 @@ function isEventInSelectedCategories(event) {
 
   return false;
 }
-
 
 
 function updateCalendarEvents() {
