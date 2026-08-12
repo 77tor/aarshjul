@@ -922,13 +922,20 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
 // Viser beskrivelse + lenke dersom den finnes
-      if (viewDescription) {
+if (viewDescription) {
         let content = activeEvent.description || "Ingen beskrivelse oppgitt.";
+        
+        // Hovedlenke (Informasjonsside)
         if (activeEvent.url) {
-          content += `<br><br>🔗 <strong>DKS-nettside:</strong> <a href="${activeEvent.url}" target="_blank" rel="noopener noreferrer" style="color: #0284c7; font-weight: 600; text-decoration: underline;">Åpne produksjonssiden ↗</a>`;
-          viewDescription.innerHTML = content;
-        } else {
-          viewDescription.textContent = content;
+          content += `<br><br>🔗 <strong>Informasjon:</strong> <a href="${activeEvent.url}" target="_blank" rel="noopener noreferrer" style="color: #0284c7; font-weight: 600; text-decoration: underline;">Les mer om kartleggingen ↗</a>`;
+        }
+        
+        // Registreringslenke (f.eks. Conexus eller GitHub)
+        if (ext.regUrl) {
+          content += `<br>📝 <strong>Registrering:</strong> <a href="${ext.regUrl}" target="_blank" rel="noopener noreferrer" style="color: #059669; font-weight: 600; text-decoration: underline;">${ext.regTekst || 'Åpne registrering ↗'}</a>`;
+        }
+
+        viewDescription.innerHTML = content;
         }
       }
 
