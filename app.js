@@ -963,6 +963,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
+
 // Firestore Realtime Lytter
 onSnapshot(eventsRef, (snapshot) => {
   rawEvents = snapshot.docs.map(doc => {
@@ -977,10 +978,9 @@ onSnapshot(eventsRef, (snapshot) => {
     const isRecurring = Boolean(data.repeatPattern || data.recurringSeriesId);
     const iconPrefix = isRecurring ? "🔁 " : "";
 
-    // Slår opp farge direkte eller via categoryColors (case-insensitive fallback)
     const eventGroup = data.group || '';
-    const colorKey = Object.keys(categoryColors).find(k => k.toLowerCase() === eventGroup.toLowerCase());
-    const eventColor = categoryColors[colorKey] || '#3788d8';
+    // Bruker den nye getCategoryColor-funksjonen for å fange opp aliases (f.eks. "Felles" -> "Fellesaktiviteter")
+    const eventColor = getCategoryColor(eventGroup);
 
     return {
       id: doc.id,
@@ -1007,33 +1007,67 @@ onSnapshot(eventsRef, (snapshot) => {
 });
 
 // Sjekker om en hendelse tilhører de valgte kategoriene
+// Alias-mapping for å koble ulike gruppenavn til menykategoriene
+const categoryAliases = {
+  'felles': 'Fellesaktiviteter',
+  'fellesaktivitet': 'Fellesaktiviteter',
+  'svømming': 'Svømming',
+  'svomme': 'Svømming',
+  'dks': 'DKS',
+  'bursdag': 'Bursdag',
+  'bursdager': 'Bursdag'
+};
+
+// Hjelpefunksjon for å finne riktig farge basert på gruppenavn og alias
+function getCategoryColor(groupName) {
+  if (!groupName) return '#3788d8';
+  
+  const rawGroup = groupName.toLowerCase().trim();
+  const targetCategory = categoryAliases[rawGroup] || groupName;
+  
+  const matchedKey = Object.keys(categoryColors).find(
+    k => k.toLowerCase() === targetCategory.toLowerCase()
+  );
+  
+  return categoryColors[matchedKey] || categoryColors[groupName] || '#3788d8';
+}
+
+// Sjekker om en hendelse tilhører de valgte kategoriene
 function isEventInSelectedCategories(event) {
   if (!selectedCategories || selectedCategories.length === 0) return false;
 
-  const group = (event.extendedProps?.group || event.group || '').toLowerCase();
-  const trinnArray = event.extendedProps?.trinn || event.trinn || [];
+  const rawGroup = (event.extendedProps?.group || event.group || '').trim();
+  const mappedGroup = (categoryAliases[rawGroup.toLowerCase()] || rawGroup).toLowerCase();
   
+  const trinnArray = event.extendedProps?.trinn || event.trinn || [];
   const title = (event.title || event.extendedProps?.rawTitle || '').toLowerCase();
   const description = (event.extendedProps?.description || '').toLowerCase();
-  const altInnhold = `${group} ${title} ${description}`.toLowerCase();
+  const altInnhold = `${rawGroup} ${title} ${description}`.toLowerCase();
 
   for (const cat of selectedCategories) {
-    const catLower = cat.toLowerCase();
+    const catLower = cat.toLowerCase().trim();
     const isTrinnCategory = catLower.endsWith('. trinn');
 
-    // A) HVIS MAN FILTRERER PÅ ET TRINN (f.eks. "1. trinn")
-    if (isTrinnCategory) {
-      if (Array.isArray(trinnArray) && trinnArray.length > 0) {
-        if (trinnArray.some(t => t.toLowerCase() === catLower)) return true;
-      }
+    // 1. Direkte match på Kategori/Gruppe (f.eks "Felles" -> "Fellesaktiviteter")
+    if (mappedGroup === catLower) {
+      return true;
+    }
 
-      if (altInnhold.includes("alle trinn") || altInnhold.includes("1.-7. trinn") || altInnhold.includes("1-7. trinn")) {
+    // 2. Sjekk om hendelsen matcher valgt TRINN (f.eks "7. trinn")
+    if (isTrinnCategory) {
+      // Match i trinn-array
+      if (Array.isArray(trinnArray) && trinnArray.some(t => t.toLowerCase() === catLower)) {
         return true;
       }
 
-      if (!Array.isArray(trinnArray) || trinnArray.length === 0) {
-        const trinnNummer = parseInt(cat.split('.')[0].trim(), 10);
-        
+      // Felles for hele skolen
+      if (altInnhold.includes("alle trinn") || altInnhold.includes("1.-7. trinn") || altInnhold.includes("1-7. trinn") || mappedGroup === "fellesaktiviteter") {
+        return true;
+      }
+
+      // Tekstsøk etter trinn/klasser i tittel (f.eks "7a-b", "7. trinn")
+      const trinnNummer = parseInt(cat.split('.')[0].trim(), 10);
+      if (!isNaN(trinnNummer)) {
         if (altInnhold.includes("heståsen") && trinnNummer >= 1 && trinnNummer <= 3) return true;
         if (altInnhold.includes("brattbakken") && trinnNummer >= 4 && trinnNummer <= 7) return true;
 
@@ -1047,15 +1081,9 @@ function isEventInSelectedCategories(event) {
           if (trinnNummer >= startTrinn && trinnNummer <= sluttTrinn) return true;
         }
       }
-      continue; 
     }
 
-    // B) HVIS MAN FILTRERER PÅ EN KATEGORI/GRUPPE
-    if (group === catLower) {
-      return true;
-    }
-
-    // C) SAMLEKATEGORIER
+    // 3. Samlekategorier
     if (cat === "Alle på Heståsen" && (altInnhold.includes("heståsen") || trinnArray.some(t => ["1. trinn", "2. trinn", "3. trinn"].includes(t)))) {
       return true;
     }
@@ -1066,6 +1094,8 @@ function isEventInSelectedCategories(event) {
 
   return false;
 }
+
+
 
 function updateCalendarEvents() {
   let filteredBursdagEvents = [];
