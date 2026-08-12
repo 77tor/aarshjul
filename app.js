@@ -3,12 +3,12 @@ import {
   getFirestore, 
   collection, 
   addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  getDocs, 
-  query, 
-  where, 
+  updateDoc,
+  deleteDoc,
+  doc,
+  getDocs,
+  query,
+  where,
   onSnapshot 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -16,7 +16,6 @@ import { schoolYearsData } from "./fridager.js";
 import { getFellesaktiviteterSomEvents } from "./fellesaktiviteter.js";
 import { getDKSAktiviteterSomEvents } from './DKS.js';
 import { getSvommeAktiviteterSomEvents } from './svomming.js';
-import { getBirthdayEvents } from './ansatte.js';
 
 // Firebase-konfigurasjon
 const firebaseConfig = {
@@ -30,29 +29,8 @@ const firebaseConfig = {
   measurementId: "G-M02DFGGH3R"
 };
 
-// Initialiser Firebase og Firestore
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const eventsRef = collection(db, "school_events");
-
-const ALLOWED_ADMINS = [
-  "77tor@ikrs.no",
-  "tor.skarprud@gmail.com",
-  "75thomas@ikrs.no",
-  "62marit3@ikrs.no",
-  "72janne@ikrs.no"
-];
-
-// Funksjon for å sjekke om innlogget bruker har administratorrettigheter
-function isUserAdmin() {
-  // Bytter du ut denne med din faktiske innloggingssjekk (f.eks. localStorage.getItem('userEmail'))
-  const currentUserEmail = localStorage.getItem('userEmail') || ''; 
-  return ALLOWED_ADMINS.includes(currentUserEmail.toLowerCase());
-}
-
-
 const categoryColors = {
-  // Trinn (En tydelig regnbueskala gjør at trinnene skiller seg klart fra hverandre)
+  // Trinn
   "1. trinn": "#e74c3c", // Rød
   "2. trinn": "#e67e22", // Oransje
   "3. trinn": "#f1c40f", // Gul
@@ -61,7 +39,7 @@ const categoryColors = {
   "6. trinn": "#3498db", // Blå
   "7. trinn": "#9b59b6", // Lila
 
-  // Spesifikke fag og aktiviteter (Unike farger som skiller seg fra trinnene)
+  // Spesifikke fag og aktiviteter
   "DKS": "#d35400",             // Mørk oransje / brent murtone
   "Svømming": "#00cec9",        // Klar cyan / vannblå
   "Fellesaktiviteter": "#2c3e50",// Mørk skiferblå
@@ -69,8 +47,7 @@ const categoryColors = {
   "Kartlegginger": "#6c5ce7",   // Dyp indigo / lilla-blå
   "Frister": "#c0392b",         // Dyp rød (signal/varselfarge)
   "UiA": "#00b894",              // Mørk myntgrønn
-  "Sosialt": "#e84393",          // Knall knallrosa
-  "Bursdag": "#f59e0b"          // Varm amber / fest-oransje
+  "Sosialt": "#e84393"          // Knall knallrosa
 };
 
 const repeatLabels = {
@@ -148,6 +125,7 @@ const svommeEventsFromJs = typeof getSvommeAktiviteterSomEvents === 'function'
   ? getSvommeAktiviteterSomEvents('2026-2027') 
   : [];
 
+// Firebase Initialisering (skjer KUN én gang her)
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const eventsRef = collection(db, "school_events");
@@ -160,6 +138,129 @@ let currentSelection = null;
 const contextMenu = document.getElementById('contextMenu');
 
 let miniCalCurrentDate = new Date();
+
+// GENERER KATEGORI-LISTE I SIDEPANELET
+function renderCategoryFilters() {
+  const filterList = document.getElementById('filterList');
+  if (!filterList) return;
+
+  filterList.innerHTML = '';
+
+  Object.entries(categoryColors).forEach(([categoryName, color]) => {
+    const catItem = document.createElement('div');
+    catItem.className = 'filter-item-vert';
+    catItem.style.display = 'flex';
+    catItem.style.alignItems = 'center';
+    catItem.style.justifyContent = 'space-between';
+    catItem.style.marginBottom = '8px';
+
+    const safeId = categoryName.replace(/[^a-zA-Z0-9]/g, '_');
+
+    catItem.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <input type="checkbox" id="cat_${safeId}" value="${categoryName}" checked />
+        <span class="color-dot" style="background-color: ${color}; width: 12px; height: 12px; border-radius: 50%; display: inline-block;"></span>
+        <label for="cat_${safeId}">${categoryName}</label>
+      </div>
+      <button type="button" class="btn-category-preview" title="Se hele kategorien" style="background:none; border:none; cursor:pointer;">🔍</button>
+    `;
+
+    // Sjekkboks-endring (filtrering)
+    catItem.querySelector('input').addEventListener('change', (e) => {
+      if (e.target.checked) {
+        if (!selectedCategories.includes(categoryName)) selectedCategories.push(categoryName);
+      } else {
+        selectedCategories = selectedCategories.filter(c => c !== categoryName);
+      }
+      if (calendar) calendar.refetchEvents();
+    });
+
+    // Åpne kategorimodal
+    catItem.querySelector('.btn-category-preview').addEventListener('click', (e) => {
+      e.stopPropagation();
+      openCategoryModal({ name: categoryName, color: color });
+    });
+
+    filterList.appendChild(catItem);
+  });
+}
+
+// Åpne kategorimodal og vis alle avtaler for valgt kategori
+function openCategoryModal(category) {
+  const modal = document.getElementById('categoryModal');
+  const title = document.getElementById('categoryModalTitle');
+  const listContainer = document.getElementById('categoryEventsList');
+
+  if (!modal) return;
+
+  title.textContent = `Kategori: ${category.name}`;
+  listContainer.innerHTML = '';
+
+  // Hent alle hendelser som tilhører denne kategorien fra FullCalendar
+  let events = [];
+  if (calendar) {
+    events = calendar.getEvents().filter(e => {
+      return e.extendedProps?.group === category.name;
+    });
+  }
+
+  // Sorter hendelsene kronologisk etter startdato
+  events.sort((a, b) => (a.start || 0) - (b.start || 0));
+
+  if (events.length === 0) {
+    listContainer.innerHTML = '<p style="color: #64748b; font-style: italic; padding: 10px;">Ingen avtaler funnet i denne kategorien.</p>';
+  } else {
+    events.forEach(event => {
+      const card = document.createElement('div');
+      card.className = 'category-event-card';
+      card.style.borderLeft = `4px solid ${category.color || '#2563eb'}`;
+      card.style.padding = '10px';
+      card.style.marginBottom = '8px';
+      card.style.background = '#f8fafc';
+      card.style.borderRadius = '4px';
+
+      const timeStr = event.allDay 
+        ? event.start.toLocaleDateString('no-NO')
+        : `${event.start.toLocaleDateString('no-NO')} kl. ${event.start.toLocaleTimeString('no-NO', {hour: '2-digit', minute:'2-digit'})}`;
+
+      card.innerHTML = `
+        <div class="event-title" style="font-weight: bold;">${event.title}</div>
+        <div class="event-time" style="font-size: 0.85em; color: #475569;">📅 ${timeStr}</div>
+        ${event.extendedProps?.description ? `<div class="event-desc" style="font-size: 0.9em; margin-top: 4px;">${event.extendedProps.description}</div>` : ''}
+      `;
+      listContainer.appendChild(card);
+    });
+  }
+
+  modal.style.display = 'flex';
+}
+
+function closeCategoryModal() {
+  const modal = document.getElementById('categoryModal');
+  if (modal) modal.style.display = 'none';
+}
+
+// Event-lyttere for lukking og utskrift i kategorimodalen
+document.addEventListener('DOMContentLoaded', () => {
+  renderCategoryFilters();
+
+  const closeX = document.getElementById('categoryModalCloseX');
+  const closeBtn = document.getElementById('btnCategoryModalClose');
+  const printBtn = document.getElementById('btnCategoryModalPrint');
+
+  if (closeX) closeX.addEventListener('click', closeCategoryModal);
+  if (closeBtn) closeBtn.addEventListener('click', closeCategoryModal);
+
+  if (printBtn) {
+    printBtn.addEventListener('click', () => {
+      document.body.classList.add('printing-category');
+      window.print();
+      document.body.classList.remove('printing-category');
+    });
+  }
+});
+
+// SLUTT PÅ MODAL FOR KATEGORIER
 
 function populateGroupDropdown() {
   const groupSelect = document.getElementById('group');
@@ -235,19 +336,9 @@ function showViewMode() {
   document.getElementById('formSubmitBtn').style.display = 'none';
   document.getElementById('viewCancelBtn').style.display = 'inline-block';
 
-  // --- LOGIKK FOR Å SKJULE/VISE REDIGER OG SLETT ---
   const isRoute = activeEvent && activeEvent.isSchoolRoute;
-  const lockedGroups = ["DKS", "Svømming", "Fellesaktiviteter", "Kartlegginger", "Bursdag"];
-  const isLockedGroup = activeEvent && lockedGroups.includes(activeEvent.group);
-
-  // Hvis det er en skolerute, ELLER en låst gruppe og brukeren IKKE er admin -> Skjul knappene
-  if (isRoute || (isLockedGroup && !isUserAdmin())) {
-    document.getElementById('viewEditBtn').style.display = 'none';
-    document.getElementById('viewDeleteBtn').style.display = 'none';
-  } else {
-    document.getElementById('viewEditBtn').style.display = 'inline-block';
-    document.getElementById('viewDeleteBtn').style.display = 'inline-block';
-  }
+  document.getElementById('viewEditBtn').style.display = isRoute ? 'none' : 'inline-block';
+  document.getElementById('viewDeleteBtn').style.display = isRoute ? 'none' : 'inline-block';
 
   document.getElementById('eventModal').style.display = 'flex';
 }
@@ -588,7 +679,7 @@ document.addEventListener('DOMContentLoaded', () => {
     locale: 'no',
     firstDay: 1,
     scrollTime: '08:00:00',
-    slotDuration: '00:30:00', // <-- Komma må være her!
+    slotDuration: '00:30:00',
 
     datesSet: function(info) {
       if (typeof miniCalCurrentDate !== 'undefined') {
@@ -601,11 +692,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
           highlightDateInHeader(currentSelectedStr);
         }, 50);
-      }
-
-      // --- NYTT: Oppdater bursdager hvis vi blar til et nytt år ---
-      if (typeof getBirthdayEvents === 'function' && typeof updateCalendarEvents === 'function') {
-        updateCalendarEvents();
       }
 
       // Legg til ukenummer i tittelen for ukesvisninger
@@ -810,8 +896,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Firestore Realtime Lytter
 onSnapshot(eventsRef, (snapshot) => {
-  const colors = (typeof categoryColors !== 'undefined') ? categoryColors : {};
-
   rawEvents = snapshot.docs.map(doc => {
     const data = doc.data();
     
@@ -821,20 +905,16 @@ onSnapshot(eventsRef, (snapshot) => {
     let endIso = data.endDate || data.startDate;
     if (data.endTime) endIso += `T${data.endTime}`;
 
-    const isAllDay = !data.startTime;
     const isRecurring = Boolean(data.repeatPattern || data.recurringSeriesId);
     const iconPrefix = isRecurring ? "🔁 " : "";
-    const color = colors[data.group] || '#3788d8';
 
     return {
       id: doc.id,
       title: `${iconPrefix}[${data.group}] ${data.title}`,
       start: startIso,
-      // Hvis heledagshendelse på samme dag, dropp 'end' så FullCalendar viser den riktig
-      end: (isAllDay && endIso === data.startDate) ? undefined : endIso,
-      allDay: isAllDay,
-      backgroundColor: color,
-      borderColor: color,
+      end: endIso,
+      backgroundColor: categoryColors[data.group] || '#3788d8',
+      borderColor: categoryColors[data.group] || '#3788d8',
       extendedProps: { 
         group: data.group,
         rawTitle: data.title,
@@ -845,14 +925,11 @@ onSnapshot(eventsRef, (snapshot) => {
         description: data.description || '',
         repeatPattern: data.repeatPattern || null,
         recurringSeriesId: data.recurringSeriesId || null,
-        trinn: Array.isArray(data.trinn) ? data.trinn : []
+        trinn: Array.isArray(data.trinn) ? data.trinn : [] // Støtte for trinn-array i Firestore
       }
     };
   });
-
-  if (typeof updateCalendarEvents === 'function') {
-    updateCalendarEvents();
-  }
+  updateCalendarEvents();
 });
 
 // <-- BRUK DENNE UTGAVEN:
@@ -921,18 +998,6 @@ function isEventInSelectedCategories(event) {
 }
 
 function updateCalendarEvents() {
-  // 1. Hent bursdager fra ansatte.js basert på hvilket år kalenderen viser
-  let filteredBursdagEvents = [];
-  if (typeof getBirthdayEvents === 'function' && calendar) {
-    const currentYear = calendar.getDate().getFullYear();
-    const rawBursdager = getBirthdayEvents(currentYear);
-    
-    // Filtrer bursdagene gjennom valgte kategorier
-    filteredBursdagEvents = rawBursdager.filter(event => 
-      isEventInSelectedCategories(event)
-    );
-  }
-
   const filteredUserEvents = rawEvents.filter(event => 
     isEventInSelectedCategories(event)
   );
@@ -951,13 +1016,11 @@ function updateCalendarEvents() {
 
   const schoolEvents = typeof schoolEventsFromJs !== 'undefined' ? schoolEventsFromJs : [];
 
-  // 2. Legg til filteredBursdagEvents i listen over alle hendelser
   const allEvents = [
     ...schoolEvents, 
     ...filteredFellesEvents, 
     ...filteredDksEvents, 
     ...filteredSvommeEvents, 
-    ...filteredBursdagEvents, // <-- Bursdager lagt til her
     ...filteredUserEvents
   ];
 
