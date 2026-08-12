@@ -204,7 +204,8 @@ function renderCategoryFilters() {
   });
 }
 
-// Åpne kategorimodal og vis ALLE avtaler for valgt kategori
+
+// Åpne kategorimodal og vis ALLE avtaler for valgt kategori (med klokkeslett og fra/til-dato)
 function openCategoryModal(categoryName) {
   const modal = document.getElementById('categoryModal');
   const title = document.getElementById('categoryModalTitle');
@@ -212,7 +213,6 @@ function openCategoryModal(categoryName) {
 
   if (!modal) return;
 
-  // Håndter dersom argumentet enten er en streng eller et objekt
   const catName = typeof categoryName === 'object' ? categoryName.name : categoryName;
   const catColor = typeof categoryName === 'object' ? categoryName.color : (typeof getCategoryColor === 'function' ? getCategoryColor(catName) : '#2563eb');
 
@@ -229,10 +229,8 @@ function openCategoryModal(categoryName) {
     ...rawEvents
   ];
 
-  // Filtrer ved hjelp av isEventInSelectedCategories dersom den finnes,
-  // eller bruk en robust intern fallback
+  // Filtrer ved å gjenbruke isEventInSelectedCategories
   const matchedEvents = allRawEvents.filter(evt => {
-    // Hvis den globale filtreringsfunksjonen finnes, gjenbruker vi den for konsistens
     if (typeof isEventInSelectedCategories === 'function') {
       const originalSelected = [...selectedCategories];
       selectedCategories = [catName];
@@ -241,21 +239,19 @@ function openCategoryModal(categoryName) {
       if (isMatch) return true;
     }
 
-    // Fallback-filtrering
     const rawGrp = (evt.extendedProps?.group || evt.group || evt.extendedProps?.category || '').trim();
     const mappedGrp = typeof categoryAliases !== 'undefined' && categoryAliases[rawGrp.toLowerCase()] 
       ? categoryAliases[rawGrp.toLowerCase()] 
       : rawGrp;
 
     const trinnArray = evt.extendedProps?.trinn || evt.trinn || [];
-    
     const matchesGroup = mappedGrp.toLowerCase() === catName.toLowerCase();
     const matchesTrinn = Array.isArray(trinnArray) && trinnArray.some(t => t.toLowerCase() === catName.toLowerCase());
 
     return matchesGroup || matchesTrinn;
   });
 
-  // Sorter hendelsene kronologisk etter startdato
+  // Sorter hendelsene kronologisk
   matchedEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
 
   if (matchedEvents.length === 0) {
@@ -265,21 +261,59 @@ function openCategoryModal(categoryName) {
       const card = document.createElement('div');
       card.className = 'category-event-card';
       card.style.borderLeft = `4px solid ${catColor}`;
-      card.style.padding = '10px';
+      card.style.padding = '10px 14px';
       card.style.marginBottom = '8px';
       card.style.background = '#f8fafc';
-      card.style.borderRadius = '4px';
+      card.style.borderRadius = '6px';
+      card.style.border = '1px solid #e2e8f0';
+      card.style.borderLeftWidth = '4px';
 
-      const evtStart = new Date(evt.start);
-      const startStr = !isNaN(evtStart) ? evtStart.toLocaleDateString('no-NO') : evt.start;
       const titleText = evt.title || evt.extendedProps?.rawTitle || 'Uten tittel';
       const descText = evt.extendedProps?.description || '';
 
+      // --- DATO- FORMATERING ---
+      const startDateStr = evt.extendedProps?.startDate || (evt.start ? evt.start.split('T')[0] : '');
+      const endDateStr = evt.extendedProps?.endDate || (evt.end ? evt.end.split('T')[0] : '');
+
+      let dateFormatted = '';
+      if (startDateStr) {
+        const startObj = new Date(startDateStr + 'T00:00:00');
+        const startNor = !isNaN(startObj) ? startObj.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' }) : startDateStr;
+
+        if (endDateStr && endDateStr !== startDateStr) {
+          const endObj = new Date(endDateStr + 'T00:00:00');
+          const endNor = !isNaN(endObj) ? endObj.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' }) : endDateStr;
+          dateFormatted = `${startNor}. – ${endNor}.`;
+        } else {
+          dateFormatted = `${startNor}.`;
+        }
+      }
+
+      // --- KLOKKESLETT- FORMATERING ---
+      const startTime = evt.extendedProps?.startTime || (evt.start && evt.start.includes('T') ? evt.start.split('T')[1].substring(0, 5) : '');
+      const endTime = evt.extendedProps?.endTime || (evt.end && evt.end.includes('T') ? evt.end.split('T')[1].substring(0, 5) : '');
+
+      let timeFormatted = '';
+      if (startTime) {
+        timeFormatted = endTime ? `kl. ${startTime} - ${endTime}` : `kl. ${startTime}`;
+      }
+
+      // Kombiner dato og tid
+      let datetimeLabel = '';
+      if (dateFormatted && timeFormatted) {
+        datetimeLabel = `📅 ${dateFormatted} &nbsp;•&nbsp; ⏰ ${timeFormatted}`;
+      } else if (dateFormatted) {
+        datetimeLabel = `📅 ${dateFormatted}`;
+      } else if (timeFormatted) {
+        datetimeLabel = `⏰ ${timeFormatted}`;
+      }
+
       card.innerHTML = `
-        <div class="event-title" style="font-weight: bold; color: #1e293b;">${titleText}</div>
-        <div class="event-time" style="font-size: 0.85em; color: #64748b; margin-top: 2px;">📅 ${startStr}</div>
-        ${descText ? `<div class="event-desc" style="font-size: 0.9em; color: #334155; margin-top: 4px;">${descText}</div>` : ''}
+        <div class="event-title" style="font-weight: 600; color: #0f172a; font-size: 0.95rem;">${titleText}</div>
+        ${datetimeLabel ? `<div class="event-time" style="font-size: 0.82rem; color: #64748b; margin-top: 3px; display: flex; align-items: center; gap: 4px;">${datetimeLabel}</div>` : ''}
+        ${descText ? `<div class="event-desc" style="font-size: 0.88rem; color: #334155; margin-top: 6px; white-space: pre-line;">${descText}</div>` : ''}
       `;
+      
       listContainer.appendChild(card);
     });
   }
