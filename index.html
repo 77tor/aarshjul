@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Årshjul og Skolekalender</title>
-    <link rel="icon" type="image/png" href="aarshjul.svg">
-    <link rel="apple-touch-icon" href="aarshjul.svg">
+  <link rel="icon" type="image/png" href="aarshjul.svg">
+  <link rel="apple-touch-icon" href="aarshjul.svg">
 
   <!-- FullCalendar CDN -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
@@ -21,7 +21,7 @@
 </head>
 <body>
 
-<!-- Egen overskrift kun synlig under utskrift -->
+  <!-- Egen overskrift kun synlig under utskrift -->
   <div id="printHeader" class="print-only-header">
     <h1 id="printTitle">Ukeplan</h1>
     <p id="printSubTitle"></p>
@@ -51,7 +51,7 @@
           <button id="btnToggleAllCategories" type="button" class="btn-text">Velg ingen</button>
         </div>
         <div id="filterList" class="filter-list"></div>
-<button id="btnPrintCategory" type="button" class="btn btn-primary" style="display: none; margin-top: 12px; width: 100%;">
+        <button id="btnPrintCategory" type="button" class="btn btn-primary" style="display: none; margin-top: 12px; width: 100%;">
           🖨️ Skriv ut kategori
         </button>
       </div>
@@ -171,7 +171,6 @@
   </div>
 
   <!-- Hovedskript som ES-modul -->
-  <script src="ansatte.js"></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>
