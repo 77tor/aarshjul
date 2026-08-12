@@ -130,7 +130,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 @media print {
   @page { 
     size: A4 portrait; 
-    margin: 12mm; 
+    margin: 6mm 8mm !important; /* Mindre sidemarger og topp/bunn-marger */
   }
 
   html, body { 
@@ -186,22 +186,25 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
   }
 
   body.printing-category #categoryModal .modal-header {
-    border-bottom: 2px solid #0f172a !important;
-    padding: 0 0 10px 0 !important;
-    margin-bottom: 16px !important;
+    border-bottom: 1.5px solid #0f172a !important;
+    padding: 0 0 2px 0 !important;
+    margin-bottom: 4px !important;
   }
 
-  body.printing-category #categoryModalTitle {
-    font-size: 18pt !important;
+body.printing-category #categoryModalTitle {
+    font-size: 14pt !important;
     font-weight: 800 !important;
     color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1.1 !important;
   }
 
   /* Liste-visning for oppramsing */
   body.printing-category .category-events-list {
     display: flex !important;
     flex-direction: column !important;
-    gap: 2px !important;
+    gap: 1px !important;
     max-height: none !important;
     overflow: visible !important;
   }
