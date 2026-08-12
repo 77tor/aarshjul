@@ -101,6 +101,38 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
   body.printing-category .category-events-list { max-height: none !important; overflow: visible !important; }
 }
 
+/* Styling for kategorilisten og fargeprikker */
+.filter-item-vert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #334155;
+  transition: background-color 0.15s ease;
+}
+
+.filter-item-vert:hover {
+  background-color: #f1f5f9;
+}
+
+.color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.filter-label {
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Utskriftstil for hovedkalender */
 .print-only-header { display: none; }
 
