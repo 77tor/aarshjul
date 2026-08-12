@@ -2,6 +2,17 @@
  * DKS (Den Kulturelle Skolesekken) – Hånes skole 2026-2027
  */
 
+// Lenker til DKS-produksjonene
+const DKS_LENKER = {
+  "Mosaikk 26-27": "https://www.denkulturelleskolesekken.no/utforsk-produksjoner-i-dks/?produksjon=23873",
+  "Kunst Nå! 26-27": "https://www.denkulturelleskolesekken.no/utforsk-produksjoner-i-dks/?produksjon=23885",
+  "ARIADNES TRÅD": "https://www.denkulturelleskolesekken.no/utforsk-produksjoner-i-dks/?produksjon=24729",
+  "I Havets Favn 26-27": "https://www.denkulturelleskolesekken.no/utforsk-produksjoner-i-dks/?produksjon=23676",
+  "SANS 26-27": "https://www.denkulturelleskolesekken.no/utforsk-produksjoner-i-dks/?produksjon=24072",
+  "To i båden": "https://www.denkulturelleskolesekken.no/utforsk-produksjoner-i-dks/?produksjon=25188",
+  "ELLE MAIJA 26-27": "https://www.denkulturelleskolesekken.no/utforsk-produksjoner-i-dks/?produksjon=22943"
+};
+
 const DKS_REGISTER = [
   {
     id: "dks-1",
@@ -346,7 +357,10 @@ const DKS_REGISTER = [
 ];
 
 export function getDKSAktiviteter() {
-  return DKS_REGISTER;
+  return DKS_REGISTER.map(a => ({
+    ...a,
+    url: DKS_LENKER[a.tittel] || null
+  }));
 }
 
 export function getDKSAktiviteterSomEvents() {
@@ -373,10 +387,11 @@ export function getDKSAktiviteterSomEvents() {
     }
 
     const trinnListe = Array.from(trinnSet);
+    const dksUrl = DKS_LENKER[a.tittel] || null;
 
     return {
       id: a.id,
-      title: `🎭 DKS ${a.tittel} (${a.deltakere})`,
+      title: `🎭 ${a.tittel} (${a.deltakere})`,
       start: `${a.dato}T${a.startTid}:00`,
       end: `${a.dato}T${a.sluttTid}:00`,
       allDay: false,
@@ -388,7 +403,8 @@ export function getDKSAktiviteterSomEvents() {
         sted: a.sted,
         arrangor: a.arrangor,
         deltakere: a.deltakere,
-        trinn: trinnListe, // Eksplisitt trinn-liste for filtrering
+        trinn: trinnListe,
+        url: dksUrl, // Lenken ligger klar her
         description: `Sted: ${a.sted} | Arrangør: ${a.arrangor} | Deltakere: ${a.deltakere}`
       }
     };

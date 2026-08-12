@@ -890,7 +890,8 @@ document.addEventListener('DOMContentLoaded', () => {
         repeatPattern: ext.repeatPattern || '',
         recurringSeriesId: ext.recurringSeriesId || null,
         isSchoolRoute: isSchoolRoute,
-        isReadOnly: isReadOnly
+        isReadOnly: isReadOnly,
+        url: ext.url || null // <-- LEGGER TIL URL HER
       };
 
       const viewTitle = document.getElementById('viewTitle');
@@ -920,7 +921,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      if (viewDescription) viewDescription.textContent = activeEvent.description || "Ingen beskrivelse oppgitt.";
+// Viser beskrivelse + lenke dersom den finnes
+      if (viewDescription) {
+        let content = activeEvent.description || "Ingen beskrivelse oppgitt.";
+        if (activeEvent.url) {
+          content += `<br><br>🔗 <strong>DKS-nettside:</strong> <a href="${activeEvent.url}" target="_blank" rel="noopener noreferrer" style="color: #0284c7; font-weight: 600; text-decoration: underline;">Åpne produksjonssiden ↗</a>`;
+          viewDescription.innerHTML = content;
+        } else {
+          viewDescription.textContent = content;
+        }
+      }
 
       if (typeof showViewMode === 'function') showViewMode(activeEvent);
     },
