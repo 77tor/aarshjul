@@ -124,6 +124,9 @@ const dksEventsFromJs = typeof getDKSAktiviteterSomEvents === 'function'
 const svommeEventsFromJs = typeof getSvommeAktiviteterSomEvents === 'function' 
   ? getSvommeAktiviteterSomEvents('2026-2027') 
   : [];
+const ansatteEventsFromJs = typeof getAnsatteBursdager === 'function'
+  ? getAnsatteBursdager()
+  : [];
 
 // Firebase Initialisering (skjer KUN én gang her)
 const app = initializeApp(firebaseConfig);
@@ -336,9 +339,17 @@ function showViewMode() {
   document.getElementById('formSubmitBtn').style.display = 'none';
   document.getElementById('viewCancelBtn').style.display = 'inline-block';
 
-  const isRoute = activeEvent && activeEvent.isSchoolRoute;
-  document.getElementById('viewEditBtn').style.display = isRoute ? 'none' : 'inline-block';
-  document.getElementById('viewDeleteBtn').style.display = isRoute ? 'none' : 'inline-block';
+  // --- HER ER ENDRINGEN ---
+  // Hent kategori/gruppe fra hendelsen
+  const group = activeEvent?.extendedProps?.group || '';
+  const readOnlyGroups = ['Skolerute', 'DKS', 'Svømming', 'Fellesaktiviteter', 'Ansatte', 'Bursdag'];
+  
+  // Sjekk om det er skolerute ELLER en av de beskyttede gruppene
+  const isReadOnly = activeEvent?.isSchoolRoute || readOnlyGroups.includes(group);
+
+  // Skjul eller vis rediger/slett basert på om den er skrivebeskyttet
+  document.getElementById('viewEditBtn').style.display = isReadOnly ? 'none' : 'inline-block';
+  document.getElementById('viewDeleteBtn').style.display = isReadOnly ? 'none' : 'inline-block';
 
   document.getElementById('eventModal').style.display = 'flex';
 }
@@ -531,7 +542,7 @@ document.getElementById('miniNextBtn').addEventListener('click', () => {
 });
 
 
-/* Oppstart & FullCalendar */
+
 /* Oppstart & FullCalendar */
 document.addEventListener('DOMContentLoaded', () => {
   if (typeof populateGroupDropdown === 'function') {
