@@ -41,12 +41,12 @@ const categoryColors = {
   "7. trinn": "#9b59b6", // Lila
 
   // Spesifikke fag og aktiviteter
-  "DKS": "#d35400",             // Mørk oransje / brent murtone
+  "DKS": "#d35400",              // Mørk oransje / brent murtone
   "Svømming": "#00cec9",        // Klar cyan / vannblå
   "Fellesaktiviteter": "#2c3e50",// Mørk skiferblå
   "SFO": "#ff7675",              // Korall / varm rosa
   "Kartlegginger": "#6c5ce7",   // Dyp indigo / lilla-blå
-  "Frister": "#c0392b",         // Dyp rød (signal/varselfarge)
+  "Frister": "#c0392b",          // Dyp rød (signal/varselfarge)
   "UiA": "#00b894",              // Mørk myntgrønn
   "Sosialt": "#e84393",          // Knall knallrosa
   "Bursdag": "#f59e0b"          // Varm amber / fest-oransje
@@ -63,7 +63,7 @@ const offDateSet = new Set();
 const schoolEventsFromJs = [];
 
 function parseSchoolYearsData() {
-  if (!schoolYearsData) return;
+  if (typeof schoolYearsData === 'undefined' || !schoolYearsData) return;
   Object.values(schoolYearsData).flat().forEach(item => {
     let cur = new Date(item.startDate + "T00:00:00");
     const last = new Date(item.endDate + "T00:00:00");
@@ -127,10 +127,10 @@ const svommeEventsFromJs = typeof getSvommeAktiviteterSomEvents === 'function'
   ? getSvommeAktiviteterSomEvents('2026-2027') 
   : [];
 const ansatteEventsFromJs = typeof getBirthdayEvents === 'function'
-  ? getBirthdayEvents(2026) // Du kan sende inn gjeldende år, f.eks. 2026
+  ? getBirthdayEvents(2026)
   : [];
 
-// Firebase Initialisering (skjer KUN én gang her)
+// Firebase Initialisering
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const eventsRef = collection(db, "school_events");
@@ -190,7 +190,7 @@ function renderCategoryFilters() {
   });
 }
 
-// Åpne kategorimodal og vis alle avtaler for valgt kategori
+// Åpne kategorimodal og vis ALLE avtaler for valgt kategori (fanger også opp trinn-arrayer)
 function openCategoryModal(category) {
   const modal = document.getElementById('categoryModal');
   const title = document.getElementById('categoryModalTitle');
@@ -201,21 +201,34 @@ function openCategoryModal(category) {
   title.textContent = `Kategori: ${category.name}`;
   listContainer.innerHTML = '';
 
-  // Hent alle hendelser som tilhører denne kategorien fra FullCalendar
-  let events = [];
-  if (calendar) {
-    events = calendar.getEvents().filter(e => {
-      return e.extendedProps?.group === category.name;
-    });
-  }
+  // Samle ALLE hendelser på tvers av JS-filer og brukeravtaler
+  const allRawEvents = [
+    ...(typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []),
+    ...(typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []),
+    ...(typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []),
+    ...(typeof ansatteEventsFromJs !== 'undefined' ? ansatteEventsFromJs : []),
+    ...(typeof schoolEventsFromJs !== 'undefined' ? schoolEventsFromJs : []),
+    ...rawEvents
+  ];
+
+  // Filtrer basert på enten group, category eller trinn-array
+  const matchedEvents = allRawEvents.filter(evt => {
+    const grp = evt.extendedProps?.group || evt.group || evt.extendedProps?.category || '';
+    const trinnArray = evt.extendedProps?.trinn || evt.trinn || [];
+    
+    const matchesGroup = grp.toLowerCase() === category.name.toLowerCase();
+    const matchesTrinn = Array.isArray(trinnArray) && trinnArray.includes(category.name);
+
+    return matchesGroup || matchesTrinn;
+  });
 
   // Sorter hendelsene kronologisk etter startdato
-  events.sort((a, b) => (a.start || 0) - (b.start || 0));
+  matchedEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
 
-  if (events.length === 0) {
+  if (matchedEvents.length === 0) {
     listContainer.innerHTML = '<p style="color: #64748b; font-style: italic; padding: 10px;">Ingen avtaler funnet i denne kategorien.</p>';
   } else {
-    events.forEach(event => {
+    matchedEvents.forEach(evt => {
       const card = document.createElement('div');
       card.className = 'category-event-card';
       card.style.borderLeft = `4px solid ${category.color || '#2563eb'}`;
@@ -224,14 +237,15 @@ function openCategoryModal(category) {
       card.style.background = '#f8fafc';
       card.style.borderRadius = '4px';
 
-      const timeStr = event.allDay 
-        ? event.start.toLocaleDateString('no-NO')
-        : `${event.start.toLocaleDateString('no-NO')} kl. ${event.start.toLocaleTimeString('no-NO', {hour: '2-digit', minute:'2-digit'})}`;
+      const evtStart = new Date(evt.start);
+      const startStr = !isNaN(evtStart) ? evtStart.toLocaleDateString('no-NO') : evt.start;
+      const titleText = evt.title || evt.extendedProps?.rawTitle || 'Uten tittel';
+      const descText = evt.extendedProps?.description || '';
 
       card.innerHTML = `
-        <div class="event-title" style="font-weight: bold;">${event.title}</div>
-        <div class="event-time" style="font-size: 0.85em; color: #475569;">📅 ${timeStr}</div>
-        ${event.extendedProps?.description ? `<div class="event-desc" style="font-size: 0.9em; margin-top: 4px;">${event.extendedProps.description}</div>` : ''}
+        <div class="event-title" style="font-weight: bold; color: #1e293b;">${titleText}</div>
+        <div class="event-time" style="font-size: 0.85em; color: #64748b; margin-top: 2px;">📅 ${startStr}</div>
+        ${descText ? `<div class="event-desc" style="font-size: 0.9em; color: #334155; margin-top: 4px;">${descText}</div>` : ''}
       `;
       listContainer.appendChild(card);
     });
@@ -258,14 +272,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (printBtn) {
     printBtn.addEventListener('click', () => {
-      document.body.classList.add('printing-category');
       window.print();
-      document.body.classList.remove('printing-category');
     });
   }
 });
-
-// SLUTT PÅ MODAL FOR KATEGORIER
 
 function populateGroupDropdown() {
   const groupSelect = document.getElementById('group');
@@ -317,7 +327,7 @@ function showFormMode(title = "Ny avtale", isRecurring = false) {
   document.getElementById('isRecurringMode').value = isRecurring ? "true" : "false";
 
   const recurringGroup = document.getElementById('recurringGroup');
-  recurringGroup.style.display = isRecurring ? 'block' : 'none';
+  if (recurringGroup) recurringGroup.style.display = isRecurring ? 'block' : 'none';
 
   document.getElementById('viewEditBtn').style.display = 'none';
   document.getElementById('viewDeleteBtn').style.display = 'none';
@@ -326,7 +336,7 @@ function showFormMode(title = "Ny avtale", isRecurring = false) {
   document.getElementById('formSubmitBtn').style.display = 'inline-block';
 
   document.getElementById('eventModal').style.display = 'flex';
-  setTimeout(() => document.getElementById('title').focus(), 50);
+  setTimeout(() => document.getElementById('title')?.focus(), 50);
 }
 
 function showViewMode() {
