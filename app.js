@@ -341,20 +341,31 @@ function showViewMode() {
   document.getElementById('formSubmitBtn').style.display = 'none';
   document.getElementById('viewCancelBtn').style.display = 'inline-block';
 
-  // --- HER ER ENDRINGEN ---
-  // Hent kategori/gruppe fra hendelsen
+  // Hent kategori/gruppe og ID fra hendelsen
   const group = activeEvent?.extendedProps?.group || '';
-  const readOnlyGroups = ['Skolerute', 'DKS', 'Svømming', 'Fellesaktiviteter', 'Ansatte', 'Bursdag'];
+  const eventId = activeEvent?.id || '';
   
-  // Sjekk om det er skolerute ELLER en av de beskyttede gruppene
-  const isReadOnly = activeEvent?.isSchoolRoute || readOnlyGroups.includes(group);
+  // Alle beskyttede kategorier fra JS-filene
+  const readOnlyGroups = ['Skolerute', 'DKS', 'Svømming', 'Fellesaktiviteter', 'Ansatte', 'Bursdag'];
 
-  // Skjul eller vis rediger/slett basert på om den er skrivebeskyttet
+  // Sjekk om hendelsen kommer fra en ekstern JS-fil
+  const isReadOnly = 
+    activeEvent?.isSchoolRoute || 
+    activeEvent?.extendedProps?.isSchoolRoute ||
+    readOnlyGroups.includes(group) ||
+    eventId.startsWith('school_route_') ||
+    eventId.startsWith('bday-') ||
+    eventId.startsWith('dks_') ||
+    eventId.startsWith('svom_') ||
+    eventId.startsWith('felles_');
+
+  // Skjul Rediger og Slett dersom hendelsen er skrivebeskyttet
   document.getElementById('viewEditBtn').style.display = isReadOnly ? 'none' : 'inline-block';
   document.getElementById('viewDeleteBtn').style.display = isReadOnly ? 'none' : 'inline-block';
 
   document.getElementById('eventModal').style.display = 'flex';
 }
+
 
 function formatDate(dateObj) {
   const year = dateObj.getFullYear();
