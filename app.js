@@ -204,16 +204,20 @@ function renderCategoryFilters() {
   });
 }
 
-// Åpne kategorimodal og vis ALLE avtaler for valgt kategori (fanger også opp trinn-arrayer)
-function openCategoryModal(category) {
+// Åpne kategorimodal og vis ALLE avtaler for valgt kategori
+function openCategoryModal(categoryName) {
   const modal = document.getElementById('categoryModal');
   const title = document.getElementById('categoryModalTitle');
   const listContainer = document.getElementById('categoryEventsList');
 
   if (!modal) return;
 
-  title.textContent = `Kategori: ${category.name}`;
-  listContainer.innerHTML = '';
+  // Håndter dersom argumentet enten er en streng eller et objekt
+  const catName = typeof categoryName === 'object' ? categoryName.name : categoryName;
+  const catColor = typeof categoryName === 'object' ? categoryName.color : (typeof getCategoryColor === 'function' ? getCategoryColor(catName) : '#2563eb');
+
+  if (title) title.textContent = `Kategori: ${catName}`;
+  if (listContainer) listContainer.innerHTML = '';
 
   // Samle ALLE hendelser på tvers av JS-filer og brukeravtaler
   const allRawEvents = [
@@ -225,13 +229,28 @@ function openCategoryModal(category) {
     ...rawEvents
   ];
 
-  // Filtrer basert på enten group, category eller trinn-array
+  // Filtrer ved hjelp av isEventInSelectedCategories dersom den finnes,
+  // eller bruk en robust intern fallback
   const matchedEvents = allRawEvents.filter(evt => {
-    const grp = evt.extendedProps?.group || evt.group || evt.extendedProps?.category || '';
+    // Hvis den globale filtreringsfunksjonen finnes, gjenbruker vi den for konsistens
+    if (typeof isEventInSelectedCategories === 'function') {
+      const originalSelected = [...selectedCategories];
+      selectedCategories = [catName];
+      const isMatch = isEventInSelectedCategories(evt);
+      selectedCategories = originalSelected; // Tilbakestill
+      if (isMatch) return true;
+    }
+
+    // Fallback-filtrering
+    const rawGrp = (evt.extendedProps?.group || evt.group || evt.extendedProps?.category || '').trim();
+    const mappedGrp = typeof categoryAliases !== 'undefined' && categoryAliases[rawGrp.toLowerCase()] 
+      ? categoryAliases[rawGrp.toLowerCase()] 
+      : rawGrp;
+
     const trinnArray = evt.extendedProps?.trinn || evt.trinn || [];
     
-    const matchesGroup = grp.toLowerCase() === category.name.toLowerCase();
-    const matchesTrinn = Array.isArray(trinnArray) && trinnArray.includes(category.name);
+    const matchesGroup = mappedGrp.toLowerCase() === catName.toLowerCase();
+    const matchesTrinn = Array.isArray(trinnArray) && trinnArray.some(t => t.toLowerCase() === catName.toLowerCase());
 
     return matchesGroup || matchesTrinn;
   });
@@ -245,7 +264,7 @@ function openCategoryModal(category) {
     matchedEvents.forEach(evt => {
       const card = document.createElement('div');
       card.className = 'category-event-card';
-      card.style.borderLeft = `4px solid ${category.color || '#2563eb'}`;
+      card.style.borderLeft = `4px solid ${catColor}`;
       card.style.padding = '10px';
       card.style.marginBottom = '8px';
       card.style.background = '#f8fafc';
@@ -275,8 +294,6 @@ function closeCategoryModal() {
 
 // Event-lyttere for lukking og utskrift i kategorimodalen
 document.addEventListener('DOMContentLoaded', () => {
-  renderCategoryFilters();
-
   const closeX = document.getElementById('categoryModalCloseX');
   const closeBtn = document.getElementById('btnCategoryModalClose');
   const printBtn = document.getElementById('btnCategoryModalPrint');
@@ -1320,15 +1337,17 @@ function renderFilters() {
   filterContainer.innerHTML = '';
 
   Object.keys(categoryColors).forEach(cat => {
-    const item = document.createElement('label');
+    const item = document.createElement('div');
     item.className = 'filter-item-vert';
     
+    // Checkbox for av/på filtrering
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = selectedCategories.includes(cat);
     checkbox.value = cat;
     
     checkbox.addEventListener('change', (e) => {
+      e.stopPropagation(); // Hindrer at modalen åpnes når man bare vil sjekke av boksen
       if (e.target.checked) {
         if (!selectedCategories.includes(cat)) selectedCategories.push(cat);
       } else {
@@ -1339,17 +1358,37 @@ function renderFilters() {
       checkSingleCategorySelection();
     });
 
+    // Fargeprikk
     const colorDot = document.createElement('span');
     colorDot.className = 'color-dot';
-    colorDot.style.backgroundColor = categoryColors[cat];
+    const catColor = categoryColors[cat] || '#3788d8';
+    colorDot.style.backgroundColor = catColor;
 
+    // Tekst (Kategorinavn)
     const labelText = document.createElement('span');
     labelText.className = 'filter-label';
     labelText.textContent = cat;
 
+    // Klikkområde for fargeprikk og tekst som ÅPNER MODALEN
+    const clickArea = document.createElement('div');
+    clickArea.style.cssText = 'display: flex; align-items: center; gap: 8px; flex: 1; cursor: pointer;';
+    clickArea.appendChild(colorDot);
+    clickArea.appendChild(labelText);
+
+    clickArea.addEventListener('click', () => {
+      if (typeof openCategoryModal === 'function') {
+        openCategoryModal(cat);
+      } else if (typeof showCategoryModal === 'function') {
+        showCategoryModal(cat);
+      } else {
+        console.warn('Fant ingen modal-funksjon (f.eks. openCategoryModal) for kategorien:', cat);
+      }
+    });
+
+    // Sett sammen elementet
     item.appendChild(checkbox);
-    item.appendChild(colorDot);
-    item.appendChild(labelText);
+    item.appendChild(clickArea);
+    
     filterContainer.appendChild(item);
   });
 
