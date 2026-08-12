@@ -1223,7 +1223,6 @@ function isEventInSelectedCategories(event) {
   return false;
 }
 
-
 function updateCalendarEvents() {
   let filteredBursdagEvents = [];
   if (typeof getBirthdayEvents === 'function' && calendar) {
@@ -1231,6 +1230,10 @@ function updateCalendarEvents() {
     const rawBursdager = getBirthdayEvents(currentYear);
     filteredBursdagEvents = rawBursdager.filter(event => isEventInSelectedCategories(event));
   }
+
+  // 1. Hent og filtrer kartleggingene fra Kartlegging.js
+  const rawKartlegginger = typeof getKartleggingerSomEvents === 'function' ? getKartleggingerSomEvents() : [];
+  const filteredKartleggingEvents = rawKartlegginger.filter(event => isEventInSelectedCategories(event));
 
   const filteredUserEvents = rawEvents.filter(event => isEventInSelectedCategories(event));
   const filteredFellesEvents = (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
@@ -1250,12 +1253,14 @@ function updateCalendarEvents() {
     };
   });
 
+  // 2. Legg til kartleggingene i allEvents-arrayet
   const allEvents = [
     ...schoolEvents, 
     ...applyColors(filteredFellesEvents), 
     ...applyColors(filteredDksEvents), 
     ...applyColors(filteredSvommeEvents), 
     ...applyColors(filteredBursdagEvents), 
+    ...applyColors(filteredKartleggingEvents), // <-- NÅ ER KARTLEGGINGENE MED!
     ...filteredUserEvents
   ];
 
@@ -1264,6 +1269,7 @@ function updateCalendarEvents() {
     calendar.addEventSource(allEvents);
   }
 }
+
 
 // Modal Lyttere
 document.getElementById('modalCloseX')?.addEventListener('click', closeModal);
