@@ -331,7 +331,7 @@ function showFormMode(title = "Ny avtale", isRecurring = false) {
 
 function showViewMode() {
 console.log("Aktiv hendelse:", activeEvent.id, activeEvent.extendedProps);
-  hideContextMenu();
+hideContextMenu();
   document.getElementById('modalHeaderTitle').textContent = "Avtaledetaljer";
   document.getElementById('eventForm').style.display = 'none';
   document.getElementById('viewMode').style.display = 'block';
@@ -342,7 +342,7 @@ console.log("Aktiv hendelse:", activeEvent.id, activeEvent.extendedProps);
   document.getElementById('formSubmitBtn').style.display = 'none';
   document.getElementById('viewCancelBtn').style.display = 'inline-block';
 
-  // Hent alle mulige felter der gruppe/kategori kan ligge i FullCalendar
+  // Hent gruppe/kategori dersom extendedProps eksisterer
   const group = (
     activeEvent?.extendedProps?.group || 
     activeEvent?.groupId || 
@@ -355,25 +355,22 @@ console.log("Aktiv hendelse:", activeEvent.id, activeEvent.extendedProps);
   // Sjekk 1: Sjekk om det er merket som skolerute
   const isSchoolRoute = activeEvent?.isSchoolRoute || activeEvent?.extendedProps?.isSchoolRoute;
 
-  // Sjekk 2: Liste over alle eksterne grupper (med variasjoner for sikkerhets skyld)
+  // Sjekk 2: Liste over alle eksterne grupper
   const readOnlyGroups = [
     'Skolerute', 'DKS', 'Svømming', 'Svomming', 
     'Fellesaktiviteter', 'Felles', 'Ansatte', 'Bursdag'
   ];
 
-  // Match på gruppe (uavhengig av store/små bokstaver)
   const isReadOnlyGroup = readOnlyGroups.some(g => g.toLowerCase() === group.toLowerCase());
 
-  // Sjekk 3: Sjekk om ID-en starter med kjennetegn fra de ulike .js-filene
+  // Sjekk 3: Sjekk alle kjente ID-mønstre fra de ulike .js-filene
   const hasExternalId = 
     eventId.startsWith('school_route_') || 
     eventId.startsWith('bday-') || 
-    eventId.startsWith('dks_') || 
-    eventId.startsWith('dks-') ||
-    eventId.startsWith('svom_') || 
-    eventId.startsWith('svom-') ||
-    eventId.startsWith('felles_') || 
-    eventId.startsWith('felles-');
+    eventId.startsWith('dks') ||          // Fanger opp dks_, dks-, dks1 osv.
+    eventId.startsWith('svomm') ||        // Fanger opp svomm-1, svom_, svomming osv.
+    eventId.startsWith('felles') || 
+    eventId.startsWith('fa-');            // Fanger opp fa-2627-08-1
 
   // Dersom en av disse slår ut, er hendelsen skrivebeskyttet
   const isReadOnly = isSchoolRoute || isReadOnlyGroup || hasExternalId;
@@ -384,7 +381,6 @@ console.log("Aktiv hendelse:", activeEvent.id, activeEvent.extendedProps);
 
   document.getElementById('eventModal').style.display = 'flex';
 }
-
 
 function formatDate(dateObj) {
   const year = dateObj.getFullYear();
