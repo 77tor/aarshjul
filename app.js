@@ -337,7 +337,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (printBtn) {
     printBtn.addEventListener('click', () => {
+      // Legger til utskriftsklasse slik at CSS vet at det er modalen som skal skrives ut
+      document.body.classList.add('printing-category');
+      
       window.print();
+
+      // Fjerner klassen igjen rett etter utskriftsdialogen lukkes/skrives ut
+      setTimeout(() => {
+        document.body.classList.remove('printing-category');
+      }, 500);
     });
   }
 });
