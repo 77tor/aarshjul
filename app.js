@@ -1115,7 +1115,12 @@ const categoryAliases = {
   'svomme': 'Svømming',
   'dks': 'DKS',
   'bursdag': 'Bursdag',
-  'bursdager': 'Bursdag'
+  'bursdager': 'Bursdag',
+  // --- LEGG TIL DISSE LINJENE ---
+  'kartlegging': 'Kartlegging',
+  'kartlegginger': 'Kartlegging',
+  'prøve': 'Kartlegging',
+  'test': 'Kartlegging'
 };
 
 // Hjelpefunksjon for å finne riktig farge basert på gruppenavn og alias
