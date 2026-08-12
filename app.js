@@ -700,96 +700,110 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       },
 
-      printWeekBtn: {
-        text: '🖨️ Skriv ut uke',
-        click: function() {
-          const originalView = calendar.view.type;
+printWeekBtn: {
+      text: '🖨️ Skriv ut uke',
+      click: function() {
+        if (typeof hideContextMenu === 'function') hideContextMenu();
+        if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
 
-          // Bytt til listevisning for uken
-          calendar.changeView('listWeek');
+        // 1. Hent aktiv periode (start og slutt for uken i kalenderen)
+        const view = calendar.view;
+        const viewStart = view.activeStart;
+        const viewEnd = view.activeEnd;
 
-          const view = calendar.view;
-          const start = view.currentStart;
-          const end = new Date(view.currentEnd.getTime() - 1);
-
-          // Beregn ISO-ukenummer
-          const target = new Date(start.valueOf());
-          const dayNr = (start.getDay() + 6) % 7;
-          target.setDate(target.getDate() - dayNr + 3);
-          const firstThursday = target.valueOf();
-          target.setMonth(0, 1);
-          if (target.getDay() !== 4) {
-            target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
-          }
-          const weekNum = 1 + Math.ceil((firstThursday - target) / 604800000);
-
-          const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
-          const startStr = start.toLocaleDateString('no-NO', options);
-          const endStr = end.toLocaleDateString('no-NO', options);
-
-          const titleEl = document.getElementById('printTitle');
-          const subTitleEl = document.getElementById('printSubTitle');
-          if (titleEl) titleEl.textContent = `Ukeplan – Uke ${weekNum}`;
-          if (subTitleEl) subTitleEl.textContent = `${startStr} – ${endStr}`;
-
-          if (typeof hideContextMenu === 'function') hideContextMenu();
-          if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
-
-          requestAnimationFrame(() => {
-            setTimeout(() => {
-              const currentEvents = calendar.getEvents();
-              const multiDayMap = new Map();
-
-              // Bygg kart over flerdagershendelser med start- og sluttdato
-              currentEvents.forEach(evt => {
-                const titleKey = evt.title.trim();
-                let isMultiDay = false;
-                let startD = evt.start;
-                let endD = evt.end ? new Date(evt.end.getTime() - 1) : evt.start;
-
-                if (evt.start && evt.end) {
-                  const diffDays = (evt.end.getTime() - evt.start.getTime()) / (1000 * 3600 * 24);
-                  if (diffDays > 1) isMultiDay = true;
-                } else if (evt.allDay) {
-                  isMultiDay = true;
-                }
-
-                if (isMultiDay && startD) {
-                  const fmt = { day: '2-digit', month: '2-digit' };
-                  const rangeText = `${startD.toLocaleDateString('no-NO', fmt)} – ${endD.toLocaleDateString('no-NO', fmt)}`;
-                  multiDayMap.set(titleKey, rangeText);
-                }
-              });
-
-              const eventRows = document.querySelectorAll('.fc-list-event');
-              const seenMultiDayTitles = new Set();
-
-              eventRows.forEach(row => {
-                const titleText = row.querySelector('.fc-list-event-title')?.textContent?.trim();
-                const timeCell = row.querySelector('.fc-list-event-time');
-
-                if (titleText && multiDayMap.has(titleText)) {
-                  if (seenMultiDayTitles.has(titleText)) {
-                    // Skjul rad fra dag 2, 3 osv.
-                    row.style.display = 'none';
-                  } else {
-                    seenMultiDayTitles.add(titleText);
-                    // Sett inn til/fra dato i klokkeslett-cellen
-                    if (timeCell) {
-                      timeCell.textContent = multiDayMap.get(titleText);
-                    }
-                  }
-                }
-              });
-
-              // Kjør utskrift dialog
-              window.print();
-
-              // Tilbakekall opprinnelig visning etter utskrift
-              calendar.changeView(originalView);
-            }, 300);
-          });
+        // 2. Beregn ISO-ukenummer for tittelen
+        const target = new Date(view.currentStart.valueOf());
+        const dayNr = (target.getDay() + 6) % 7;
+        target.setDate(target.getDate() - dayNr + 3);
+        const firstThursday = target.valueOf();
+        target.setMonth(0, 1);
+        if (target.getDay() !== 4) {
+          target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
         }
+        const weekNum = 1 + Math.ceil((firstThursday - target) / 604800000);
+
+        // 3. Sett tittel i modal-headeren
+        const titleEl = document.getElementById('categoryModalTitle');
+        if (titleEl) {
+          titleEl.textContent = `Ukeplan – Uke ${weekNum}`;
+        }
+
+        // 4. Hent kun de SYNLEGE/FILTRERTE hendelsene fra FullCalendar for uken
+        // (calendar.getEvents() tar hensyn til valgte kategorier dersom du filtrerer i kalenderen)
+        const currentEvents = calendar.getEvents().filter(evt => {
+          const evtStart = evt.start;
+          const evtEnd = evt.end || evtStart;
+          return evtStart < viewEnd && evtEnd >= viewStart;
+        });
+
+        // Fjern duplikater/filtrer unike hendelser basert på tittel + startdato
+        const uniqueEventsMap = new Map();
+        currentEvents.forEach(evt => {
+          const key = `${evt.title}_${evt.startStr}`;
+          if (!uniqueEventsMap.has(key)) {
+            uniqueEventsMap.set(key, evt);
+          }
+        });
+
+        const sortedEvents = Array.from(uniqueEventsMap.values()).sort((a, b) => a.start - b.start);
+
+        // 5. Bygg opp den ultrakompakte lista inne i categoryEventsList
+        const listContainer = document.getElementById('categoryEventsList');
+        if (listContainer) {
+          listContainer.innerHTML = '';
+
+          if (sortedEvents.length === 0) {
+            listContainer.innerHTML = '<p style="color: #64748b; font-style: italic; padding: 6px;">Ingen avtaler funnet for denne uken i de valgte kategoriene.</p>';
+          } else {
+            sortedEvents.forEach(evt => {
+              const ext = evt.extendedProps || {};
+              const card = document.createElement('div');
+              card.className = 'category-event-card';
+
+              // Tittel
+              const titleText = evt.title || ext.rawTitle || 'Uten tittel';
+
+              // Formater datoer (f.eks. "14. aug." eller "14. aug. – 18. aug.")
+              const startD = evt.start;
+              const endD = evt.end ? new Date(evt.end.getTime() - (evt.allDay ? 86400000 : 0)) : startD;
+
+              const fmt = { day: 'numeric', month: 'short' };
+              let dateStr = startD.toLocaleDateString('no-NO', fmt);
+              if (endD && endD.toDateString() !== startD.toDateString()) {
+                dateStr += ` – ${endD.toLocaleDateString('no-NO', fmt)}`;
+              }
+
+              // Formater klokkeslett
+              let timeStr = '';
+              if (!evt.allDay && evt.start) {
+                const startTime = evt.start.toTimeString().substring(0, 5);
+                const endTime = evt.end ? evt.end.toTimeString().substring(0, 5) : '';
+                timeStr = endTime ? `kl. ${startTime}-${endTime}` : `kl. ${startTime}`;
+              }
+
+              let datetimeLabel = `📅 ${dateStr}`;
+              if (timeStr) datetimeLabel += ` &nbsp;•&nbsp; ⏰ ${timeStr}`;
+
+              const descText = ext.description || '';
+
+              card.innerHTML = `
+                <div class="event-title">${titleText}</div>
+                <div class="event-time">${datetimeLabel}</div>
+                ${descText ? `<div class="event-desc">${descText}</div>` : ''}
+              `;
+
+              listContainer.appendChild(card);
+            });
+          }
+        }
+
+        // 6. Utfør utskriften med 'printing-week'-klassen aktivert
+        document.body.classList.add('printing-week');
+        window.print();
+        
+        setTimeout(() => {
+          document.body.classList.remove('printing-week');
+        }, 500);
       }
     },
 
