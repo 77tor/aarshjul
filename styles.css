@@ -123,11 +123,10 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
   text-overflow: ellipsis;
 }
 
-/* Utskriftstil for hovedkalender */
+/* Utskriftstil for hovedkalender-overskrift */
 .print-only-header { display: none; }
 
-/* Utskriftsregler for kategorimodal */
-/* --- UTSKRIFTSTILER --- */
+/* --- SAMLET UTSKRIFTSTIL --- */
 @media print {
   @page { 
     size: A4 portrait; 
@@ -144,7 +143,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     overflow: visible !important; 
   }
 
-  /* Skjul alt av menyer, sidepaneler, knapper og popovers */
+  /* Skjul globale meny- og knappeelementer under utskrift */
   .sidebar, 
   .fc-header-toolbar, 
   .popover, 
@@ -157,12 +156,15 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     display: none !important; 
   }
 
-  /* --- MODUS 1: Utskrift av Kategorimodal --- */
-  body.printing-category .app-layout {
-    display: none !important;
-  }
-
-  body.printing-category .modal-overlay {
+  /* =========================================================
+     MODUS 1: Utskrift av KATEGORIMODAL (Ren oppramsing)
+     ========================================================= */
+  body.printing-category .app-layout,
+  body.printing-category .main-content,
+  body.printing-category #calendar,
+  body.printing-category .fc,
+  body.printing-category #printHeader,
+  body.printing-category .modal-overlay:not(#categoryModal) {
     display: none !important;
   }
 
@@ -171,6 +173,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     position: static !important;
     background: none !important;
     padding: 0 !important;
+    margin: 0 !important;
   }
 
   body.printing-category #categoryModal .modal-card {
@@ -179,11 +182,12 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     box-shadow: none !important;
     border: none !important;
     padding: 0 !important;
+    background: transparent !important;
   }
 
   body.printing-category #categoryModal .modal-header {
     border-bottom: 2px solid #0f172a !important;
-    padding: 0 0 12px 0 !important;
+    padding: 0 0 10px 0 !important;
     margin-bottom: 16px !important;
   }
 
@@ -193,22 +197,48 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     color: #0f172a !important;
   }
 
+  /* Liste-visning for oppramsing */
   body.printing-category .category-events-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
     max-height: none !important;
     overflow: visible !important;
-    gap: 12px !important;
   }
 
+  /* Hvert enkelt kort i den oppramsede lista */
   body.printing-category .category-event-card {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     background: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
-    border-left-width: 6px !important;
+    border-left-width: 5px !important;
     padding: 10px 14px !important;
+    border-radius: 4px !important;
   }
 
-  /* --- MODUS 2: Utskrift av Hovedkalender (Når modal IKKE er åpen) --- */
+  body.printing-category .category-event-card .event-title {
+    font-size: 11pt !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+  }
+
+  body.printing-category .category-event-card .event-time {
+    font-size: 9pt !important;
+    color: #475569 !important;
+    margin-top: 3px !important;
+  }
+
+  body.printing-category .category-event-card .event-desc {
+    font-size: 9pt !important;
+    color: #334155 !important;
+    margin-top: 5px !important;
+  }
+
+
+  /* =========================================================
+     MODUS 2: Utskrift av HOVEDKALENDER (Når modal IKKE skrives ut)
+     ========================================================= */
   body:not(.printing-category) .modal-overlay {
     display: none !important;
   }
