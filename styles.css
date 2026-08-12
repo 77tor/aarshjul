@@ -130,7 +130,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 @media print {
   @page { 
     size: A4 portrait; 
-    margin: 6mm 8mm !important; /* Mindre sidemarger og topp/bunn-marger */
+    margin: 8mm 8mm !important; /* Mindre sidemarger og topp/bunn-marger */
   }
 
   html, body { 
