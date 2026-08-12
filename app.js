@@ -154,20 +154,16 @@ function renderCategoryFilters() {
   Object.entries(categoryColors).forEach(([categoryName, color]) => {
     const catItem = document.createElement('div');
     catItem.className = 'filter-item-vert';
-    catItem.style.display = 'flex';
-    catItem.style.alignItems = 'center';
-    catItem.style.justifyContent = 'space-between';
-    catItem.style.marginBottom = '8px';
 
     const safeId = categoryName.replace(/[^a-zA-Z0-9]/g, '_');
 
     catItem.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 8px;">
+      <div class="filter-item-left">
         <input type="checkbox" id="cat_${safeId}" value="${categoryName}" checked />
-        <span class="color-dot" style="background-color: ${color}; width: 12px; height: 12px; border-radius: 50%; display: inline-block;"></span>
+        <span class="color-dot" style="background-color: ${color};"></span>
         <label for="cat_${safeId}">${categoryName}</label>
       </div>
-      <button type="button" class="btn-category-preview" title="Se hele kategorien" style="background:none; border:none; cursor:pointer;">🔍</button>
+      <button type="button" class="btn-category-preview" title="Se hele ${categoryName}">🔍</button>
     `;
 
     // Sjekkboks-endring (filtrering)
@@ -180,7 +176,7 @@ function renderCategoryFilters() {
       if (calendar) calendar.refetchEvents();
     });
 
-    // Åpne kategorimodal
+    // Åpne kategorimodal ved klikk på forstørrelsesglasset
     catItem.querySelector('.btn-category-preview').addEventListener('click', (e) => {
       e.stopPropagation();
       openCategoryModal({ name: categoryName, color: color });
