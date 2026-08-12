@@ -341,25 +341,43 @@ function showViewMode() {
   document.getElementById('formSubmitBtn').style.display = 'none';
   document.getElementById('viewCancelBtn').style.display = 'inline-block';
 
-  // Hent kategori/gruppe og ID fra hendelsen
-  const group = activeEvent?.extendedProps?.group || '';
-  const eventId = activeEvent?.id || '';
-  
-  // Alle beskyttede kategorier fra JS-filene
-  const readOnlyGroups = ['Skolerute', 'DKS', 'Svømming', 'Fellesaktiviteter', 'Ansatte', 'Bursdag'];
+  // Hent alle mulige felter der gruppe/kategori kan ligge i FullCalendar
+  const group = (
+    activeEvent?.extendedProps?.group || 
+    activeEvent?.groupId || 
+    activeEvent?.extendedProps?.category || 
+    ''
+  ).trim();
 
-  // Sjekk om hendelsen kommer fra en ekstern JS-fil
-  const isReadOnly = 
-    activeEvent?.isSchoolRoute || 
-    activeEvent?.extendedProps?.isSchoolRoute ||
-    readOnlyGroups.includes(group) ||
-    eventId.startsWith('school_route_') ||
-    eventId.startsWith('bday-') ||
-    eventId.startsWith('dks_') ||
-    eventId.startsWith('svom_') ||
-    eventId.startsWith('felles_');
+  const eventId = String(activeEvent?.id || '');
 
-  // Skjul Rediger og Slett dersom hendelsen er skrivebeskyttet
+  // Sjekk 1: Sjekk om det er merket som skolerute
+  const isSchoolRoute = activeEvent?.isSchoolRoute || activeEvent?.extendedProps?.isSchoolRoute;
+
+  // Sjekk 2: Liste over alle eksterne grupper (med variasjoner for sikkerhets skyld)
+  const readOnlyGroups = [
+    'Skolerute', 'DKS', 'Svømming', 'Svomming', 
+    'Fellesaktiviteter', 'Felles', 'Ansatte', 'Bursdag'
+  ];
+
+  // Match på gruppe (uavhengig av store/små bokstaver)
+  const isReadOnlyGroup = readOnlyGroups.some(g => g.toLowerCase() === group.toLowerCase());
+
+  // Sjekk 3: Sjekk om ID-en starter med kjennetegn fra de ulike .js-filene
+  const hasExternalId = 
+    eventId.startsWith('school_route_') || 
+    eventId.startsWith('bday-') || 
+    eventId.startsWith('dks_') || 
+    eventId.startsWith('dks-') ||
+    eventId.startsWith('svom_') || 
+    eventId.startsWith('svom-') ||
+    eventId.startsWith('felles_') || 
+    eventId.startsWith('felles-');
+
+  // Dersom en av disse slår ut, er hendelsen skrivebeskyttet
+  const isReadOnly = isSchoolRoute || isReadOnlyGroup || hasExternalId;
+
+  // Skjul eller vis rediger/slett
   document.getElementById('viewEditBtn').style.display = isReadOnly ? 'none' : 'inline-block';
   document.getElementById('viewDeleteBtn').style.display = isReadOnly ? 'none' : 'inline-block';
 
