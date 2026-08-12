@@ -160,10 +160,14 @@
 
       <!-- FOOTER KNAPPER -->
       <div id="normalFooter" class="modal-footer">
+        <!-- Vises kun i visningsmodus for egne hendelser -->
+        <div class="actions-left">
+          <button id="viewEditBtn" type="button" class="btn btn-ghost btn-sm" style="display: none;">✏️ Rediger</button>
+          <button id="viewDeleteBtn" type="button" class="btn btn-ghost-danger btn-sm" style="display: none;">🗑️ Slett</button>
+        </div>
+
         <button id="formCancelBtn" type="button" class="btn btn-secondary">Avbryt</button>
-        <button id="viewCancelBtn" type="button" class="btn btn-secondary" style="display: none;">Lukk</button>
-        <button id="viewEditBtn" type="button" class="btn btn-primary" style="display: none;">Rediger</button>
-        <button id="viewDeleteBtn" type="button" class="btn btn-danger" style="display: none;">Slett</button>
+        <button id="viewCancelBtn" type="button" class="btn btn-primary" style="display: none;">Lukk</button>
         <button id="formSubmitBtn" type="submit" form="eventForm" class="btn btn-primary">Lagre</button>
       </div>
 
