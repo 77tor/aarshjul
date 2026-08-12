@@ -17,6 +17,7 @@ import { getFellesaktiviteterSomEvents } from "./fellesaktiviteter.js";
 import { getDKSAktiviteterSomEvents } from './DKS.js';
 import { getSvommeAktiviteterSomEvents } from './svomming.js';
 import { getBirthdayEvents } from './ansatte.js';
+import { getKartleggingerSomEvents } from './Kartlegging.js'; // <-- LEGG TIL DENNE
 
 // Firebase-konfigurasjon
 const firebaseConfig = {
@@ -45,7 +46,7 @@ const categoryColors = {
   "Svømming": "#00cec9",        // Klar cyan / vannblå
   "Fellesaktiviteter": "#2c3e50",// Mørk skiferblå
   "SFO": "#ff7675",              // Korall / varm rosa
-  "Kartlegginger": "#6c5ce7",   // Dyp indigo / lilla-blå
+  "Kartlegging": "#6c5ce7",   // Dyp indigo / lilla-blå
   "Frister": "#c0392b",          // Dyp rød (signal/varselfarge)
   "UiA": "#00b894",              // Mørk myntgrønn
   "Sosialt": "#e84393",          // Knall knallrosa
@@ -128,6 +129,9 @@ const svommeEventsFromJs = typeof getSvommeAktiviteterSomEvents === 'function'
   : [];
 const ansatteEventsFromJs = typeof getBirthdayEvents === 'function'
   ? getBirthdayEvents(2026)
+  : [];
+const kartleggingEventsFromJs = typeof getKartleggingerSomEvents === 'function'
+  ? getKartleggingerSomEvents()
   : [];
 
 // Firebase Initialisering
@@ -220,14 +224,15 @@ function openCategoryModal(categoryName) {
   if (listContainer) listContainer.innerHTML = '';
 
   // Samle ALLE hendelser på tvers av JS-filer og brukeravtaler
-  const allRawEvents = [
-    ...(typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []),
-    ...(typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []),
-    ...(typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []),
-    ...(typeof ansatteEventsFromJs !== 'undefined' ? ansatteEventsFromJs : []),
-    ...(typeof schoolEventsFromJs !== 'undefined' ? schoolEventsFromJs : []),
-    ...rawEvents
-  ];
+const allRawEvents = [
+  ...(typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []),
+  ...(typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []),
+  ...(typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []),
+  ...(typeof ansatteEventsFromJs !== 'undefined' ? ansatteEventsFromJs : []),
+  ...(typeof kartleggingEventsFromJs !== 'undefined' ? kartleggingEventsFromJs : []), // <-- LEGG TIL DENNE
+  ...(typeof schoolEventsFromJs !== 'undefined' ? schoolEventsFromJs : []),
+  ...rawEvents
+];
 
   // Filtrer ved å gjenbruke isEventInSelectedCategories
   const matchedEvents = allRawEvents.filter(evt => {
@@ -439,21 +444,23 @@ hideContextMenu();
   const isSchoolRoute = activeEvent?.isSchoolRoute || activeEvent?.extendedProps?.isSchoolRoute;
 
   // Sjekk 2: Liste over alle eksterne grupper
-  const readOnlyGroups = [
-    'Skolerute', 'DKS', 'Svømming', 'Svomming', 
-    'Fellesaktiviteter', 'Felles', 'Ansatte', 'Bursdag'
-  ];
+const readOnlyGroups = [
+  'Skolerute', 'DKS', 'Svømming', 'Svomming', 
+  'Fellesaktiviteter', 'Felles', 'Ansatte', 'Bursdag',
+  'Kartlegging', 'Kartlegginger' // <-- LEGG TIL DISSE
+];
 
   const isReadOnlyGroup = readOnlyGroups.some(g => g.toLowerCase() === group.toLowerCase());
 
   // Sjekk 3: Sjekk alle kjente ID-mønstre fra de ulike .js-filene
-  const hasExternalId = 
-    eventId.startsWith('school_route_') || 
-    eventId.startsWith('bday-') || 
-    eventId.startsWith('dks') ||          // Fanger opp dks_, dks-, dks1 osv.
-    eventId.startsWith('svomm') ||        // Fanger opp svomm-1, svom_, svomming osv.
-    eventId.startsWith('felles') || 
-    eventId.startsWith('fa-');            // Fanger opp fa-2627-08-1
+const hasExternalId = 
+  eventId.startsWith('school_route_') || 
+  eventId.startsWith('bday-') || 
+  eventId.startsWith('dks') || 
+  eventId.startsWith('svomm') || 
+  eventId.startsWith('felles') || 
+  eventId.startsWith('fa-') ||
+  eventId.startsWith('kart-'); // <-- Fanger opp "kart-1a", "kart-2", osv.
 
   // Dersom en av disse slår ut, er hendelsen skrivebeskyttet
   const isReadOnly = isSchoolRoute || isReadOnlyGroup || hasExternalId;
