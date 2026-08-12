@@ -63,7 +63,7 @@ export function getSvommeAktiviteterSomEvents() {
 
     return {
       id: a.id,
-      title: `[Svømming] ${a.tittel} (${a.deltakere})`,
+      title: `🏊 Skolesvømming (${a.deltakere})`,
       start: `${a.dato}T${a.startTid}:00`,
       end: `${a.dato}T${a.sluttTid}:00`,
       allDay: false,
