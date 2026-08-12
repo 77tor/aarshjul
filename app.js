@@ -774,7 +774,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const weekNum = 1 + Math.ceil((firstThursday - target) / 604800000);
 
-        // Oppdater overskriften i kalenderen
+// Oppdater overskriften i kalenderen
         const titleEl = document.querySelector('.fc-toolbar-title');
         if (titleEl) {
           titleEl.textContent = `Uke ${weekNum}: ${view.title}`;
@@ -813,7 +813,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const ext = info.event.extendedProps || {};
       const isSchoolRoute = ext.isSchoolRoute || false;
-      const isReadOnly = ext.isReadOnly || isSchoolRoute; // Skolerute markeres alltid som skriveskjermet
+      const isReadOnly = ext.isReadOnly || isSchoolRoute;
 
       activeEvent = {
         id: info.event.id || '',
@@ -859,7 +859,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (viewDescription) viewDescription.textContent = activeEvent.description || "Ingen beskrivelse oppgitt.";
 
-      // Send activeEvent med inn i visningsmodalen
       if (typeof showViewMode === 'function') showViewMode(activeEvent);
     },
 
@@ -870,7 +869,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof renderFilters === 'function') renderFilters();
   if (typeof renderMiniCalendar === 'function') renderMiniCalendar();
 
-  // Tvinger hendelsene inn i kalenderen ved oppstart
   if (typeof updateCalendarEvents === 'function') {
     updateCalendarEvents();
   }
@@ -979,15 +977,20 @@ onSnapshot(eventsRef, (snapshot) => {
     const isRecurring = Boolean(data.repeatPattern || data.recurringSeriesId);
     const iconPrefix = isRecurring ? "🔁 " : "";
 
+    // Slår opp farge direkte eller via categoryColors (case-insensitive fallback)
+    const eventGroup = data.group || '';
+    const colorKey = Object.keys(categoryColors).find(k => k.toLowerCase() === eventGroup.toLowerCase());
+    const eventColor = categoryColors[colorKey] || '#3788d8';
+
     return {
       id: doc.id,
-      title: `${iconPrefix}[${data.group}] ${data.title}`,
+      title: `${iconPrefix}${eventGroup ? '[' + eventGroup + '] ' : ''}${data.title}`,
       start: startIso,
       end: endIso,
-      backgroundColor: categoryColors[data.group] || '#3788d8',
-      borderColor: categoryColors[data.group] || '#3788d8',
+      backgroundColor: eventColor,
+      borderColor: eventColor,
       extendedProps: { 
-        group: data.group,
+        group: eventGroup,
         rawTitle: data.title,
         startDate: data.startDate,
         startTime: data.startTime || '',
@@ -996,40 +999,38 @@ onSnapshot(eventsRef, (snapshot) => {
         description: data.description || '',
         repeatPattern: data.repeatPattern || null,
         recurringSeriesId: data.recurringSeriesId || null,
-        trinn: Array.isArray(data.trinn) ? data.trinn : [] // Støtte for trinn-array i Firestore
+        trinn: Array.isArray(data.trinn) ? data.trinn : []
       }
     };
   });
   updateCalendarEvents();
 });
 
-// <-- BRUK DENNE UTGAVEN:
+// Sjekker om en hendelse tilhører de valgte kategoriene
 function isEventInSelectedCategories(event) {
-  if (selectedCategories.length === 0) return false;
+  if (!selectedCategories || selectedCategories.length === 0) return false;
 
-  const group = (event.extendedProps?.group || '').toLowerCase();
-  const trinnArray = event.extendedProps?.trinn || [];
+  const group = (event.extendedProps?.group || event.group || '').toLowerCase();
+  const trinnArray = event.extendedProps?.trinn || event.trinn || [];
   
   const title = (event.title || event.extendedProps?.rawTitle || '').toLowerCase();
   const description = (event.extendedProps?.description || '').toLowerCase();
   const altInnhold = `${group} ${title} ${description}`.toLowerCase();
 
   for (const cat of selectedCategories) {
-    const isTrinnCategory = cat.endsWith('. trinn');
+    const catLower = cat.toLowerCase();
+    const isTrinnCategory = catLower.endsWith('. trinn');
 
     // A) HVIS MAN FILTRERER PÅ ET TRINN (f.eks. "1. trinn")
     if (isTrinnCategory) {
-      // 1. Sjekk direkte i trinn-arrayen
       if (Array.isArray(trinnArray) && trinnArray.length > 0) {
-        if (trinnArray.includes(cat)) return true;
+        if (trinnArray.some(t => t.toLowerCase() === catLower)) return true;
       }
 
-      // 2. Skoleomfattende hendelser
       if (altInnhold.includes("alle trinn") || altInnhold.includes("1.-7. trinn") || altInnhold.includes("1-7. trinn")) {
         return true;
       }
 
-      // 3. Fallback for manuelle hendelser uten trinnArray
       if (!Array.isArray(trinnArray) || trinnArray.length === 0) {
         const trinnNummer = parseInt(cat.split('.')[0].trim(), 10);
         
@@ -1046,13 +1047,11 @@ function isEventInSelectedCategories(event) {
           if (trinnNummer >= startTrinn && trinnNummer <= sluttTrinn) return true;
         }
       }
-
-      // Dersom det var et trinn-filter og eventet ikke matchet trinnet, hopp videre
       continue; 
     }
 
-    // B) HVIS MAN FILTRERER PÅ EN KATEGORI/GRUPPE (f.eks. "Svømming", "DKS")
-    if (group === cat.toLowerCase()) {
+    // B) HVIS MAN FILTRERER PÅ EN KATEGORI/GRUPPE
+    if (group === catLower) {
       return true;
     }
 
@@ -1069,43 +1068,37 @@ function isEventInSelectedCategories(event) {
 }
 
 function updateCalendarEvents() {
-  // 1. Hent bursdager fra ansatte.js basert på hvilket år kalenderen viser
   let filteredBursdagEvents = [];
   if (typeof getBirthdayEvents === 'function' && calendar) {
     const currentYear = calendar.getDate().getFullYear();
     const rawBursdager = getBirthdayEvents(currentYear);
-    
-    // Filtrer bursdagene gjennom valgte kategorier
-    filteredBursdagEvents = rawBursdager.filter(event => 
-      isEventInSelectedCategories(event)
-    );
+    filteredBursdagEvents = rawBursdager.filter(event => isEventInSelectedCategories(event));
   }
 
-  const filteredUserEvents = rawEvents.filter(event => 
-    isEventInSelectedCategories(event)
-  );
-
-  const filteredFellesEvents = (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []).filter(event => 
-    isEventInSelectedCategories(event)
-  );
-
-  const filteredDksEvents = (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []).filter(event => 
-    isEventInSelectedCategories(event)
-  );
-
-  const filteredSvommeEvents = (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []).filter(event => 
-    isEventInSelectedCategories(event)
-  );
-
+  const filteredUserEvents = rawEvents.filter(event => isEventInSelectedCategories(event));
+  const filteredFellesEvents = (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
+  const filteredDksEvents = (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
+  const filteredSvommeEvents = (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
   const schoolEvents = typeof schoolEventsFromJs !== 'undefined' ? schoolEventsFromJs : [];
 
-  // 2. Legg til filteredBursdagEvents i listen over alle hendelser
+  // Påfør riktige farger fra categoryColors til alle eksterne hendelser før visning
+  const applyColors = (events) => events.map(evt => {
+    const grp = evt.extendedProps?.group || evt.group || '';
+    const colorKey = Object.keys(categoryColors).find(k => k.toLowerCase() === grp.toLowerCase());
+    const c = categoryColors[colorKey] || evt.backgroundColor || evt.color || '#3788d8';
+    return {
+      ...evt,
+      backgroundColor: c,
+      borderColor: c
+    };
+  });
+
   const allEvents = [
     ...schoolEvents, 
-    ...filteredFellesEvents, 
-    ...filteredDksEvents, 
-    ...filteredSvommeEvents, 
-    ...filteredBursdagEvents, // <-- Bursdager lagt til her
+    ...applyColors(filteredFellesEvents), 
+    ...applyColors(filteredDksEvents), 
+    ...applyColors(filteredSvommeEvents), 
+    ...applyColors(filteredBursdagEvents), 
     ...filteredUserEvents
   ];
 
@@ -1115,13 +1108,12 @@ function updateCalendarEvents() {
   }
 }
 
-
 // Modal Lyttere
-document.getElementById('modalCloseX').addEventListener('click', closeModal);
-document.getElementById('formCancelBtn').addEventListener('click', closeModal);
-document.getElementById('viewCancelBtn').addEventListener('click', closeModal);
+document.getElementById('modalCloseX')?.addEventListener('click', closeModal);
+document.getElementById('formCancelBtn')?.addEventListener('click', closeModal);
+document.getElementById('viewCancelBtn')?.addEventListener('click', closeModal);
 
-document.getElementById('viewEditBtn').addEventListener('click', () => {
+document.getElementById('viewEditBtn')?.addEventListener('click', () => {
   if (activeEvent && !activeEvent.isSchoolRoute) {
     document.getElementById('eventId').value = activeEvent.id;
     document.getElementById('title').value = activeEvent.title;
@@ -1136,7 +1128,7 @@ document.getElementById('viewEditBtn').addEventListener('click', () => {
   }
 });
 
-document.getElementById('viewDeleteBtn').addEventListener('click', async () => {
+document.getElementById('viewDeleteBtn')?.addEventListener('click', async () => {
   if (!activeEvent || activeEvent.isSchoolRoute) return;
 
   if (activeEvent.recurringSeriesId) {
@@ -1156,12 +1148,12 @@ document.getElementById('viewDeleteBtn').addEventListener('click', async () => {
   }
 });
 
-document.getElementById('cancelDeleteModeBtn').addEventListener('click', () => {
+document.getElementById('cancelDeleteModeBtn')?.addEventListener('click', () => {
   document.getElementById('deleteConfirmMode').style.display = 'none';
   document.getElementById('normalFooter').style.display = 'flex';
 });
 
-document.getElementById('deleteSingleBtn').addEventListener('click', async () => {
+document.getElementById('deleteSingleBtn')?.addEventListener('click', async () => {
   if (!activeEvent) return;
   const targetId = activeEvent.id;
   closeModal();
@@ -1173,7 +1165,7 @@ document.getElementById('deleteSingleBtn').addEventListener('click', async () =>
   }
 });
 
-document.getElementById('deleteFutureBtn').addEventListener('click', async () => {
+document.getElementById('deleteFutureBtn')?.addEventListener('click', async () => {
   if (!activeEvent || !activeEvent.recurringSeriesId) return;
   const seriesId = activeEvent.recurringSeriesId;
   const currentDate = activeEvent.startDate;
@@ -1195,7 +1187,7 @@ document.getElementById('deleteFutureBtn').addEventListener('click', async () =>
   }
 });
 
-document.getElementById('deleteAllSeriesBtn').addEventListener('click', async () => {
+document.getElementById('deleteAllSeriesBtn')?.addEventListener('click', async () => {
   if (!activeEvent || !activeEvent.recurringSeriesId) return;
   const seriesId = activeEvent.recurringSeriesId;
 
@@ -1212,7 +1204,7 @@ document.getElementById('deleteAllSeriesBtn').addEventListener('click', async ()
   }
 });
 
-document.getElementById('eventForm').addEventListener('submit', async (e) => {
+document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const eventId = document.getElementById('eventId').value;
@@ -1347,7 +1339,7 @@ function checkSingleCategorySelection() {
   }
 }
 
-// Lytter på utskriftsknappen for valgt kategori (Oppdatert med bursdager og trinn-array sjekk)
+// Lytter på utskriftsknappen for valgt kategori
 document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (selectedCategories.length !== 1) return;
 
@@ -1363,13 +1355,10 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   calendar.gotoDate(schoolYearStart);
 
   const shouldIncludeEvent = (evt) => {
-    // Sjekk om trinn-arrayen inneholder den valgte kategorien direkte
     const trinnArray = evt.extendedProps?.trinn || [];
     if (Array.isArray(trinnArray) && trinnArray.includes(selectedCategory)) {
       return true;
     }
-
-    // Standard kategorisjekk
     return isEventInSelectedCategories(evt);
   };
 
@@ -1378,14 +1367,16 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   const filteredDksEvents = (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []).filter(shouldIncludeEvent);
   const filteredSvommeEvents = (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []).filter(shouldIncludeEvent);
   
-  // --- HER ER ENDRINGEN: Filtrer bursdager fra ansatte.js ---
-  const filteredAnsatteEvents = (typeof ansatteEventsFromJs !== 'undefined' ? ansatteEventsFromJs : []).filter(shouldIncludeEvent);
+  let filteredBursdager = [];
+  if (typeof getBirthdayEvents === 'function' && calendar) {
+    filteredBursdager = getBirthdayEvents(startYear).filter(shouldIncludeEvent);
+  }
 
   const allRawEvents = [
     ...filteredFellesEvents, 
     ...filteredDksEvents, 
     ...filteredSvommeEvents, 
-    ...filteredAnsatteEvents, // <-- LEGG TIL DENNE HER
+    ...filteredBursdager,
     ...filteredUserEvents
   ];
 
@@ -1443,7 +1434,7 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
       start: item.minStart.toISOString().split('T')[0],
       end: item.minStart.toISOString().split('T')[0],
       allDay: true,
-      color: item.originalEvt.color || item.originalEvt.backgroundColor
+      color: item.originalEvt.color || item.originalEvt.backgroundColor || '#3788d8'
     };
   });
 
