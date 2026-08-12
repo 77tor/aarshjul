@@ -16,6 +16,7 @@ import { schoolYearsData } from "./fridager.js";
 import { getFellesaktiviteterSomEvents } from "./fellesaktiviteter.js";
 import { getDKSAktiviteterSomEvents } from './DKS.js';
 import { getSvommeAktiviteterSomEvents } from './svomming.js';
+import { getBirthdayEvents } from './ansatte.js';
 
 // Firebase-konfigurasjon
 const firebaseConfig = {
@@ -125,8 +126,8 @@ const dksEventsFromJs = typeof getDKSAktiviteterSomEvents === 'function'
 const svommeEventsFromJs = typeof getSvommeAktiviteterSomEvents === 'function' 
   ? getSvommeAktiviteterSomEvents('2026-2027') 
   : [];
-const ansatteEventsFromJs = typeof getAnsatteBursdager === 'function'
-  ? getAnsatteBursdager()
+const ansatteEventsFromJs = typeof getBirthdayEvents === 'function'
+  ? getBirthdayEvents(2026) // Du kan sende inn gjeldende år, f.eks. 2026
   : [];
 
 // Firebase Initialisering (skjer KUN én gang her)
@@ -1296,7 +1297,7 @@ function checkSingleCategorySelection() {
   }
 }
 
-// Lytter på utskriftsknappen for valgt kategori (Oppdatert med trinn-array sjekk)
+// Lytter på utskriftsknappen for valgt kategori (Oppdatert med bursdager og trinn-array sjekk)
 document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (selectedCategories.length !== 1) return;
 
@@ -1326,11 +1327,15 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   const filteredFellesEvents = (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []).filter(shouldIncludeEvent);
   const filteredDksEvents = (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []).filter(shouldIncludeEvent);
   const filteredSvommeEvents = (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []).filter(shouldIncludeEvent);
+  
+  // --- HER ER ENDRINGEN: Filtrer bursdager fra ansatte.js ---
+  const filteredAnsatteEvents = (typeof ansatteEventsFromJs !== 'undefined' ? ansatteEventsFromJs : []).filter(shouldIncludeEvent);
 
   const allRawEvents = [
     ...filteredFellesEvents, 
     ...filteredDksEvents, 
     ...filteredSvommeEvents, 
+    ...filteredAnsatteEvents, // <-- LEGG TIL DENNE HER
     ...filteredUserEvents
   ];
 
