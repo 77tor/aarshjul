@@ -66,12 +66,7 @@ const ansatteData = [
   { etternavn: "Aadnevik", fornavn: "Malin", fodselsdato: "22.07.1997", epost: "malin.aadnevik@kristiansand.kommune.no" }
 ];
 
-/**
- * Hjelpefunksjon som genererer FullCalendar-hendelser for bursdager i et bestemt år.
- * @param {number} year - Året du vil hente bursdager for (f.eks. 2026)
- * @returns {Array} Liste med hendelsesobjekter klare for FullCalendar
- */
-function getBirthdayEvents(year = new Date().getFullYear()) {
+export function getBirthdayEvents(year = new Date().getFullYear()) {
   return ansatteData.map(ansatt => {
     const [dag, maaned, fodselsAar] = ansatt.fodselsdato.split('.');
     const alder = year - parseInt(fodselsAar, 10);
@@ -83,7 +78,7 @@ function getBirthdayEvents(year = new Date().getFullYear()) {
       start: dateStr,
       allDay: true,
       display: 'block',
-      backgroundColor: '#f59e0b', // Jevn oransje farge for bursdager
+      backgroundColor: '#f59e0b',
       borderColor: '#d97706',
       extendedProps: {
         rawTitle: `Bursdag: ${ansatt.fornavn} ${ansatt.etternavn}`,
