@@ -653,7 +653,6 @@ document.getElementById('miniNextBtn').addEventListener('click', () => {
 });
 
 
-
 /* Oppstart & FullCalendar */
 document.addEventListener('DOMContentLoaded', () => {
   if (typeof populateGroupDropdown === 'function') {
@@ -662,6 +661,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const calendarEl = document.getElementById('calendar');
   if (!calendarEl) return;
+
+  // Hjelpefunksjon for presis ISO-ukenummerberegning
+  function getISOWeekNumber(d) {
+    const date = new Date(d.getTime());
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() + 3 - ((date.getDay() + 6) % 7));
+    const week1 = new Date(date.getFullYear(), 0, 4);
+    return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
+  }
 
   calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'timeGridWeek',
@@ -700,110 +708,103 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       },
 
-printWeekBtn: {
-      text: '🖨️ Skriv ut uke',
-      click: function() {
-        if (typeof hideContextMenu === 'function') hideContextMenu();
-        if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
+      printWeekBtn: {
+        text: '🖨️ Skriv ut uke',
+        click: function() {
+          if (typeof hideContextMenu === 'function') hideContextMenu();
+          if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
 
-        // 1. Hent aktiv periode (start og slutt for uken i kalenderen)
-        const view = calendar.view;
-        const viewStart = view.activeStart;
-        const viewEnd = view.activeEnd;
+          // 1. Hent aktiv periode (start og slutt for uken i kalenderen)
+          const view = calendar.view;
+          const viewStart = view.activeStart;
+          const viewEnd = view.activeEnd;
 
-        // 2. Beregn ISO-ukenummer for tittelen
-        const target = new Date(view.currentStart.valueOf());
-        const dayNr = (target.getDay() + 6) % 7;
-        target.setDate(target.getDate() - dayNr + 3);
-        const firstThursday = target.valueOf();
-        target.setMonth(0, 1);
-        if (target.getDay() !== 4) {
-          target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
-        }
-        const weekNum = 1 + Math.ceil((firstThursday - target) / 604800000);
+          // 2. Beregn ISO-ukenummer for tittelen
+          const weekNum = getISOWeekNumber(view.currentStart);
 
-        // 3. Sett tittel i modal-headeren
-        const titleEl = document.getElementById('categoryModalTitle');
-        if (titleEl) {
-          titleEl.textContent = `Ukeplan – Uke ${weekNum}`;
-        }
-
-        // 4. Hent kun de SYNLEGE/FILTRERTE hendelsene fra FullCalendar for uken
-        // (calendar.getEvents() tar hensyn til valgte kategorier dersom du filtrerer i kalenderen)
-        const currentEvents = calendar.getEvents().filter(evt => {
-          const evtStart = evt.start;
-          const evtEnd = evt.end || evtStart;
-          return evtStart < viewEnd && evtEnd >= viewStart;
-        });
-
-        // Fjern duplikater/filtrer unike hendelser basert på tittel + startdato
-        const uniqueEventsMap = new Map();
-        currentEvents.forEach(evt => {
-          const key = `${evt.title}_${evt.startStr}`;
-          if (!uniqueEventsMap.has(key)) {
-            uniqueEventsMap.set(key, evt);
+          // 3. Sett tittel i modal-headeren
+          const titleEl = document.getElementById('categoryModalTitle');
+          if (titleEl) {
+            titleEl.textContent = `Ukeplan – Uke ${weekNum}`;
           }
-        });
 
-        const sortedEvents = Array.from(uniqueEventsMap.values()).sort((a, b) => a.start - b.start);
+          // 4. Hent kun de SYNLEGE/FILTRERTE hendelsene fra FullCalendar for uken
+          const currentEvents = calendar.getEvents().filter(evt => {
+            const evtStart = evt.start;
+            const evtEnd = evt.end || evtStart;
+            // Sjekk at avtalen er innenfor ukesvisningen OG at den ikke er eksplisitt skjult
+            return evtStart < viewEnd && evtEnd >= viewStart && evt.display !== 'none';
+          });
 
-        // 5. Bygg opp den ultrakompakte lista inne i categoryEventsList
-        const listContainer = document.getElementById('categoryEventsList');
-        if (listContainer) {
-          listContainer.innerHTML = '';
+          // Fjern duplikater/filtrer unike hendelser basert på tittel + startdato
+          const uniqueEventsMap = new Map();
+          currentEvents.forEach(evt => {
+            const key = `${evt.title}_${evt.startStr}`;
+            if (!uniqueEventsMap.has(key)) {
+              uniqueEventsMap.set(key, evt);
+            }
+          });
 
-          if (sortedEvents.length === 0) {
-            listContainer.innerHTML = '<p style="color: #64748b; font-style: italic; padding: 6px;">Ingen avtaler funnet for denne uken i de valgte kategoriene.</p>';
-          } else {
-            sortedEvents.forEach(evt => {
-              const ext = evt.extendedProps || {};
-              const card = document.createElement('div');
-              card.className = 'category-event-card';
+          const sortedEvents = Array.from(uniqueEventsMap.values()).sort((a, b) => a.start - b.start);
 
-              // Tittel
-              const titleText = evt.title || ext.rawTitle || 'Uten tittel';
+          // 5. Bygg opp den ultrakompakte lista inne i categoryEventsList
+          const listContainer = document.getElementById('categoryEventsList');
+          if (listContainer) {
+            listContainer.innerHTML = '';
 
-              // Formater datoer (f.eks. "14. aug." eller "14. aug. – 18. aug.")
-              const startD = evt.start;
-              const endD = evt.end ? new Date(evt.end.getTime() - (evt.allDay ? 86400000 : 0)) : startD;
+            if (sortedEvents.length === 0) {
+              listContainer.innerHTML = '<p style="color: #64748b; font-style: italic; padding: 6px;">Ingen avtaler funnet for denne uken i de valgte kategoriene.</p>';
+            } else {
+              sortedEvents.forEach(evt => {
+                const ext = evt.extendedProps || {};
+                const card = document.createElement('div');
+                card.className = 'category-event-card';
 
-              const fmt = { day: 'numeric', month: 'short' };
-              let dateStr = startD.toLocaleDateString('no-NO', fmt);
-              if (endD && endD.toDateString() !== startD.toDateString()) {
-                dateStr += ` – ${endD.toLocaleDateString('no-NO', fmt)}`;
-              }
+                // Tittel
+                const titleText = evt.title || ext.rawTitle || 'Uten tittel';
 
-              // Formater klokkeslett
-              let timeStr = '';
-              if (!evt.allDay && evt.start) {
-                const startTime = evt.start.toTimeString().substring(0, 5);
-                const endTime = evt.end ? evt.end.toTimeString().substring(0, 5) : '';
-                timeStr = endTime ? `kl. ${startTime}-${endTime}` : `kl. ${startTime}`;
-              }
+                // Formater datoer (f.eks. "14. aug." eller "14. aug. – 18. aug.")
+                const startD = evt.start;
+                const endD = evt.end ? new Date(evt.end.getTime() - (evt.allDay ? 86400000 : 0)) : startD;
 
-              let datetimeLabel = `📅 ${dateStr}`;
-              if (timeStr) datetimeLabel += ` &nbsp;•&nbsp; ⏰ ${timeStr}`;
+                const fmt = { day: 'numeric', month: 'short' };
+                let dateStr = startD.toLocaleDateString('no-NO', fmt);
+                if (endD && endD.toDateString() !== startD.toDateString()) {
+                  dateStr += ` – ${endD.toLocaleDateString('no-NO', fmt)}`;
+                }
 
-              const descText = ext.description || '';
+                // Formater klokkeslett
+                let timeStr = '';
+                if (!evt.allDay && evt.start) {
+                  const startTime = evt.start.toTimeString().substring(0, 5);
+                  const endTime = evt.end ? evt.end.toTimeString().substring(0, 5) : '';
+                  timeStr = endTime ? `kl. ${startTime}-${endTime}` : `kl. ${startTime}`;
+                }
 
-              card.innerHTML = `
-                <div class="event-title">${titleText}</div>
-                <div class="event-time">${datetimeLabel}</div>
-                ${descText ? `<div class="event-desc">${descText}</div>` : ''}
-              `;
+                let datetimeLabel = `📅 ${dateStr}`;
+                if (timeStr) datetimeLabel += ` &nbsp;•&nbsp; ⏰ ${timeStr}`;
 
-              listContainer.appendChild(card);
-            });
+                const descText = ext.description || '';
+
+                card.innerHTML = `
+                  <div class="event-title">${titleText}</div>
+                  <div class="event-time">${datetimeLabel}</div>
+                  ${descText ? `<div class="event-desc">${descText}</div>` : ''}
+                `;
+
+                listContainer.appendChild(card);
+              });
+            }
           }
-        }
 
-        // 6. Utfør utskriften med 'printing-week'-klassen aktivert
-        document.body.classList.add('printing-week');
-        window.print();
-        
-        setTimeout(() => {
-          document.body.classList.remove('printing-week');
-        }, 500);
+          // 6. Utfør utskriften med 'printing-week'-klassen aktivert
+          document.body.classList.add('printing-week');
+          window.print();
+
+          setTimeout(() => {
+            document.body.classList.remove('printing-week');
+          }, 500);
+        }
       }
     },
 
@@ -823,7 +824,7 @@ printWeekBtn: {
         miniCalCurrentDate = new Date(info.view.currentStart);
       }
       if (typeof renderMiniCalendar === 'function') renderMiniCalendar();
-      
+
       if (calendar && typeof formatDate === 'function' && typeof highlightDateInHeader === 'function') {
         const currentSelectedStr = formatDate(calendar.getDate());
         setTimeout(() => {
@@ -834,27 +835,16 @@ printWeekBtn: {
       // Legg til ukenummer i tittelen for ukesvisninger
       const view = info.view;
       if (view.type === 'timeGridWeek' || view.type === 'dayGridWeek' || view.type === 'listWeek') {
-        const start = view.currentStart;
-        
-        // Beregn ISO-ukenummer
-        const target = new Date(start.valueOf());
-        const dayNr = (start.getDay() + 6) % 7;
-        target.setDate(target.getDate() - dayNr + 3);
-        const firstThursday = target.valueOf();
-        target.setMonth(0, 1);
-        if (target.getDay() !== 4) {
-          target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
-        }
-        const weekNum = 1 + Math.ceil((firstThursday - target) / 604800000);
+        const weekNum = getISOWeekNumber(view.currentStart);
 
-// Oppdater overskriften i kalenderen
+        // Oppdater overskriften i kalenderen
         const titleEl = document.querySelector('.fc-toolbar-title');
         if (titleEl) {
           titleEl.textContent = `Uke ${weekNum}: ${view.title}`;
         }
       }
     },
-    
+
     dayCellClassNames: function(arg) {
       if (typeof formatDate !== 'function') return [];
       const dateStr = formatDate(arg.date);
@@ -910,7 +900,7 @@ printWeekBtn: {
 
       if (viewTitle) viewTitle.textContent = activeEvent.title;
       if (viewGroup) viewGroup.textContent = activeEvent.group;
-      
+
       let timeText = typeof formatNorwegianDate === 'function' ? formatNorwegianDate(activeEvent.startDate) : activeEvent.startDate;
       if (activeEvent.startTime) timeText += ` kl. ${activeEvent.startTime}`;
       if (activeEvent.endTime) timeText += ` - ${activeEvent.endTime}`;
@@ -970,7 +960,7 @@ printWeekBtn: {
   calendarEl.addEventListener('contextmenu', (e) => {
     if (typeof currentSelection !== 'undefined' && currentSelection) {
       e.preventDefault();
-      
+
       const menu = document.getElementById('contextMenu');
       if (!menu) return;
 
@@ -987,7 +977,7 @@ printWeekBtn: {
   document.addEventListener('click', (e) => {
     const popover = document.getElementById('selectionPopover');
     const menu = document.getElementById('contextMenu');
-    
+
     if (menu && !menu.contains(e.target) && typeof hideContextMenu === 'function') {
       hideContextMenu();
     }
@@ -1032,8 +1022,7 @@ printWeekBtn: {
       if (typeof showFormMode === 'function') showFormMode("Ny regelmessig avtale", true);
     });
   }
-
-});
+}); // <-- Riktig avslutning her
 
 
 
