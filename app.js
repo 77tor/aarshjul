@@ -125,12 +125,14 @@ function updateAuthUI(user) {
   if (!loginBtn || !userInfo) return;
 
   if (user) {
-    userInfo.textContent = `👤 ${user.email}`;
+    // Viser kun første del av e-posten hvis den blir for lang (eller hele om du ønsker)
+    const displayName = user.email ? user.email.split('@')[0] : 'Bruker';
+    userInfo.textContent = `👤 ${displayName}`;
     loginBtn.textContent = '🚪 Logg ut';
     loginBtn.onclick = handleLogout;
   } else {
     userInfo.textContent = '';
-    loginBtn.textContent = '🔑 Logg inn med Google';
+    loginBtn.textContent = '🔑 Logg inn';
     loginBtn.onclick = handleLogin;
   }
 }

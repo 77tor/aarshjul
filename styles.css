@@ -87,6 +87,51 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .btn-ghost-danger:hover { background-color: #fee2e2; color: #b91c1c; }
 .delete-options { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 
+
+/* Sidebar Header & Innlogging på én linje */
+.sidebar-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  margin-bottom: 12px !important;
+}
+
+.sidebar-header h2 {
+  font-size: 1.1rem !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+}
+
+.auth-container {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.user-info-text {
+  font-size: 0.75rem !important;
+  color: #475569 !important;
+  font-weight: 600 !important;
+  max-width: 90px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.btn-auth {
+  background-color: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+  padding: 4px 8px !important;
+  font-size: 0.78rem !important;
+  white-space: nowrap !important;
+}
+
+.btn-auth:hover {
+  background-color: #e2e8f0 !important;
+}
+
 /* Utskriftstil */
 .print-only-header { display: none; }
 @media print {
