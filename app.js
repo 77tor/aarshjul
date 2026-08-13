@@ -507,8 +507,8 @@ function showFormMode(title = "Ny avtale", isRecurring = false) {
 }
 
 function showViewMode() {
-console.log("Aktiv hendelse:", activeEvent.id, activeEvent.extendedProps);
-hideContextMenu();
+  console.log("Aktiv hendelse:", activeEvent.id, activeEvent.extendedProps);
+  hideContextMenu();
   document.getElementById('modalHeaderTitle').textContent = "Avtaledetaljer";
   document.getElementById('eventForm').style.display = 'none';
   document.getElementById('viewMode').style.display = 'block';
@@ -519,47 +519,22 @@ hideContextMenu();
   document.getElementById('formSubmitBtn').style.display = 'none';
   document.getElementById('viewCancelBtn').style.display = 'inline-block';
 
-  // Hent gruppe/kategori dersom extendedProps eksisterer
-  const group = (
-    activeEvent?.extendedProps?.group || 
-    activeEvent?.groupId || 
-    activeEvent?.extendedProps?.category || 
-    ''
-  ).trim();
-
-  const eventId = String(activeEvent?.id || '');
-
-  // Sjekk 1: Sjekk om det er merket som skolerute
+  // 1. Sjekk om dette er en skolerute (fridager/planleggingsdager)
   const isSchoolRoute = activeEvent?.isSchoolRoute || activeEvent?.extendedProps?.isSchoolRoute;
 
-  // Sjekk 2: Liste over alle eksterne grupper
-const readOnlyGroups = [
-  'Skolerute', 'DKS', 'Svømming', 'Svomming', 
-  'Fellesaktiviteter', 'Felles', 'Ansatte', 'Bursdag',
-  'Kartlegging', 'Kartlegginger' // <-- LEGG TIL DISSE
-];
+  // 2. Sjekk om innlogget bruker har admin-rettigheter
+  const admin = typeof isCurrentUserAdmin === 'function' && isCurrentUserAdmin();
 
-  const isReadOnlyGroup = readOnlyGroups.some(g => g.toLowerCase() === group.toLowerCase());
+  // 3. Admin skal kunne slette/redigere ALT unntatt rene skoleruter/fridager
+  const canEditOrDelete = admin && !isSchoolRoute;
 
-  // Sjekk 3: Sjekk alle kjente ID-mønstre fra de ulike .js-filene
-const hasExternalId = 
-  eventId.startsWith('school_route_') || 
-  eventId.startsWith('bday-') || 
-  eventId.startsWith('dks') || 
-  eventId.startsWith('svomm') || 
-  eventId.startsWith('felles') || 
-  eventId.startsWith('fa-') ||
-  eventId.startsWith('kart-'); // <-- Fanger opp "kart-1a", "kart-2", osv.
-
-  // Dersom en av disse slår ut, er hendelsen skrivebeskyttet
-  const isReadOnly = isSchoolRoute || isReadOnlyGroup || hasExternalId;
-
-  // Skjul eller vis rediger/slett
-  document.getElementById('viewEditBtn').style.display = isReadOnly ? 'none' : 'inline-block';
-  document.getElementById('viewDeleteBtn').style.display = isReadOnly ? 'none' : 'inline-block';
+  // Vis eller skjul knapper basert på rettigheter
+  document.getElementById('viewEditBtn').style.display = canEditOrDelete ? 'inline-block' : 'none';
+  document.getElementById('viewDeleteBtn').style.display = canEditOrDelete ? 'inline-block' : 'none';
 
   document.getElementById('eventModal').style.display = 'flex';
 }
+
 
 function formatDate(dateObj) {
   const year = dateObj.getFullYear();
