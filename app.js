@@ -679,9 +679,9 @@ document.addEventListener('DOMContentLoaded', () => {
     return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
   }
 
-  calendar = new FullCalendar.Calendar(calendarEl, {
+calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'timeGridWeek',
-    initialDate: '2026-08-17',
+    // initialDate er fjernet herfra!
     selectable: true,
     selectMirror: true,
     unselectAuto: false,
