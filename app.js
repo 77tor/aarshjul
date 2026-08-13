@@ -25,6 +25,8 @@ import { getDKSAktiviteterSomEvents } from './DKS.js';
 import { getSvommeAktiviteterSomEvents } from './svomming.js';
 import { getBirthdayEvents } from './ansatte.js';
 import { getKartleggingerSomEvents } from './Kartlegging.js';
+import { getMoteAktiviteterSomEvents } from './moter.js';
+
 // Firebase-konfigurasjon
 const firebaseConfig = {
   apiKey: "AIzaSyBFIOEfe6g7QfJppfOHTvhnNpd1XWMFpv0",
@@ -59,7 +61,7 @@ const categoryColors = {
   "Fellesaktiviteter": "#2c3e50",// Mørk skiferblå
   "SFO": "#ff7675",              // Korall / varm rosa
   "Kartlegging": "#6c5ce7",   // Dyp indigo / lilla-blå
-  "Frister": "#c0392b",          // Dyp rød (signal/varselfarge)
+  "Møter": "#c0392b",          // Dyp rød (signal/varselfarge)
   "UiA": "#00b894",              // Mørk myntgrønn
   "Sosialt": "#e84393",          // Knall knallrosa
   "Bursdag": "#f59e0b"          // Varm amber / fest-oransje
@@ -229,6 +231,9 @@ const ansatteEventsFromJs = typeof getBirthdayEvents === 'function'
 const kartleggingEventsFromJs = typeof getKartleggingerSomEvents === 'function'
   ? getKartleggingerSomEvents()
   : [];
+const moterEventsFromJs = typeof getMoteAktiviteterSomEvents === 'function'
+  ? getMoteAktiviteterSomEvents()
+  : [];
 
 let rawEvents = [];
 let selectedCategories = Object.keys(categoryColors);
@@ -320,7 +325,8 @@ const allRawEvents = [
   ...(typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []),
   ...(typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []),
   ...(typeof ansatteEventsFromJs !== 'undefined' ? ansatteEventsFromJs : []),
-  ...(typeof kartleggingEventsFromJs !== 'undefined' ? kartleggingEventsFromJs : []), // <-- LEGG TIL DENNE
+  ...(typeof kartleggingEventsFromJs !== 'undefined' ? kartleggingEventsFromJs : []),
+  ...(typeof moterEventsFromJs !== 'undefined' ? moterEventsFromJs : []), // <-- LEGG TIL DENNE
   ...(typeof schoolEventsFromJs !== 'undefined' ? schoolEventsFromJs : []),
   ...rawEvents
 ];
@@ -1196,11 +1202,16 @@ const categoryAliases = {
   'dks': 'DKS',
   'bursdag': 'Bursdag',
   'bursdager': 'Bursdag',
-  // --- LEGG TIL DISSE LINJENE ---
   'kartlegging': 'Kartlegging',
   'kartlegginger': 'Kartlegging',
   'prøve': 'Kartlegging',
-  'test': 'Kartlegging'
+  'test': 'Kartlegging',
+  // --- LEGG TIL DISSE FOR MØTER ---
+  'møter': 'Møter',
+  'møte': 'Møter',
+  'foreldremøte': 'Møter',
+  'fellesmøte': 'Møter',
+  'samtaler': 'Møter'
 };
 
 // Hjelpefunksjon for å finne riktig farge basert på gruppenavn og alias
@@ -1316,6 +1327,7 @@ function updateCalendarEvents() {
   }
 
   // Hent eksterne hendelser fra .js-filene
+  const rawMoter = typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : []; // <-- NY LINJE
   const rawKartlegginger = typeof getKartleggingerSomEvents === 'function' ? getKartleggingerSomEvents() : [];
   const rawFelles = typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : [];
   const rawDks = typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : [];
@@ -1347,13 +1359,14 @@ function updateCalendarEvents() {
 
   const filteredUserEvents = rawEvents.filter(event => isEventInSelectedCategories(event));
 
-  const allEvents = [
+const allEvents = [
     ...schoolEvents, 
     ...processStaticEvents(rawFelles), 
     ...processStaticEvents(rawDks), 
     ...processStaticEvents(rawSvomme), 
     ...processStaticEvents(filteredBursdagEvents), 
     ...processStaticEvents(rawKartlegginger), 
+    ...processStaticEvents(rawMoter), // <-- LEGG TIL DENNE!
     ...filteredUserEvents
   ];
 
@@ -1696,6 +1709,8 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   const filteredFellesEvents = (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []).filter(shouldIncludeEvent);
   const filteredDksEvents = (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []).filter(shouldIncludeEvent);
   const filteredSvommeEvents = (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []).filter(shouldIncludeEvent);
+  // LEGG TIL DENNE LINJEN:
+  const filteredMoteEvents = (typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : []).filter(shouldIncludeEvent);
   
   let filteredBursdager = [];
   if (typeof getBirthdayEvents === 'function' && calendar) {
@@ -1706,6 +1721,7 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
     ...filteredFellesEvents, 
     ...filteredDksEvents, 
     ...filteredSvommeEvents, 
+    ...filteredMoteEvents, // <-- LEGG TIL DENNE I ARRAYET
     ...filteredBursdager,
     ...filteredUserEvents
   ];
