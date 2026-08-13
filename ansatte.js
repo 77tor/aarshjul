@@ -4,6 +4,7 @@ const ansatteData = [
   { etternavn: "Abelsen", fornavn: "Anne", fodselsdato: "12.05.1974", epost: "anne.abelsen@kristiansand.kommune.no" },
   { etternavn: "Abrahamsen", fornavn: "Truls", fodselsdato: "29.11.1997", epost: "truls.abrahamsen@kristiansand.kommune.no" },
   { etternavn: "Ali", fornavn: "Yaser Shahada", fodselsdato: "25.08.1978", epost: "yaser.shahada.ali@kristiansand.kommune.no" },
+  { etternavn: "Bechmann", fornavn: "Kari Grostad", fodselsdato: "13.08.1986", epost: "kari.grostad.beckmann@kristiansand.kommune.no" },
   { etternavn: "Berg", fornavn: "Hans-Petter", fodselsdato: "23.09.1964", epost: "hans-petter.berg3@kristiansand.kommune.no" },
   { etternavn: "Bergum", fornavn: "Siril", fodselsdato: "20.09.1993", epost: "siril.bergum@kristiansand.kommune.no" },
   { etternavn: "Birkeland", fornavn: "Geir Andre", fodselsdato: "24.10.1971", epost: "geir.andre.birkeland@kristiansand.kommune.no" },
