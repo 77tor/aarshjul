@@ -211,7 +211,7 @@ export function getMoteAktiviteterSomEvents() {
     const isAllDay = !m.startTime;
     return {
       id: m.id,
-      title: `🗣️ Møter ${m.title}`,
+      title: `🧑‍🤝‍🧑 Møte - ${m.title}`,
       start: isAllDay ? m.startDate : `${m.startDate}T${m.startTime}:00`,
       end: isAllDay ? m.endDate : `${m.endDate}T${m.endTime}:00`,
       allDay: isAllDay,
