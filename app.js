@@ -12,6 +12,21 @@ import {
   onSnapshot 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+// Liste over godkjente administratorer
+const ADMIN_EMAILS = [
+  '77tor@ikrs.no',
+  'tor.skarprud@gmail.com',
+  '75thomas@ikrs.no',
+  '72janne@ikrs.no',
+  '62marit3@ikrs.no'
+];
+
+// Hjelpefunksjon for å sjekke om innlogget bruker er admin
+function isCurrentUserAdmin() {
+  const user = firebase.auth().currentUser; // Eller din valgte auth-metode
+  return user && ADMIN_EMAILS.includes(user.email.toLowerCase());
+}
+
 import { schoolYearsData } from "./fridager.js";
 import { getFellesaktiviteterSomEvents } from "./fellesaktiviteter.js";
 import { getDKSAktiviteterSomEvents } from './DKS.js';
