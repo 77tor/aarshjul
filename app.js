@@ -127,7 +127,7 @@ function updateAuthUI(user) {
   if (!loginBtn || !userInfo) return;
 
   if (user) {
-    // Viser kun første del av e-posten hvis den blir for lang (eller hele om du ønsker)
+    // Viser kun første del av e-posten (f.eks. "tor.skarprud")
     const displayName = user.email ? user.email.split('@')[0] : 'Bruker';
     userInfo.textContent = `👤 ${displayName}`;
     loginBtn.textContent = '🚪 Logg ut';
