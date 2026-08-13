@@ -75,7 +75,6 @@ const redDateSet = new Set();
 const offDateSet = new Set();
 const schoolEventsFromJs = [];
 
-
 // --- ADMIN TILGANGSBEGRENSNING ---
 const ADMIN_EMAILS = [
   '77tor@ikrs.no',
@@ -92,13 +91,16 @@ function isCurrentUserAdmin() {
   return user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
 }
 
-// 🔑 NY: Lytter på innloggingsstatus fra Firebase Auth
+// 🔑 Lytter på innloggingsstatus fra Firebase Auth
 onAuthStateChanged(auth, (user) => {
   if (user) {
     console.log("Logget inn i Firebase som:", user.email);
   } else {
     console.log("Ingen bruker er logget inn i Firebase Auth ennå.");
   }
+
+  // Oppdaterer knapp og e-post i sidepanelet
+  updateAuthUI(user);
 
   // Tvinger en oppdatering av kalenderen når Firebase har avklart hvem du er
   if (typeof updateCalendarEvents === 'function') {
@@ -113,6 +115,47 @@ onSnapshot(collection(db, 'deleted_static_events'), (snapshot) => {
     updateCalendarEvents();
   }
 });
+
+// 🔑 INNLOGGING / UTLOGGINGSHÅNDTERING
+const loginBtn = document.getElementById('loginBtn');
+const userInfo = document.getElementById('userInfo');
+
+// Oppdaterer brukergrensesnittet basert på om noen er logget inn
+function updateAuthUI(user) {
+  if (!loginBtn || !userInfo) return;
+
+  if (user) {
+    userInfo.textContent = `👤 ${user.email}`;
+    loginBtn.textContent = '🚪 Logg ut';
+    loginBtn.onclick = handleLogout;
+  } else {
+    userInfo.textContent = '';
+    loginBtn.textContent = '🔑 Logg inn med Google';
+    loginBtn.onclick = handleLogin;
+  }
+}
+
+// Logg inn med Google Popup
+async function handleLogin() {
+  const provider = new GoogleAuthProvider();
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (error) {
+    console.error("Feil ved innlogging:", error);
+    alert("Klarte ikke å logge inn: " + error.message);
+  }
+}
+
+// Logg ut
+async function handleLogout() {
+  try {
+    await auth.signOut();
+  } catch (error) {
+    console.error("Feil ved utlogging:", error);
+  }
+}
+
+
 
 function parseSchoolYearsData() {
   if (typeof schoolYearsData === 'undefined' || !schoolYearsData) return;
