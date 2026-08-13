@@ -12,20 +12,29 @@ import {
   onSnapshot 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Liste over godkjente administratorer
+// --- ADMIN TILGANGSBEGRENSNING ---
 const ADMIN_EMAILS = [
   '77tor@ikrs.no',
-  'tor.skarprud@gmail.com',
   '75thomas@ikrs.no',
   '72janne@ikrs.no',
   '62marit3@ikrs.no'
 ];
 
-// Hjelpefunksjon for å sjekke om innlogget bruker er admin
+let deletedStaticEventIds = new Set();
+
+// Sjekker om nåværende bruker har admin-rettigheter
 function isCurrentUserAdmin() {
-  const user = firebase.auth().currentUser; // Eller din valgte auth-metode
-  return user && ADMIN_EMAILS.includes(user.email.toLowerCase());
+  const user = firebase.auth().currentUser;
+  return user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
 }
+
+// Lytter på slettede statiske .js-hendelser fra Firestore
+onSnapshot(collection(db, 'deleted_static_events'), (snapshot) => {
+  deletedStaticEventIds = new Set(snapshot.docs.map(doc => doc.id));
+  if (typeof updateCalendarEvents === 'function') {
+    updateCalendarEvents();
+  }
+});
 
 import { schoolYearsData } from "./fridager.js";
 import { getFellesaktiviteterSomEvents } from "./fellesaktiviteter.js";
@@ -914,6 +923,7 @@ calendar = new FullCalendar.Calendar(calendarEl, {
         recurringSeriesId: ext.recurringSeriesId || null,
         isSchoolRoute: isSchoolRoute,
         isReadOnly: isReadOnly,
+        isStatic: ext.isStatic || false, // Flagg for .js-hendelser
         url: ext.url || null,
         regUrl: ext.regUrl || null,
         regTekst: ext.regTekst || null
@@ -960,7 +970,12 @@ calendar = new FullCalendar.Calendar(calendarEl, {
           content += `<br>📝 <strong>Registrering:</strong> <a href="${activeEvent.regUrl}" target="_blank" rel="noopener noreferrer" style="color: #059669; font-weight: 600; text-decoration: underline;">${activeEvent.regTekst || 'Åpne registrering ↗'}</a>`;
         }
 
-        viewDescription.innerHTML = content;
+viewDescription.innerHTML = content;
+      }
+
+      // 🔑 OPPDATER SYNLIGHET PÅ REDIGER/SLETT-KNAPPER BASERT PÅ ADMIN-E-POST
+      if (typeof updateModalAdminButtons === 'function') {
+        updateModalAdminButtons();
       }
 
       if (typeof showViewMode === 'function') showViewMode(activeEvent);
@@ -1238,7 +1253,11 @@ function isEventInSelectedCategories(event) {
   return false;
 }
 
+
+// --- KALENDER OPPDATERING ---
 function updateCalendarEvents() {
+  const isAdmin = isCurrentUserAdmin();
+
   let filteredBursdagEvents = [];
   if (typeof getBirthdayEvents === 'function' && calendar) {
     const currentYear = calendar.getDate().getFullYear();
@@ -1246,36 +1265,45 @@ function updateCalendarEvents() {
     filteredBursdagEvents = rawBursdager.filter(event => isEventInSelectedCategories(event));
   }
 
-  // 1. Hent og filtrer kartleggingene fra Kartlegging.js
+  // Hent eksterne hendelser fra .js-filene
   const rawKartlegginger = typeof getKartleggingerSomEvents === 'function' ? getKartleggingerSomEvents() : [];
-  const filteredKartleggingEvents = rawKartlegginger.filter(event => isEventInSelectedCategories(event));
-
-  const filteredUserEvents = rawEvents.filter(event => isEventInSelectedCategories(event));
-  const filteredFellesEvents = (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
-  const filteredDksEvents = (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
-  const filteredSvommeEvents = (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []).filter(event => isEventInSelectedCategories(event));
+  const rawFelles = typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : [];
+  const rawDks = typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : [];
+  const rawSvomme = typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : [];
   const schoolEvents = typeof schoolEventsFromJs !== 'undefined' ? schoolEventsFromJs : [];
 
-  // Påfør riktige farger fra categoryColors til alle eksterne hendelser før visning
-  const applyColors = (events) => events.map(evt => {
-    const grp = evt.extendedProps?.group || evt.group || '';
-    const colorKey = Object.keys(categoryColors).find(k => k.toLowerCase() === grp.toLowerCase());
-    const c = categoryColors[colorKey] || evt.backgroundColor || evt.color || '#3788d8';
-    return {
-      ...evt,
-      backgroundColor: c,
-      borderColor: c
-    };
-  });
+  // Vasker, fargelegger og merker statiske hendelser
+  const processStaticEvents = (events) => {
+    return events
+      // Fjern hendelser som er slettet av admin i Firestore
+      .filter(evt => !deletedStaticEventIds.has(evt.id))
+      .filter(event => isEventInSelectedCategories(event))
+      .map(evt => {
+        const grp = evt.extendedProps?.group || evt.group || '';
+        const colorKey = Object.keys(categoryColors).find(k => k.toLowerCase() === grp.toLowerCase());
+        const c = categoryColors[colorKey] || evt.backgroundColor || evt.color || '#3788d8';
+        
+        return {
+          ...evt,
+          backgroundColor: c,
+          borderColor: c,
+          extendedProps: {
+            ...evt.extendedProps,
+            isStatic: true // Flagg for å oppdage at hendelsen stammer fra en .js-fil
+          }
+        };
+      });
+  };
 
-  // 2. Legg til kartleggingene i allEvents-arrayet
+  const filteredUserEvents = rawEvents.filter(event => isEventInSelectedCategories(event));
+
   const allEvents = [
     ...schoolEvents, 
-    ...applyColors(filteredFellesEvents), 
-    ...applyColors(filteredDksEvents), 
-    ...applyColors(filteredSvommeEvents), 
-    ...applyColors(filteredBursdagEvents), 
-    ...applyColors(filteredKartleggingEvents), // <-- NÅ ER KARTLEGGINGENE MED!
+    ...processStaticEvents(rawFelles), 
+    ...processStaticEvents(rawDks), 
+    ...processStaticEvents(rawSvomme), 
+    ...processStaticEvents(filteredBursdagEvents), 
+    ...processStaticEvents(rawKartlegginger), 
     ...filteredUserEvents
   ];
 
@@ -1286,12 +1314,34 @@ function updateCalendarEvents() {
 }
 
 
-// Modal Lyttere
+// --- MODAL & HENDELSES-LYTTERE ---
 document.getElementById('modalCloseX')?.addEventListener('click', closeModal);
 document.getElementById('formCancelBtn')?.addEventListener('click', closeModal);
 document.getElementById('viewCancelBtn')?.addEventListener('click', closeModal);
 
+// Sjekker om slette/rediger-knapper skal vises når en modal åpnes
+function updateModalAdminButtons() {
+  const isAdmin = isCurrentUserAdmin();
+  const editBtn = document.getElementById('viewEditBtn');
+  const deleteBtn = document.getElementById('viewDeleteBtn');
+
+  if (activeEvent && activeEvent.isSchoolRoute) {
+    if (editBtn) editBtn.style.display = 'none';
+    if (deleteBtn) deleteBtn.style.display = 'none';
+    return;
+  }
+
+  // Kun vis knapper dersom brukeren er logget inn som Admin
+  if (editBtn) editBtn.style.display = isAdmin ? 'inline-block' : 'none';
+  if (deleteBtn) deleteBtn.style.display = isAdmin ? 'inline-block' : 'none';
+}
+
 document.getElementById('viewEditBtn')?.addEventListener('click', () => {
+  if (!isCurrentUserAdmin()) {
+    alert("Du må være administrator for å redigere denne hendelsen.");
+    return;
+  }
+
   if (activeEvent && !activeEvent.isSchoolRoute) {
     document.getElementById('eventId').value = activeEvent.id;
     document.getElementById('title').value = activeEvent.title;
@@ -1307,8 +1357,32 @@ document.getElementById('viewEditBtn')?.addEventListener('click', () => {
 });
 
 document.getElementById('viewDeleteBtn')?.addEventListener('click', async () => {
+  if (!isCurrentUserAdmin()) {
+    alert("Du må være administrator for å slette hendelser.");
+    return;
+  }
+
   if (!activeEvent || activeEvent.isSchoolRoute) return;
 
+  // Håndtering dersom det er en statisk .js-hendelse (f.eks. DKS/Svømming/Kartlegging)
+  if (activeEvent.extendedProps?.isStatic || activeEvent.isStatic) {
+    if (confirm(`Vil du slette den faste hendelsen "${activeEvent.title}" for alle?`)) {
+      const targetId = activeEvent.id;
+      closeModal();
+      try {
+        await setDoc(doc(db, "deleted_static_events", targetId), {
+          deletedBy: firebase.auth().currentUser.email,
+          deletedAt: new Date().toISOString()
+        });
+      } catch (err) {
+        console.error("Feil ved sletting av statisk hendelse:", err);
+        alert("Kunne ikke slette hendelsen.");
+      }
+    }
+    return;
+  }
+
+  // Sletting av repetitive serier eller enkle brukerskapte hendelser
   if (activeEvent.recurringSeriesId) {
     document.getElementById('normalFooter').style.display = 'none';
     document.getElementById('deleteConfirmMode').style.display = 'flex';
@@ -1332,7 +1406,7 @@ document.getElementById('cancelDeleteModeBtn')?.addEventListener('click', () => 
 });
 
 document.getElementById('deleteSingleBtn')?.addEventListener('click', async () => {
-  if (!activeEvent) return;
+  if (!activeEvent || !isCurrentUserAdmin()) return;
   const targetId = activeEvent.id;
   closeModal();
   try {
@@ -1344,7 +1418,7 @@ document.getElementById('deleteSingleBtn')?.addEventListener('click', async () =
 });
 
 document.getElementById('deleteFutureBtn')?.addEventListener('click', async () => {
-  if (!activeEvent || !activeEvent.recurringSeriesId) return;
+  if (!activeEvent || !activeEvent.recurringSeriesId || !isCurrentUserAdmin()) return;
   const seriesId = activeEvent.recurringSeriesId;
   const currentDate = activeEvent.startDate;
 
@@ -1366,7 +1440,7 @@ document.getElementById('deleteFutureBtn')?.addEventListener('click', async () =
 });
 
 document.getElementById('deleteAllSeriesBtn')?.addEventListener('click', async () => {
-  if (!activeEvent || !activeEvent.recurringSeriesId) return;
+  if (!activeEvent || !activeEvent.recurringSeriesId || !isCurrentUserAdmin()) return;
   const seriesId = activeEvent.recurringSeriesId;
 
   closeModal();
@@ -1384,6 +1458,11 @@ document.getElementById('deleteAllSeriesBtn')?.addEventListener('click', async (
 
 document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
+
+  if (!isCurrentUserAdmin()) {
+    alert("Du har ikke tilgang til å lagre endringer.");
+    return;
+  }
 
   const eventId = document.getElementById('eventId').value;
   const isRecurring = document.getElementById('isRecurringMode').value === "true";
@@ -1461,6 +1540,7 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
     alert("Feil ved lagring til databasen.");
   }
 });
+
 
 function renderFilters() {
   const filterContainer = document.getElementById('filterList');
