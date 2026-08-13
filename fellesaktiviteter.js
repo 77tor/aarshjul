@@ -119,8 +119,8 @@ const FELLESAKTIVITETER_REGISTER = {
       id: "fa-2627-10-5",
       tittel: "Kirka - solidaritet",
       maaned: "Oktober",
-      type: "Uavklart",
-      dato: null,
+      type: "Dato",
+      dato: "2026-10-30",
       deltakere: "6. trinn",
       ansvar: "Kirka"
     },
@@ -141,8 +141,8 @@ const FELLESAKTIVITETER_REGISTER = {
       id: "fa-2627-11-2",
       tittel: "Kirka - bibelen",
       maaned: "November",
-      type: "Uavklart",
-      dato: null,
+      type: "Dato",
+      dato: "2026-11-27",
       deltakere: "5. trinn",
       ansvar: "Kirka"
     },
@@ -172,8 +172,8 @@ const FELLESAKTIVITETER_REGISTER = {
       id: "fa-2627-12-2",
       tittel: "Kirka - Julevandring",
       maaned: "Desember",
-      type: "Uavklart",
-      dato: null,
+      type: "Dato",
+      dato: "2026-12-04",
       deltakere: "1. trinn",
       ansvar: "Kirka"
     },
@@ -190,8 +190,8 @@ const FELLESAKTIVITETER_REGISTER = {
       id: "fa-2627-12-4",
       tittel: "Kirka - Julegudstjeneste",
       maaned: "Desember",
-      type: "Uavklart",
-      dato: null,
+      type: "Dato",
+      dato: "2026-12-17",
       deltakere: "Alle trinn",
       ansvar: "3. trinn"
     },
