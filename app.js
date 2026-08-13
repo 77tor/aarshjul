@@ -909,11 +909,19 @@ calendar = new FullCalendar.Calendar(calendarEl, {
       if (view.type === 'timeGridWeek' || view.type === 'dayGridWeek' || view.type === 'listWeek') {
         const weekNum = getISOWeekNumber(view.currentStart);
 
-        // Oppdater overskriften i kalenderen
-        const titleEl = document.querySelector('.fc-toolbar-title');
-        if (titleEl) {
-          titleEl.textContent = `Uke ${weekNum}: ${view.title}`;
-        }
+// Oppdater overskriften i kalenderen (Kompakt versjon for å spare plass)
+const titleEl = document.querySelector('.fc-toolbar-title');
+if (titleEl) {
+  const startDay = view.currentStart.getDate();
+  const endDate = new Date(view.currentEnd);
+  endDate.setDate(endDate.getDate() - 1); // FullCalendar setter end til lørdag/søndag
+  const endDay = endDate.getDate();
+  
+  // Henter kort månedsnavn på norsk (f.eks. "aug.")
+  const monthName = view.currentStart.toLocaleDateString('no-NO', { month: 'short' });
+
+  titleEl.textContent = `Uke ${weekNum}: ${startDay}.–${endDay}. ${monthName}`;
+}
       }
     },
 
