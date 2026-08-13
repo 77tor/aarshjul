@@ -1,4 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"; // <-- La til getAuth
 import { 
   getFirestore, 
   collection, 
@@ -12,14 +13,12 @@ import {
   onSnapshot 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-
-
 import { schoolYearsData } from "./fridager.js";
 import { getFellesaktiviteterSomEvents } from "./fellesaktiviteter.js";
 import { getDKSAktiviteterSomEvents } from './DKS.js';
 import { getSvommeAktiviteterSomEvents } from './svomming.js';
 import { getBirthdayEvents } from './ansatte.js';
-import { getKartleggingerSomEvents } from './Kartlegging.js'; // <-- LEGG TIL DENNE
+import { getKartleggingerSomEvents } from './Kartlegging.js';
 
 // Firebase-konfigurasjon
 const firebaseConfig = {
@@ -32,6 +31,12 @@ const firebaseConfig = {
   appId: "1:186927305986:web:c8534d5733dcfd2f2c9e1b",
   measurementId: "G-M02DFGGH3R"
 };
+
+// 1. INITIALISER FIREBASE OG FIRESTORE FØRST!
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const eventsRef = collection(db, "school_events");
 
 const categoryColors = {
   // Trinn
@@ -66,7 +71,6 @@ const offDateSet = new Set();
 const schoolEventsFromJs = [];
 
 
-
 // --- ADMIN TILGANGSBEGRENSNING ---
 const ADMIN_EMAILS = [
   '77tor@ikrs.no',
@@ -79,11 +83,11 @@ let deletedStaticEventIds = new Set();
 
 // Sjekker om nåværende bruker har admin-rettigheter
 function isCurrentUserAdmin() {
-  const user = firebase.auth().currentUser;
+  const user = auth.currentUser;
   return user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
 }
 
-// Lytter på slettede statiske .js-hendelser fra Firestore
+// 2. NÅ KAN DENNE LYTTE UDEN FEIL, SIDEN db DOKUMENTERES OVENFOR
 onSnapshot(collection(db, 'deleted_static_events'), (snapshot) => {
   deletedStaticEventIds = new Set(snapshot.docs.map(doc => doc.id));
   if (typeof updateCalendarEvents === 'function') {
@@ -161,11 +165,6 @@ const ansatteEventsFromJs = typeof getBirthdayEvents === 'function'
 const kartleggingEventsFromJs = typeof getKartleggingerSomEvents === 'function'
   ? getKartleggingerSomEvents()
   : [];
-
-// Firebase Initialisering
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const eventsRef = collection(db, "school_events");
 
 let rawEvents = [];
 let selectedCategories = Object.keys(categoryColors);
