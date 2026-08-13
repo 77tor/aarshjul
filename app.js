@@ -12,29 +12,7 @@ import {
   onSnapshot 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// --- ADMIN TILGANGSBEGRENSNING ---
-const ADMIN_EMAILS = [
-  '77tor@ikrs.no',
-  '75thomas@ikrs.no',
-  '72janne@ikrs.no',
-  '62marit3@ikrs.no'
-];
 
-let deletedStaticEventIds = new Set();
-
-// Sjekker om nåværende bruker har admin-rettigheter
-function isCurrentUserAdmin() {
-  const user = firebase.auth().currentUser;
-  return user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
-}
-
-// Lytter på slettede statiske .js-hendelser fra Firestore
-onSnapshot(collection(db, 'deleted_static_events'), (snapshot) => {
-  deletedStaticEventIds = new Set(snapshot.docs.map(doc => doc.id));
-  if (typeof updateCalendarEvents === 'function') {
-    updateCalendarEvents();
-  }
-});
 
 import { schoolYearsData } from "./fridager.js";
 import { getFellesaktiviteterSomEvents } from "./fellesaktiviteter.js";
@@ -86,6 +64,32 @@ const repeatLabels = {
 const redDateSet = new Set();
 const offDateSet = new Set();
 const schoolEventsFromJs = [];
+
+
+
+// --- ADMIN TILGANGSBEGRENSNING ---
+const ADMIN_EMAILS = [
+  '77tor@ikrs.no',
+  '75thomas@ikrs.no',
+  '72janne@ikrs.no',
+  '62marit3@ikrs.no'
+];
+
+let deletedStaticEventIds = new Set();
+
+// Sjekker om nåværende bruker har admin-rettigheter
+function isCurrentUserAdmin() {
+  const user = firebase.auth().currentUser;
+  return user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
+}
+
+// Lytter på slettede statiske .js-hendelser fra Firestore
+onSnapshot(collection(db, 'deleted_static_events'), (snapshot) => {
+  deletedStaticEventIds = new Set(snapshot.docs.map(doc => doc.id));
+  if (typeof updateCalendarEvents === 'function') {
+    updateCalendarEvents();
+  }
+});
 
 function parseSchoolYearsData() {
   if (typeof schoolYearsData === 'undefined' || !schoolYearsData) return;
