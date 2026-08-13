@@ -1,5 +1,11 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"; // <-- La til getAuth
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"; // <-- Utvidet med de ekstra funksjonene
+
 import { 
   getFirestore, 
   collection, 
@@ -19,7 +25,6 @@ import { getDKSAktiviteterSomEvents } from './DKS.js';
 import { getSvommeAktiviteterSomEvents } from './svomming.js';
 import { getBirthdayEvents } from './ansatte.js';
 import { getKartleggingerSomEvents } from './Kartlegging.js';
-
 // Firebase-konfigurasjon
 const firebaseConfig = {
   apiKey: "AIzaSyBFIOEfe6g7QfJppfOHTvhnNpd1XWMFpv0",
@@ -87,7 +92,21 @@ function isCurrentUserAdmin() {
   return user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
 }
 
-// 2. NÅ KAN DENNE LYTTE UDEN FEIL, SIDEN db DOKUMENTERES OVENFOR
+// 🔑 NY: Lytter på innloggingsstatus fra Firebase Auth
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    console.log("Logget inn i Firebase som:", user.email);
+  } else {
+    console.log("Ingen bruker er logget inn i Firebase Auth ennå.");
+  }
+
+  // Tvinger en oppdatering av kalenderen når Firebase har avklart hvem du er
+  if (typeof updateCalendarEvents === 'function') {
+    updateCalendarEvents();
+  }
+});
+
+// 2. NÅ KAN DENNE LYTTE UTEN FEIL, SIDEN db DOKUMENTERES OVENFOR
 onSnapshot(collection(db, 'deleted_static_events'), (snapshot) => {
   deletedStaticEventIds = new Set(snapshot.docs.map(doc => doc.id));
   if (typeof updateCalendarEvents === 'function') {
