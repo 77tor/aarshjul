@@ -22,7 +22,8 @@ const DKS_REGISTER = [
     sluttTid: "10:45",
     sted: "Hånes skole",
     arrangor: "Agder fylkeskommune",
-    deltakere: "1A (24 per)"
+    deltakere: "1A (24 per)",
+    trinn: "1. trinn"
   },
   {
     id: "dks-2",
@@ -32,7 +33,8 @@ const DKS_REGISTER = [
     sluttTid: "13:15",
     sted: "Hånes skole",
     arrangor: "Agder fylkeskommune",
-    deltakere: "1b (24 per)"
+    deltakere: "1b (24 per)",
+    trinn: "1. trinn"
   },
   {
     id: "dks-3",
@@ -42,7 +44,8 @@ const DKS_REGISTER = [
     sluttTid: "11:45",
     sted: "Hånes skole",
     arrangor: "Agder fylkeskommune",
-    deltakere: "2a (17 per)"
+    deltakere: "2a (17 per)",
+    trinn: "2. trinn"
   },
   {
     id: "dks-4",
@@ -52,7 +55,8 @@ const DKS_REGISTER = [
     sluttTid: "10:45",
     sted: "Hånes skole",
     arrangor: "Agder fylkeskommune",
-    deltakere: "2b (17 per)"
+    deltakere: "2b (17 per)",
+    trinn: "2. trinn"
   },
   {
     id: "dks-5",
@@ -62,7 +66,8 @@ const DKS_REGISTER = [
     sluttTid: "13:15",
     sted: "Hånes skole",
     arrangor: "Agder fylkeskommune",
-    deltakere: "2C (23 per)"
+    deltakere: "2C (23 per)",
+    trinn: "2. trinn"
   },
   {
     id: "dks-6",
@@ -72,7 +77,8 @@ const DKS_REGISTER = [
     sluttTid: "10:45",
     sted: "Hånes skole",
     arrangor: "Agder fylkeskommune",
-    deltakere: "3a (22 per)"
+    deltakere: "3a (22 per)",
+    trinn: "3. trinn"
   },
   {
     id: "dks-7",
@@ -82,7 +88,8 @@ const DKS_REGISTER = [
     sluttTid: "13:15",
     sted: "Hånes skole",
     arrangor: "Agder fylkeskommune",
-    deltakere: "3b (20 per)"
+    deltakere: "3b (20 per)",
+    trinn: "3. trinn"
   },
   {
     id: "dks-8",
@@ -92,7 +99,8 @@ const DKS_REGISTER = [
     sluttTid: "10:45",
     sted: "Hånes skole",
     arrangor: "Agder fylkeskommune",
-    deltakere: "3C (18 per)"
+    deltakere: "3C (18 per)",
+    trinn: "3. trinn"
   },
   {
     id: "dks-9",
@@ -102,7 +110,8 @@ const DKS_REGISTER = [
     sluttTid: "14:00",
     sted: "Hånes skole",
     arrangor: "Agder fylkeskommune",
-    deltakere: "4A (22 per)"
+    deltakere: "4A (22 per)",
+    trinn: "4. trinn"
   },
   {
     id: "dks-10",
@@ -112,7 +121,8 @@ const DKS_REGISTER = [
     sluttTid: "10:45",
     sted: "Hånes skole",
     arrangor: "Agder fylkeskommune",
-    deltakere: "4b (23 per)"
+    deltakere: "4b (23 per)",
+    trinn: "4. trinn"
   },
   {
     id: "dks-11",
@@ -122,7 +132,8 @@ const DKS_REGISTER = [
     sluttTid: "13:15",
     sted: "Hånes skole",
     arrangor: "Agder fylkeskommune",
-    deltakere: "4C (19 per)"
+    deltakere: "4C (19 per)",
+    trinn: "4. trinn"
   },
   {
     id: "dks-12",
@@ -132,7 +143,8 @@ const DKS_REGISTER = [
     sluttTid: "10:45",
     sted: "Hånes skole – Gymsal",
     arrangor: "Agder fylkeskommune",
-    deltakere: "5A (22 per)"
+    deltakere: "5A (22 per)",
+    trinn: "5. trinn"
   },
   {
     id: "dks-13",
@@ -142,7 +154,8 @@ const DKS_REGISTER = [
     sluttTid: "13:15",
     sted: "Hånes skole – Gymsal",
     arrangor: "Agder fylkeskommune",
-    deltakere: "5b (21 per)"
+    deltakere: "5b (21 per)",
+    trinn: "5. trinn"
   },
   {
     id: "dks-14",
@@ -152,7 +165,8 @@ const DKS_REGISTER = [
     sluttTid: "10:45",
     sted: "Hånes skole – Gymsal",
     arrangor: "Agder fylkeskommune",
-    deltakere: "5C (19 per)"
+    deltakere: "5C (19 per)",
+    trinn: "5. trinn"
   },
   {
     id: "dks-15",
@@ -162,7 +176,8 @@ const DKS_REGISTER = [
     sluttTid: "13:15",
     sted: "Hånes skole – Gymsal",
     arrangor: "Agder fylkeskommune",
-    deltakere: "6A (22 per)"
+    deltakere: "6A (22 per)",
+    trinn: "6. trinn"
   },
   {
     id: "dks-16",
@@ -172,7 +187,8 @@ const DKS_REGISTER = [
     sluttTid: "10:45",
     sted: "Hånes skole – Gymsal",
     arrangor: "Agder fylkeskommune",
-    deltakere: "6b (20 per)"
+    deltakere: "6b (20 per)",
+    trinn: "6. trinn"
   },
   {
     id: "dks-17",
@@ -182,7 +198,8 @@ const DKS_REGISTER = [
     sluttTid: "13:15",
     sted: "Hånes skole – Gymsal",
     arrangor: "Agder fylkeskommune",
-    deltakere: "6C (23 per)"
+    deltakere: "6C (23 per)",
+    trinn: "6. trinn"
   },
   {
     id: "dks-18",
@@ -192,7 +209,8 @@ const DKS_REGISTER = [
     sluttTid: "10:45",
     sted: "Hånes skole – Gymsal",
     arrangor: "Agder fylkeskommune",
-    deltakere: "6D (16 per)"
+    deltakere: "6D (16 per)",
+    trinn: "6. trinn"
   },
   {
     id: "dks-19",
@@ -202,7 +220,8 @@ const DKS_REGISTER = [
     sluttTid: "13:15",
     sted: "Hånes skole – Gymsal",
     arrangor: "Agder fylkeskommune",
-    deltakere: "7A (22 per)"
+    deltakere: "7A (22 per)",
+    trinn: "7. trinn"
   },
   {
     id: "dks-20",
@@ -212,7 +231,8 @@ const DKS_REGISTER = [
     sluttTid: "10:45",
     sted: "Hånes skole – Gymsal",
     arrangor: "Agder fylkeskommune",
-    deltakere: "7B (16 per)"
+    deltakere: "7B (16 per)",
+    trinn: "7. trinn"
   },
   {
     id: "dks-21",
@@ -222,7 +242,8 @@ const DKS_REGISTER = [
     sluttTid: "13:15",
     sted: "Hånes skole – Gymsal",
     arrangor: "Agder fylkeskommune",
-    deltakere: "7C (21 per)"
+    deltakere: "7C (21 per)",
+    trinn: "7. trinn"
   },
   {
     id: "dks-22",
@@ -232,7 +253,8 @@ const DKS_REGISTER = [
     sluttTid: "11:00",
     sted: "Hånes skole – Gymsal",
     arrangor: "Kristiansand kommune",
-    deltakere: "6b (20 per), 6A (22 per)"
+    deltakere: "6b (20 per), 6A (22 per)",
+    trinn: "6. trinn"
   },
   {
     id: "dks-23",
@@ -242,7 +264,8 @@ const DKS_REGISTER = [
     sluttTid: "14:00",
     sted: "Hånes skole – Gymsal",
     arrangor: "Kristiansand kommune",
-    deltakere: "6C (23 per), 6D (16 per)"
+    deltakere: "6C (23 per), 6D (16 per)",
+    trinn: "6. trinn"
   },
   {
     id: "dks-24",
@@ -252,7 +275,8 @@ const DKS_REGISTER = [
     sluttTid: "11:00",
     sted: "Hånes skole – Gymsal",
     arrangor: "Agder fylkeskommune",
-    deltakere: "5.-6. trinn (103 deltakere)"
+    deltakere: "5.-6. trinn (103 deltakere)",
+    trinn: ["5. trinn", "6. trinn"]
   },
   {
     id: "dks-25",
@@ -262,7 +286,8 @@ const DKS_REGISTER = [
     sluttTid: "12:30",
     sted: "Hånes skole – Gymsal",
     arrangor: "Agder fylkeskommune",
-    deltakere: "6.-7. trinn (96 deltakere)"
+    deltakere: "6.-7. trinn (96 deltakere)",
+    trinn: ["6. trinn", "7. trinn"]
   },
   {
     id: "dks-26",
@@ -272,7 +297,8 @@ const DKS_REGISTER = [
     sluttTid: "10:00",
     sted: "Hånes skole – Gymsal",
     arrangor: "Agder fylkeskommune",
-    deltakere: "1.-3. trinn (152 deltakere)"
+    deltakere: "1.-3. trinn (152 deltakere)",
+    trinn: ["1. trinn", "2. trinn", "3. trinn"]
   },
   {
     id: "dks-27",
@@ -282,7 +308,8 @@ const DKS_REGISTER = [
     sluttTid: "11:00",
     sted: "Hånes skole – Gymsal",
     arrangor: "Agder fylkeskommune",
-    deltakere: "3.-5. trinn (143 deltakere)"
+    deltakere: "3.-5. trinn (143 deltakere)",
+    trinn: ["3. trinn", "4. trinn", "5. trinn"]
   },
   {
     id: "dks-28",
@@ -292,7 +319,8 @@ const DKS_REGISTER = [
     sluttTid: "10:00",
     sted: "Hånes skole – Gymsal",
     arrangor: "Agder fylkeskommune",
-    deltakere: "5.-7. trinn (156 deltakere)"
+    deltakere: "5.-7. trinn (156 deltakere)",
+    trinn: ["5. trinn", "6. trinn", "7. trinn"]
   },
   {
     id: "dks-29",
@@ -302,7 +330,8 @@ const DKS_REGISTER = [
     sluttTid: "09:55",
     sted: "Hånes skole – Gymsal",
     arrangor: "Kristiansand kommune",
-    deltakere: "1A (24 per), 1b (24 per)"
+    deltakere: "1A (24 per), 1b (24 per)",
+    trinn: "1. trinn"
   },
   {
     id: "dks-30",
@@ -312,7 +341,8 @@ const DKS_REGISTER = [
     sluttTid: "12:25",
     sted: "Hånes skole – Gymsal",
     arrangor: "Kristiansand kommune",
-    deltakere: "2a (17 per), 2b (17 per), 2C (23 per)"
+    deltakere: "2a (17 per), 2b (17 per), 2C (23 per)",
+    trinn: "2. trinn"
   },
   {
     id: "dks-31",
@@ -322,7 +352,8 @@ const DKS_REGISTER = [
     sluttTid: "09:55",
     sted: "Hånes skole – Gymsal",
     arrangor: "Kristiansand kommune",
-    deltakere: "3a (22 per), 3b (20 per), 3C (18 per)"
+    deltakere: "3a (22 per), 3b (20 per), 3C (18 per)",
+    trinn: "3. trinn"
   },
   {
     id: "dks-32",
@@ -332,7 +363,8 @@ const DKS_REGISTER = [
     sluttTid: "12:25",
     sted: "Hånes skole – Gymsal",
     arrangor: "Kristiansand kommune",
-    deltakere: "4A (22 per), 4b (23 per), 4C (19 per)"
+    deltakere: "4A (22 per), 4b (23 per), 4C (19 per)",
+    trinn: "4. trinn"
   },
   {
     id: "dks-33",
@@ -342,7 +374,8 @@ const DKS_REGISTER = [
     sluttTid: "11:00",
     sted: "Hånes skole – Gymsal",
     arrangor: "Agder fylkeskommune",
-    deltakere: "1.-2. trinn (130 deltakere)"
+    deltakere: "1.-2. trinn (130 deltakere)",
+    trinn: ["1. trinn", "2. trinn"]
   },
   {
     id: "dks-34",
@@ -352,7 +385,8 @@ const DKS_REGISTER = [
     sluttTid: "12:30",
     sted: "Hånes skole – Gymsal",
     arrangor: "Agder fylkeskommune",
-    deltakere: "3.-4. trinn (122 deltakere)"
+    deltakere: "3.-4. trinn (122 deltakere)",
+    trinn: ["3. trinn", "4. trinn"]
   }
 ];
 
@@ -367,26 +401,8 @@ export function getDKSAktiviteterSomEvents() {
   const liste = getDKSAktiviteter();
 
   return liste.map(a => {
-    const trinnSet = new Set();
-    const text = a.deltakere || '';
-
-    // Sjekk etter intervaller som "5.-6. trinn" eller "1.-3. trinn"
-    const rangeMatch = text.match(/\b([1-7])\s*\.\s*-\s*([1-7])\s*\.\s*trinn\b/i);
-    if (rangeMatch) {
-      const startNum = parseInt(rangeMatch[1], 10);
-      const endNum = parseInt(rangeMatch[2], 10);
-      for (let i = startNum; i <= endNum; i++) {
-        trinnSet.add(`${i}. trinn`);
-      }
-    }
-
-    // Ekstraher enkeltklasser (f.eks. "1A", "6b", "2C") eller enkelt-tall foran trinn
-    const singleMatches = text.match(/\b([1-7])(?=[a-d]|\.|\s*trinn|\b)/gi);
-    if (singleMatches) {
-      singleMatches.forEach(num => trinnSet.add(`${num}. trinn`));
-    }
-
-    const trinnListe = Array.from(trinnSet);
+    // Sørger for at trinnListe alltid blir et array
+    const trinnListe = Array.isArray(a.trinn) ? a.trinn : [a.trinn];
     const dksUrl = DKS_LENKER[a.tittel] || null;
 
     return {
@@ -403,8 +419,8 @@ export function getDKSAktiviteterSomEvents() {
         sted: a.sted,
         arrangor: a.arrangor,
         deltakere: a.deltakere,
-        trinn: trinnListe,
-        url: dksUrl, // Lenken ligger klar her
+        trinn: trinnListe, // Eksplisitt trinn-array
+        url: dksUrl,
         description: `Sted: ${a.sted} | Arrangør: ${a.arrangor} | Deltakere: ${a.deltakere}`
       }
     };

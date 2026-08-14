@@ -10,6 +10,29 @@ export const ovingslarere = {
   "Oliv": "5b"
 };
 
+// Hjelpefunksjon for å finne trinn ut fra klasse (f.eks. "4b" -> "4. trinn")
+function finnTrinnFraKlasse(klasse) {
+  const tall = klasse.match(/\d+/);
+  return tall ? `${tall[0]}. trinn` : null;
+}
+
+// Hjelpefunksjon for å utlede et array med trinn basert på lærerne i teksten
+function finnTrinnForEvent(beskrivelse) {
+  const funnetTrinn = new Set();
+
+  Object.entries(ovingslarere).forEach(([navn, klasse]) => {
+    const regex = new RegExp(`\\b${navn}\\b`, 'i');
+    if (regex.test(beskrivelse)) {
+      const trinnNavn = finnTrinnFraKlasse(klasse);
+      if (trinnNavn) {
+        funnetTrinn.add(trinnNavn);
+      }
+    }
+  });
+
+  return Array.from(funnetTrinn);
+}
+
 // Hjelpefunksjon for å legge til klasse bak lærernavn
 function berikLarere(larerTekst) {
   let resultat = larerTekst;
@@ -123,15 +146,21 @@ export function getUiAAktiviteterSomEvents() {
     // Automatisk flett inn klassene i lærernavnene
     const beriketBeskrivelse = berikLarere(item.description);
 
+    // Utled trinn automatisk basert på øvingslærerne
+    const trinnListe = finnTrinnForEvent(item.description);
+
     return {
       id: `uia_event_${index}_${item.startDate}`,
       title: item.title,
       start: item.startDate,
       end: endAdjusted,
       allDay: true,
+      backgroundColor: '#8b5cf6', // Fin lilla farge for UiA Praksis
+      borderColor: '#7c3aed',
       extendedProps: {
         group: "UiA",
         rawTitle: item.title,
+        trinn: trinnListe, // Konsekvent trinn-matrise for filtrering!
         startDate: item.startDate,
         endDate: item.endDate,
         description: beriketBeskrivelse,

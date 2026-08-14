@@ -45,7 +45,7 @@ const KARTLEGGINGER_REGISTER = [
     id: "kart-1a",
     tittel: "Bokstavtesten (nr. 1)",
     trinnText: "1. trinn",
-    trinnListe: ["1. trinn"],
+    trinn: "1. trinn",
     startUke: 34,
     sluttUke: 38,
     infoUrl: "https://sites.google.com/ikrs.no/kartlegging/home/obligatoriske-kartlegginger/bokstavtesten",
@@ -56,7 +56,7 @@ const KARTLEGGINGER_REGISTER = [
     id: "kart-1b",
     tittel: "Bokstavtesten (nr. 2)",
     trinnText: "1. trinn",
-    trinnListe: ["1. trinn"],
+    trinn: "1. trinn",
     startUke: 1,
     sluttUke: 4,
     infoUrl: "https://sites.google.com/ikrs.no/kartlegging/home/obligatoriske-kartlegginger/bokstavtesten",
@@ -67,7 +67,7 @@ const KARTLEGGINGER_REGISTER = [
     id: "kart-1c",
     tittel: "Bokstavtesten (nr. 3)",
     trinnText: "1. trinn",
-    trinnListe: ["1. trinn"],
+    trinn: "1. trinn",
     startUke: 21,
     sluttUke: 25,
     infoUrl: "https://sites.google.com/ikrs.no/kartlegging/home/obligatoriske-kartlegginger/bokstavtesten",
@@ -80,7 +80,7 @@ const KARTLEGGINGER_REGISTER = [
     id: "kart-2",
     tittel: "Ordkjedetesten",
     trinnText: "4. trinn",
-    trinnListe: ["4. trinn"],
+    trinn: "4. trinn",
     startUke: 17,
     sluttUke: 20,
     infoUrl: "https://sites.google.com/ikrs.no/kartlegging/home/obligatoriske-kartlegginger/ordkjedetesten",
@@ -93,7 +93,7 @@ const KARTLEGGINGER_REGISTER = [
     id: "kart-3",
     tittel: "Nasjonale prøver",
     trinnText: "5. trinn",
-    trinnListe: ["5. trinn"],
+    trinn: "5. trinn",
     startUke: 36,
     sluttUke: 39,
     infoUrl: "https://sites.google.com/ikrs.no/kartlegging/home/obligatoriske-kartlegginger/nasjonale-proever",
@@ -106,7 +106,7 @@ const KARTLEGGINGER_REGISTER = [
     id: "kart-4a",
     tittel: "Klassetrivsel (Høst)",
     trinnText: "1.-7. trinn",
-    trinnListe: ["1. trinn", "2. trinn", "3. trinn", "4. trinn", "5. trinn", "6. trinn", "7. trinn"],
+    trinn: ["1. trinn", "2. trinn", "3. trinn", "4. trinn", "5. trinn", "6. trinn", "7. trinn"],
     startUke: 37,
     sluttUke: 39,
     infoUrl: "https://sites.google.com/ikrs.no/kartlegging/home/obligatoriske-kartlegginger/klassetrivsel-no",
@@ -117,7 +117,7 @@ const KARTLEGGINGER_REGISTER = [
     id: "kart-4b",
     tittel: "Klassetrivsel (Vår)",
     trinnText: "1.-7. trinn",
-    trinnListe: ["1. trinn", "2. trinn", "3. trinn", "4. trinn", "5. trinn", "6. trinn", "7. trinn"],
+    trinn: ["1. trinn", "2. trinn", "3. trinn", "4. trinn", "5. trinn", "6. trinn", "7. trinn"],
     startUke: 9,
     sluttUke: 11,
     infoUrl: "https://sites.google.com/ikrs.no/kartlegging/home/obligatoriske-kartlegginger/klassetrivsel-no",
@@ -130,7 +130,7 @@ const KARTLEGGINGER_REGISTER = [
     id: "kart-5a",
     tittel: "Lokale kartlegginger (Høst)",
     trinnText: "1.-7. trinn",
-    trinnListe: ["1. trinn", "2. trinn", "3. trinn", "4. trinn", "5. trinn", "6. trinn", "7. trinn"],
+    trinn: ["1. trinn", "2. trinn", "3. trinn", "4. trinn", "5. trinn", "6. trinn", "7. trinn"],
     startUke: 37,
     sluttUke: 39,
     infoUrl: "https://sites.google.com/ikrs.no/kartlegging/home/supplement/lokale-kartlegginger",
@@ -141,7 +141,7 @@ const KARTLEGGINGER_REGISTER = [
     id: "kart-5b",
     tittel: "Lokale kartlegginger (Vår)",
     trinnText: "1.-7. trinn",
-    trinnListe: ["1. trinn", "2. trinn", "3. trinn", "4. trinn", "5. trinn", "6. trinn", "7. trinn"],
+    trinn: ["1. trinn", "2. trinn", "3. trinn", "4. trinn", "5. trinn", "6. trinn", "7. trinn"],
     startUke: 9,
     sluttUke: 11,
     infoUrl: "https://sites.google.com/ikrs.no/kartlegging/home/supplement/lokale-kartlegginger",
@@ -165,6 +165,9 @@ export function getKartleggingerSomEvents() {
     endD.setDate(endD.getDate() + 1);
     const endStr = formatDateISO(endD);
 
+    // Sørger for at trinnListe alltid blir et array
+    const trinnArray = Array.isArray(a.trinn) ? a.trinn : [a.trinn];
+
     // Bygg opp beskrivelsen
     let desc = `Gjennomføring: Uke ${a.startUke}-${a.sluttUke} | Målgruppe: ${a.trinnText}`;
     if (a.regTekst) {
@@ -177,13 +180,13 @@ export function getKartleggingerSomEvents() {
       start: dates.startDato,
       end: endStr,
       allDay: true,
-      backgroundColor: '#f59e0b', // Stilig oransje/amber farge for kartlegginger
+      backgroundColor: '#f59e0b',
       borderColor: '#d97706',
       extendedProps: {
         group: 'Kartlegging',
         rawTitle: a.tittel,
         deltakere: a.trinnText,
-        trinn: a.trinnListe,
+        trinn: trinnArray, // Konsekvent navngivning for filtrering
         url: a.infoUrl,
         regUrl: a.regUrl,
         regTekst: a.regTekst,

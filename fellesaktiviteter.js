@@ -18,7 +18,8 @@ const FELLESAKTIVITETER_REGISTER = {
       fraDato: "2026-08-13",
       tilDato: "2026-08-23",
       deltakere: "Alle trinn",
-      ansvar: "Alle trinn"
+      ansvar: "Alle trinn",
+      trinn: "Alle trinn"
     },
     {
       id: "fa-2627-08-2",
@@ -29,7 +30,8 @@ const FELLESAKTIVITETER_REGISTER = {
       fraDato: "2026-08-13",
       tilDato: "2026-08-30",
       deltakere: "Alle trinn",
-      ansvar: "Alle trinn"
+      ansvar: "Alle trinn",
+      trinn: "Alle trinn"
     },
 
     // --- SEPTEMBER 2026 ---
@@ -42,7 +44,8 @@ const FELLESAKTIVITETER_REGISTER = {
       fraDato: "2026-08-31",
       tilDato: "2026-09-06",
       deltakere: "Alle trinn",
-      ansvar: "Alle trinn"
+      ansvar: "Alle trinn",
+      trinn: "Alle trinn"
     },
     {
       id: "fa-2627-09-2",
@@ -53,7 +56,8 @@ const FELLESAKTIVITETER_REGISTER = {
       fraDato: "2026-09-14",
       tilDato: "2026-09-20",
       deltakere: "6. trinn",
-      ansvar: "6. trinn"
+      ansvar: "6. trinn",
+      trinn: "6. trinn"
     },
     {
       id: "fa-2627-09-3",
@@ -62,7 +66,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Dato",
       dato: "2026-09-18",
       deltakere: "Alle trinn",
-      ansvar: "3. trinn og 4. trinn"
+      ansvar: "3. trinn og 4. trinn",
+      trinn: "Alle trinn"
     },
     {
       id: "fa-2627-09-4",
@@ -71,7 +76,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Dato",
       dato: "2026-09-25",
       deltakere: "Alle trinn",
-      ansvar: "7. trinn"
+      ansvar: "7. trinn",
+      trinn: "Alle trinn"
     },
 
     // --- OKTOBER 2026 ---
@@ -82,7 +88,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Dato",
       dato: "2026-10-23",
       deltakere: "Brattbakken",
-      ansvar: "Elevrådet"
+      ansvar: "Elevrådet",
+      trinn: ["4. trinn", "5. trinn", "6. trinn", "7. trinn"]
     },
     {
       id: "fa-2627-10-2",
@@ -93,7 +100,8 @@ const FELLESAKTIVITETER_REGISTER = {
       fraDato: "2026-10-12",
       tilDato: "2026-10-18",
       deltakere: "Brattbakken",
-      ansvar: "5. trinn"
+      ansvar: "5. trinn",
+      trinn: ["4. trinn", "5. trinn", "6. trinn", "7. trinn"]
     },
     {
       id: "fa-2627-10-3",
@@ -104,7 +112,8 @@ const FELLESAKTIVITETER_REGISTER = {
       fraDato: "2026-10-19",
       tilDato: "2026-10-25",
       deltakere: "Heståsen",
-      ansvar: "3. trinn"
+      ansvar: "3. trinn",
+      trinn: ["1. trinn", "2. trinn", "3. trinn"]
     },
     {
       id: "fa-2627-10-4",
@@ -113,7 +122,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Dato",
       dato: "2026-10-28",
       deltakere: "Heståsen",
-      ansvar: "2. trinn"
+      ansvar: "2. trinn",
+      trinn: ["1. trinn", "2. trinn", "3. trinn"]
     },
     {
       id: "fa-2627-10-5",
@@ -122,7 +132,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Dato",
       dato: "2026-10-30",
       deltakere: "6. trinn",
-      ansvar: "Kirka"
+      ansvar: "Kirka",
+      trinn: "6. trinn"
     },
 
     // --- NOVEMBER 2026 ---
@@ -135,7 +146,8 @@ const FELLESAKTIVITETER_REGISTER = {
       fraDato: "2026-11-02",
       tilDato: "2026-11-15",
       deltakere: "Alle trinn",
-      ansvar: "Alle trinn"
+      ansvar: "Alle trinn",
+      trinn: "Alle trinn"
     },
     {
       id: "fa-2627-11-2",
@@ -144,7 +156,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Dato",
       dato: "2026-11-27",
       deltakere: "5. trinn",
-      ansvar: "Kirka"
+      ansvar: "Kirka",
+      trinn: "5. trinn"
     },
     {
       id: "fa-2627-11-3",
@@ -155,7 +168,8 @@ const FELLESAKTIVITETER_REGISTER = {
       fraDato: "2026-11-16",
       tilDato: "2026-11-29",
       deltakere: "Heståsen og Brattbakken",
-      ansvar: "1. trinn og 4. trinn"
+      ansvar: "1. trinn og 4. trinn",
+      trinn: "Alle trinn"
     },
 
     // --- DESEMBER 2026 ---
@@ -166,7 +180,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Dato",
       dato: "2026-12-11",
       deltakere: "Alle trinn",
-      ansvar: "2. trinn"
+      ansvar: "2. trinn",
+      trinn: "Alle trinn"
     },
     {
       id: "fa-2627-12-2",
@@ -175,7 +190,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Dato",
       dato: "2026-12-04",
       deltakere: "1. trinn",
-      ansvar: "Kirka"
+      ansvar: "Kirka",
+      trinn: "1. trinn"
     },
     {
       id: "fa-2627-12-3",
@@ -184,7 +200,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Dato",
       dato: "2026-12-16",
       deltakere: "Alle trinn",
-      ansvar: "Komité + 1. trinn og 6. tr."
+      ansvar: "Komité + 1. trinn og 6. tr.",
+      trinn: "Alle trinn"
     },
     {
       id: "fa-2627-12-4",
@@ -193,7 +210,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Dato",
       dato: "2026-12-17",
       deltakere: "Alle trinn",
-      ansvar: "3. trinn"
+      ansvar: "3. trinn",
+      trinn: "Alle trinn"
     },
 
     // --- JANUAR 2027 ---
@@ -204,7 +222,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Dato",
       dato: "2027-01-22",
       deltakere: "Alle trinn",
-      ansvar: "5. trinn"
+      ansvar: "5. trinn",
+      trinn: "Alle trinn"
     },
     {
       id: "fa-2627-01-2",
@@ -215,7 +234,8 @@ const FELLESAKTIVITETER_REGISTER = {
       fraDato: "2027-01-11",
       tilDato: "2027-01-24",
       deltakere: "Alle trinn",
-      ansvar: "Alle trinn"
+      ansvar: "Alle trinn",
+      trinn: "Alle trinn"
     },
 
     // --- FEBRUAR 2027 ---
@@ -226,7 +246,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Dato",
       dato: "2027-02-04",
       deltakere: "Heståsen og 4. trinn",
-      ansvar: "3. trinn og 7. trinn"
+      ansvar: "3. trinn og 7. trinn",
+      trinn: ["1. trinn", "2. trinn", "3. trinn", "4. trinn"]
     },
     {
       id: "fa-2627-02-2",
@@ -235,7 +256,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Dato",
       dato: "2027-02-12",
       deltakere: "Brattbakken",
-      ansvar: "7. trinn"
+      ansvar: "7. trinn",
+      trinn: ["4. trinn", "5. trinn", "6. trinn", "7. trinn"]
     },
     {
       id: "fa-2627-02-3",
@@ -244,7 +266,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Uavklart",
       dato: null,
       deltakere: "4. trinn",
-      ansvar: "4. trinn"
+      ansvar: "4. trinn",
+      trinn: "4. trinn"
     },
 
     // --- MARS 2027 ---
@@ -257,7 +280,8 @@ const FELLESAKTIVITETER_REGISTER = {
       fraDato: "2027-03-08",
       tilDato: "2027-03-28",
       deltakere: "4. trinn",
-      ansvar: "4. trinn"
+      ansvar: "4. trinn",
+      trinn: "4. trinn"
     },
     {
       id: "fa-2627-03-2",
@@ -268,7 +292,8 @@ const FELLESAKTIVITETER_REGISTER = {
       fraDato: "2027-03-22",
       tilDato: "2027-04-04",
       deltakere: "Alle trinn",
-      ansvar: "Alle trinn"
+      ansvar: "Alle trinn",
+      trinn: "Alle trinn"
     },
     {
       id: "fa-2627-03-3",
@@ -277,7 +302,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Uavklart",
       dato: null,
       deltakere: "2. trinn",
-      ansvar: "2. trinn"
+      ansvar: "2. trinn",
+      trinn: "2. trinn"
     },
 
     // --- APRIL 2027 ---
@@ -290,7 +316,8 @@ const FELLESAKTIVITETER_REGISTER = {
       fraDato: "2027-04-19",
       tilDato: "2027-04-25",
       deltakere: "Heståsen",
-      ansvar: "3. trinn"
+      ansvar: "3. trinn",
+      trinn: ["1. trinn", "2. trinn", "3. trinn"]
     },
     {
       id: "fa-2627-04-2",
@@ -301,7 +328,8 @@ const FELLESAKTIVITETER_REGISTER = {
       fraDato: "2027-04-26",
       tilDato: "2027-05-09",
       deltakere: "Alle trinn",
-      ansvar: "1. trinn og 4. trinn"
+      ansvar: "1. trinn og 4. trinn",
+      trinn: "Alle trinn"
     },
 
     // --- MAI 2027 ---
@@ -312,7 +340,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Dato",
       dato: "2027-05-04",
       deltakere: "Deltakere",
-      ansvar: "6. trinn"
+      ansvar: "6. trinn",
+      trinn: ["4. trinn", "5. trinn", "6. trinn", "7. trinn"]
     },
     {
       id: "fa-2627-05-2",
@@ -321,7 +350,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Dato",
       dato: "2027-05-05",
       deltakere: "Brattbakken",
-      ansvar: "6. trinn"
+      ansvar: "6. trinn",
+      trinn: ["4. trinn", "5. trinn", "6. trinn", "7. trinn"]
     },
     {
       id: "fa-2627-05-3",
@@ -330,7 +360,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Uavklart",
       dato: null,
       deltakere: "3. trinn",
-      ansvar: "3. trinn"
+      ansvar: "3. trinn",
+      trinn: "3. trinn"
     },
     {
       id: "fa-2627-05-4",
@@ -341,7 +372,8 @@ const FELLESAKTIVITETER_REGISTER = {
       fraDato: "2027-05-03",
       tilDato: "2027-05-09",
       deltakere: "4. trinn",
-      ansvar: "4. trinn"
+      ansvar: "4. trinn",
+      trinn: "4. trinn"
     },
     {
       id: "fa-2627-05-5",
@@ -350,7 +382,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Dato",
       dato: "2027-05-21",
       deltakere: "Alle trinn",
-      ansvar: "2. trinn og 5. trinn"
+      ansvar: "2. trinn og 5. trinn",
+      trinn: "Alle trinn"
     },
 
     // --- JUNI 2027 ---
@@ -363,7 +396,8 @@ const FELLESAKTIVITETER_REGISTER = {
       fraDato: "2027-06-07",
       tilDato: "2027-06-13",
       deltakere: "Alle trinn",
-      ansvar: "Alle trinn"
+      ansvar: "Alle trinn",
+      trinn: "Alle trinn"
     },
     {
       id: "fa-2627-06-2",
@@ -374,7 +408,8 @@ const FELLESAKTIVITETER_REGISTER = {
       fraDato: "2027-05-31",
       tilDato: "2027-06-13",
       deltakere: "Alle trinn",
-      ansvar: "Alle trinn"
+      ansvar: "Alle trinn",
+      trinn: "Alle trinn"
     },
     {
       id: "fa-2627-06-3",
@@ -383,7 +418,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Uavklart",
       dato: null,
       deltakere: "7. trinn",
-      ansvar: "7. trinn"
+      ansvar: "7. trinn",
+      trinn: "7. trinn"
     },
     {
       id: "fa-2627-06-4",
@@ -392,7 +428,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Dato",
       dato: "2027-06-09",
       deltakere: "1.-6. trinn",
-      ansvar: "FAU"
+      ansvar: "FAU",
+      trinn: ["1. trinn", "2. trinn", "3. trinn", "4. trinn", "5. trinn", "6. trinn"]
     },
     {
       id: "fa-2627-06-5",
@@ -401,7 +438,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Dato",
       dato: "2027-06-11",
       deltakere: "1.-3. trinn",
-      ansvar: "1. trinn"
+      ansvar: "1. trinn",
+      trinn: ["1. trinn", "2. trinn", "3. trinn"]
     },
     {
       id: "fa-2627-06-6",
@@ -410,7 +448,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Dato",
       dato: "2027-06-11",
       deltakere: "4.-7. trinn",
-      ansvar: "5. trinn"
+      ansvar: "5. trinn",
+      trinn: ["4. trinn", "5. trinn", "6. trinn", "7. trinn"]
     },
     {
       id: "fa-2627-06-7",
@@ -419,7 +458,8 @@ const FELLESAKTIVITETER_REGISTER = {
       type: "Dato",
       dato: "2027-06-18",
       deltakere: "1.-6. trinn",
-      ansvar: "2. trinn"
+      ansvar: "2. trinn",
+      trinn: ["1. trinn", "2. trinn", "3. trinn", "4. trinn", "5. trinn", "6. trinn"]
     }
   ],
 
@@ -450,6 +490,7 @@ export function getFellesaktiviteter(skoleaar) {
 
 export function getFellesaktiviteterSomEvents(skoleaar) {
   const liste = getFellesaktiviteter(skoleaar);
+  const ALLE_TRINN_LISTE = ['1. trinn', '2. trinn', '3. trinn', '4. trinn', '5. trinn', '6. trinn', '7. trinn'];
 
   return liste
     .filter(a => a.dato || a.fraDato)
@@ -463,40 +504,14 @@ export function getFellesaktiviteterSomEvents(skoleaar) {
         end = d.toISOString().split('T')[0];
       }
 
-      // Håndterer mapping av trinn fra deltakere-feltet
+      // Konverterer trinn-feltet til et standardisert array
       let trinnListe = [];
-      const text = (a.deltakere || '').toLowerCase();
-
-      if (text.includes('alle trinn')) {
-        trinnListe = ['1. trinn', '2. trinn', '3. trinn', '4. trinn', '5. trinn', '6. trinn', '7. trinn'];
-      } else {
-        const trinnSet = new Set();
-
-        // Sjekk for spesifikke skolenavn
-        if (text.includes('heståsen')) {
-          ['1. trinn', '2. trinn', '3. trinn'].forEach(t => trinnSet.add(t));
-        }
-        if (text.includes('brattbakken')) {
-          ['4. trinn', '5. trinn', '6. trinn', '7. trinn'].forEach(t => trinnSet.add(t));
-        }
-
-        // Ekstraher intervaller som "1.-6. trinn" eller "4.-7. trinn"
-        const rangeMatch = text.match(/\b([1-7])\s*\.\s*-\s*([1-7])\s*\.\s*trinn\b/);
-        if (rangeMatch) {
-          const startNum = parseInt(rangeMatch[1], 10);
-          const endNum = parseInt(rangeMatch[2], 10);
-          for (let i = startNum; i <= endNum; i++) {
-            trinnSet.add(`${i}. trinn`);
-          }
-        }
-
-        // Ekstraher enkeltstående trinn (f.eks. "6. trinn" eller "4. trinn")
-        const singleMatches = text.match(/\b([1-7])(?=\.|\s*trinn|\b)/g);
-        if (singleMatches) {
-          singleMatches.forEach(num => trinnSet.add(`${num}. trinn`));
-        }
-
-        trinnListe = Array.from(trinnSet);
+      if (a.trinn === "Alle trinn") {
+        trinnListe = ALLE_TRINN_LISTE;
+      } else if (Array.isArray(a.trinn)) {
+        trinnListe = a.trinn;
+      } else if (a.trinn) {
+        trinnListe = [a.trinn];
       }
 
       return {
@@ -512,7 +527,7 @@ export function getFellesaktiviteterSomEvents(skoleaar) {
           rawTitle: a.tittel,
           deltakere: a.deltakere,
           ansvar: a.ansvar,
-          trinn: trinnListe, // Eksplisitt trinn-liste for filtrering og utskrift
+          trinn: trinnListe, // Eksplisitt trinn-liste
           description: `Deltakere: ${a.deltakere} | Ansvar: ${a.ansvar}`
         }
       };

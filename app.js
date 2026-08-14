@@ -1336,19 +1336,26 @@ function updateCalendarEvents() {
     filteredBursdagEvents = rawBursdager.filter(event => isEventInSelectedCategories(event));
   }
 
-  // Hent eksterne hendelser fra .js-filene
-  const rawMoter = typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : []; // <-- NY LINJE
-  const rawUia = typeof getUiAAktiviteterSomEvents === 'function' ? getUiAAktiviteterSomEvents() : [];
-  const rawKartlegginger = typeof getKartleggingerSomEvents === 'function' ? getKartleggingerSomEvents() : [];
-  const rawFelles = typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : [];
-  const rawDks = typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : [];
-  const rawSvomme = typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : [];
+  // --- HENT HENDELSER TRYGT (Støtter eksakte funksjonsnavn fra de nye filene) ---
+  const getFellesFn = window.getFellesaktiviteterSomEvents || (typeof getFellesaktiviteterSomEvents === 'function' ? getFellesaktiviteterSomEvents : null);
+  const getDksFn = window.getDKSAktiviteterSomEvents || window.getDksAktiviteterSomEvents || (typeof getDKSAktiviteterSomEvents === 'function' ? getDKSAktiviteterSomEvents : (typeof getDksAktiviteterSomEvents === 'function' ? getDksAktiviteterSomEvents : null));
+  const getSvommeFn = window.getSvommeAktiviteterSomEvents || (typeof getSvommeAktiviteterSomEvents === 'function' ? getSvommeAktiviteterSomEvents : null);
+  const getMoterFn = window.getMoteAktiviteterSomEvents || (typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents : null);
+  const getUiaFn = window.getUiAAktiviteterSomEvents || (typeof getUiAAktiviteterSomEvents === 'function' ? getUiAAktiviteterSomEvents : null);
+  const getKartleggingFn = window.getKartleggingerSomEvents || (typeof getKartleggingerSomEvents === 'function' ? getKartleggingerSomEvents : null);
+
+  const rawFelles = getFellesFn ? getFellesFn() : (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []);
+  const rawDks = getDksFn ? getDksFn() : (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []);
+  const rawSvomme = getSvommeFn ? getSvommeFn() : (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []);
+  const rawMoter = getMoterFn ? getMoterFn() : (typeof moterEventsFromJs !== 'undefined' ? moterEventsFromJs : []);
+  const rawUia = getUiaFn ? getUiaFn() : (typeof uiaEventsFromJs !== 'undefined' ? uiaEventsFromJs : []);
+  const rawKartlegginger = getKartleggingFn ? getKartleggingFn() : (typeof kartleggingEventsFromJs !== 'undefined' ? kartleggingEventsFromJs : []);
+
   const schoolEvents = typeof schoolEventsFromJs !== 'undefined' ? schoolEventsFromJs : [];
 
   // Vasker, fargelegger og merker statiske hendelser
   const processStaticEvents = (events) => {
     return events
-      // Fjern hendelser som er slettet av admin i Firestore
       .filter(evt => !deletedStaticEventIds.has(evt.id))
       .filter(event => isEventInSelectedCategories(event))
       .map(evt => {
@@ -1362,7 +1369,7 @@ function updateCalendarEvents() {
           borderColor: c,
           extendedProps: {
             ...evt.extendedProps,
-            isStatic: true // Flagg for å oppdage at hendelsen stammer fra en .js-fil
+            isStatic: true
           }
         };
       });
@@ -1370,14 +1377,14 @@ function updateCalendarEvents() {
 
   const filteredUserEvents = rawEvents.filter(event => isEventInSelectedCategories(event));
 
-const allEvents = [
+  const allEvents = [
     ...schoolEvents, 
     ...processStaticEvents(rawFelles), 
     ...processStaticEvents(rawDks), 
     ...processStaticEvents(rawSvomme), 
     ...processStaticEvents(filteredBursdagEvents), 
     ...processStaticEvents(rawKartlegginger), 
-    ...processStaticEvents(rawMoter), // <-- LEGG TIL DENNE!
+    ...processStaticEvents(rawMoter),
     ...processStaticEvents(rawUia),
     ...filteredUserEvents
   ];
@@ -1717,23 +1724,36 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
     return isEventInSelectedCategories(evt);
   };
 
+  // --- HENGER UT ALLE STATISKE KILDER TRYGT (Støtter både nye funksjoner og variabler) ---
+  const getFelles = typeof getFellesAktiviteterSomEvents === 'function' ? getFellesAktiviteterSomEvents() : (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []);
+  const getDks = typeof getDksAktiviteterSomEvents === 'function' ? getDksAktiviteterSomEvents() : (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []);
+  const getSvomme = typeof getSvommeAktiviteterSomEvents === 'function' ? getSvommeAktiviteterSomEvents() : (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []);
+  const getMoter = typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : (typeof moterEventsFromJs !== 'undefined' ? moterEventsFromJs : []);
+  const getUia = typeof getUiAAktiviteterSomEvents === 'function' ? getUiAAktiviteterSomEvents() : (typeof uiaEventsFromJs !== 'undefined' ? uiaEventsFromJs : []);
+  const getKartlegging = typeof getKartleggingerSomEvents === 'function' ? getKartleggingerSomEvents() : (typeof kartleggingEventsFromJs !== 'undefined' ? kartleggingEventsFromJs : []);
+
+  // Filtrerer alle kildene basert på valgt kategori
   const filteredUserEvents = rawEvents.filter(shouldIncludeEvent);
-  const filteredFellesEvents = (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []).filter(shouldIncludeEvent);
-  const filteredDksEvents = (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []).filter(shouldIncludeEvent);
-  const filteredSvommeEvents = (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []).filter(shouldIncludeEvent);
-  // LEGG TIL DENNE LINJEN:
-  const filteredMoteEvents = (typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : []).filter(shouldIncludeEvent);
+  const filteredFellesEvents = getFelles.filter(shouldIncludeEvent);
+  const filteredDksEvents = getDks.filter(shouldIncludeEvent);
+  const filteredSvommeEvents = getSvomme.filter(shouldIncludeEvent);
+  const filteredMoteEvents = getMoter.filter(shouldIncludeEvent);
+  const filteredUiaEvents = getUia.filter(shouldIncludeEvent);
+  const filteredKartleggingEvents = getKartlegging.filter(shouldIncludeEvent);
   
   let filteredBursdager = [];
   if (typeof getBirthdayEvents === 'function' && calendar) {
     filteredBursdager = getBirthdayEvents(startYear).filter(shouldIncludeEvent);
   }
 
+  // Samler alt i én matrise før utskrift
   const allRawEvents = [
     ...filteredFellesEvents, 
     ...filteredDksEvents, 
     ...filteredSvommeEvents, 
-    ...filteredMoteEvents, // <-- LEGG TIL DENNE I ARRAYET
+    ...filteredMoteEvents, 
+    ...filteredUiaEvents,
+    ...filteredKartleggingEvents,
     ...filteredBursdager,
     ...filteredUserEvents
   ];

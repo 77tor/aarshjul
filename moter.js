@@ -10,7 +10,7 @@ export const MOTER_REGISTER = [
     startTime: "10:00",
     endDate: "2026-08-13",
     endTime: "11:00",
-    trinn: ["1. trinn"],
+    trinn: "1. trinn",
     description: "Fellesmøte på trinnet, deretter møte i klassen.\nSted: SFO\nAnsvar: Ledelsen"
   },
   {
@@ -21,7 +21,7 @@ export const MOTER_REGISTER = [
     startTime: "17:00",
     endDate: "2026-08-26",
     endTime: "18:30",
-    trinn: ["1. trinn"],
+    trinn: "1. trinn",
     description: "Fellesmøte på trinnet, deretter møte i klassen.\nSted: SFO\nAnsvar: Lærerne"
   },
   {
@@ -32,7 +32,7 @@ export const MOTER_REGISTER = [
     startTime: "17:00",
     endDate: "2026-08-31",
     endTime: "18:30",
-    trinn: ["4. trinn"],
+    trinn: "4. trinn",
     description: "Fellesmøte på trinnet, deretter møte i klassen.\nSted: Gymsalen på Brattbakken"
   },
   {
@@ -43,7 +43,7 @@ export const MOTER_REGISTER = [
     startTime: "17:00",
     endDate: "2026-09-01",
     endTime: "18:30",
-    trinn: ["2. trinn"],
+    trinn: "2. trinn",
     description: "Fellesmøte på trinnet, deretter møte i klassen.\nSted: SFO"
   },
   {
@@ -54,7 +54,7 @@ export const MOTER_REGISTER = [
     startTime: "17:00",
     endDate: "2026-09-02",
     endTime: "18:30",
-    trinn: ["3. trinn"],
+    trinn: "3. trinn",
     description: "Fellesmøte på trinnet, deretter møte i klassen.\nSted: SFO"
   },
   {
@@ -65,7 +65,7 @@ export const MOTER_REGISTER = [
     startTime: "17:00",
     endDate: "2026-09-03",
     endTime: "18:30",
-    trinn: ["7. trinn"],
+    trinn: "7. trinn",
     description: "Fellesmøte på trinnet, deretter møte i klassen.\nSted: Gymsalen på Brattbakken"
   },
   {
@@ -76,7 +76,7 @@ export const MOTER_REGISTER = [
     startTime: "17:00",
     endDate: "2026-09-08",
     endTime: "18:30",
-    trinn: ["6. trinn"],
+    trinn: "6. trinn",
     description: "Fellesmøte på trinnet, deretter møte i klassen.\nSted: Gymsalen på Brattbakken"
   },
   {
@@ -87,7 +87,7 @@ export const MOTER_REGISTER = [
     startTime: "17:00",
     endDate: "2026-09-09",
     endTime: "18:30",
-    trinn: ["5. trinn"],
+    trinn: "5. trinn",
     description: "Fellesmøte på trinnet, deretter møte i klassen.\nSted: Gymsalen på Brattbakken"
   },
   {
@@ -98,7 +98,7 @@ export const MOTER_REGISTER = [
     startTime: "17:00",
     endDate: "2026-09-16",
     endTime: "18:30",
-    trinn: [],
+    trinn: "Alle trinn",
     description: "Gjennomføres for foreldrekontakten fra hver klasse, hele FAU og alle kontaktlærere. Hensikten er å avklare forventninger til avslutninger, bidrag fra foreldre og legge rammer for samarbeidet mellom foreldrene og lærerne i hver klasse."
   },
 
@@ -111,7 +111,7 @@ export const MOTER_REGISTER = [
     startTime: "17:00",
     endDate: "2027-02-08",
     endTime: "18:30",
-    trinn: ["1. trinn"],
+    trinn: "1. trinn",
     description: "Tema: Spill, dialog, aktive foreldre.\nAnsvar: Trinnet"
   },
   {
@@ -122,7 +122,7 @@ export const MOTER_REGISTER = [
     startTime: "17:00",
     endDate: "2027-02-09",
     endTime: "18:30",
-    trinn: ["2. trinn"],
+    trinn: "2. trinn",
     description: "Tema: Foreldremøte etter Dialogmodellen.\nAnsvar: Rektor og sosiallærer sammen med trinnet"
   },
   {
@@ -133,7 +133,7 @@ export const MOTER_REGISTER = [
     startTime: "17:00",
     endDate: "2027-02-10",
     endTime: "18:30",
-    trinn: ["3. trinn"],
+    trinn: "3. trinn",
     description: "Tema: Spill, dialog, aktive foreldre.\nAnsvar: Trinnet"
   },
   {
@@ -144,7 +144,7 @@ export const MOTER_REGISTER = [
     startTime: "17:00",
     endDate: "2027-02-11",
     endTime: "18:30",
-    trinn: ["7. trinn"],
+    trinn: "7. trinn",
     description: "Tema: Leirskole (Bringsvær uke 9 og 10).\nAnsvar: Trinnet"
   },
   {
@@ -155,7 +155,7 @@ export const MOTER_REGISTER = [
     startTime: "17:00",
     endDate: "2027-02-15",
     endTime: "18:30",
-    trinn: ["5. trinn"],
+    trinn: "5. trinn",
     description: "Tema: Foreldremøte etter Dialogmodellen.\nAnsvar: Rektor og sosiallærer sammen med trinnet"
   },
   {
@@ -166,7 +166,7 @@ export const MOTER_REGISTER = [
     startTime: "17:00",
     endDate: "2027-02-16",
     endTime: "18:30",
-    trinn: ["6. trinn"],
+    trinn: "6. trinn",
     description: "Tema: Spill, dialog, aktive foreldre.\nAnsvar: Trinnet"
   },
   {
@@ -177,7 +177,7 @@ export const MOTER_REGISTER = [
     startTime: "17:00",
     endDate: "2027-02-17",
     endTime: "18:30",
-    trinn: ["4. trinn"],
+    trinn: "4. trinn",
     description: "Tema: Spill, dialog, aktive foreldre.\nAnsvar: Trinnet"
   },
 
@@ -188,7 +188,7 @@ export const MOTER_REGISTER = [
     group: "Møter",
     startDate: "2026-11-09",
     endDate: "2026-11-13",
-    trinn: [],
+    trinn: "Alle trinn",
     description: "Foreldresamtaler gjennomføres rundt uke 46. Kontaktlærer sender invitasjon.\n\nEn samtale om elevens faglige og sosiale utvikling. Eleven deltar."
   },
   {
@@ -197,7 +197,7 @@ export const MOTER_REGISTER = [
     group: "Møter",
     startDate: "2027-04-12",
     endDate: "2027-04-16",
-    trinn: [],
+    trinn: "Alle trinn",
     description: "Foreldresamtaler gjennomføres rundt uke 14/15 (rett etter påske). Kontaktlærer sender invitasjon.\n\nEn samtale om elevens faglige og sosiale utvikling. Eleven deltar."
   }
 ];
@@ -207,18 +207,47 @@ export function getMoteAktiviteter() {
 }
 
 export function getMoteAktiviteterSomEvents() {
+  const ALLE_TRINN_LISTE = ['1. trinn', '2. trinn', '3. trinn', '4. trinn', '5. trinn', '6. trinn', '7. trinn'];
+
   return MOTER_REGISTER.map(m => {
     const isAllDay = !m.startTime;
+    let endVal = null;
+
+    if (isAllDay) {
+      if (m.endDate) {
+        // Legger til 1 dag på end når det gjelder allDay for at FullCalendar skal vise siste dag
+        const d = new Date(m.endDate);
+        d.setDate(d.getDate() + 1);
+        endVal = d.toISOString().split('T')[0];
+      } else {
+        endVal = m.startDate;
+      }
+    } else {
+      endVal = `${m.endDate}T${m.endTime}:00`;
+    }
+
+    // Standardiserer trinn-arrayet
+    let trinnListe = [];
+    if (m.trinn === "Alle trinn" || !m.trinn || (Array.isArray(m.trinn) && m.trinn.length === 0)) {
+      trinnListe = ALLE_TRINN_LISTE;
+    } else if (Array.isArray(m.trinn)) {
+      trinnListe = m.trinn;
+    } else {
+      trinnListe = [m.trinn];
+    }
+
     return {
       id: m.id,
       title: `🧑‍🤝‍🧑 Møte - ${m.title}`,
       start: isAllDay ? m.startDate : `${m.startDate}T${m.startTime}:00`,
-      end: isAllDay ? m.endDate : `${m.endDate}T${m.endTime}:00`,
+      end: endVal,
       allDay: isAllDay,
+      backgroundColor: '#3b82f6', // Fin, profesjonell blåfarge for møter
+      borderColor: '#2563eb',
       extendedProps: {
         group: 'Møter',
         rawTitle: m.title,
-        trinn: m.trinn || [],
+        trinn: trinnListe, // Konsekvent trinn-liste for kalenderfiltrering
         description: m.description,
         startDate: m.startDate,
         startTime: m.startTime || '',
