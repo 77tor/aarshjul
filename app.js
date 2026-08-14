@@ -749,21 +749,32 @@ function formatNorwegianDate(dateStr) {
 function populateFormFromSelection() {
   if (!currentSelection) return;
 
+  // 1. Tøm og tilbakestill skjemaet
   document.getElementById('eventId').value = '';
   document.getElementById('eventForm').reset();
 
+  // 🔑 VIKTIG: Tving isRecurringMode til "false" for nye enkeltavtaler!
+  const recInput = document.getElementById('isRecurringMode');
+  if (recInput) recInput.value = "false";
+  
+  const repeatCheckbox = document.getElementById('isRecurringCheckbox');
+  if (repeatCheckbox) repeatCheckbox.checked = false;
+
   let startDate = currentSelection.start;
-  let endDate = currentSelection.end;
 
-  if (currentSelection.allDay) {
-    endDate = new Date(endDate.getTime() - 1);
-  }
-
-  document.getElementById('startDate').value = formatDate(startDate);
-  document.getElementById('endDate').value = formatDate(endDate);
+  // 🔑 KJERNE-FIKSEN FOR DATO:
+  // Vi tvinger at en ny avtale ALLTID har samme sluttdato som startdato 
+  // når man oppretter en enkeltavtale fra kalenderen.
+  const formattedStart = formatDate(startDate);
+  
+  document.getElementById('startDate').value = formattedStart;
+  document.getElementById('endDate').value = formattedStart; // Satt lik startDate!
 
   if (!currentSelection.allDay) {
     document.getElementById('startTime').value = formatTime(startDate);
+    
+    // Hvis valget har et sluttidspunkt bruker vi det, ellers setter vi f.eks. +1 time
+    let endDate = currentSelection.end || new Date(startDate.getTime() + (60 * 60 * 1000));
     document.getElementById('endTime').value = formatTime(endDate);
   } else {
     document.getElementById('startTime').value = '';
@@ -1719,6 +1730,9 @@ document.getElementById('deleteAllSeriesBtn')?.addEventListener('click', async (
   }
 });
 
+
+
+
 document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -1729,41 +1743,48 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
 
   const eventId = document.getElementById('eventId')?.value;
   
-  // 🔑 RIGID SJEKK FOR GJENTAKELSE: Sjekker både hidden input OG eventuell sjekkboks.
-  // isRecurring kan KUN bli sann om det er en NY hendelse (!eventId)
+  // 🔑 Tving isRecurring til false dersom det er redigering ELLER hvis repetisjon-valget ikke er huket av / satt aktivt
   const isRecurringInput = document.getElementById('isRecurringMode')?.value;
-  const repeatCheckbox = document.getElementById('isRecurringCheckbox');
+  const repeatCheckbox = document.getElementById('isRecurringCheckbox'); // Hvis du har en avkrysningsboks
   const isRecurring = !eventId && (isRecurringInput === "true" || repeatCheckbox?.checked === true);
 
   const repeatPattern = document.getElementById('repeatPattern')?.value || 'weekly';
   
   const title = document.getElementById('title')?.value;
   const group = document.getElementById('group')?.value;
+  
+  // 🔑 DATO-SJEKK: Hent startdato
   const startDateStr = document.getElementById('startDate')?.value;
+  let endDateStr = document.getElementById('endDate')?.value;
+  
+  // 💥 VETSKAPENS PUNKT: Dersom det IKKE er valgt flerdagers-avtale eller repetisjon, 
+  // MÅ endDate være nøyaktig lik startDate!
+  if (!endDateStr || !isRecurring) {
+    endDateStr = startDateStr;
+  }
+
   const startTime = document.getElementById('startTime')?.value;
-  const endDateStr = document.getElementById('endDate')?.value;
   const endTime = document.getElementById('endTime')?.value;
   const description = document.getElementById('description')?.value;
 
-  // 🔑 HENTER ALLE VALGTE TRINN FRA SJEKKBOKSENE
+  // Henter valgte trinn
   const selectedTrinn = Array.from(document.querySelectorAll('input[name="trinnOption"]:checked'))
     .map(cb => cb.value);
 
   closeModal();
 
-  // Lokal datoforberedelse
   const safeFormatDate = typeof formatDate === 'function' ? formatDate : (d) => d.toISOString().split('T')[0];
 
   try {
     if (eventId) {
-      // 🔑 1. Redigering av eksisterende hendelse (Kun én oppdateres)
+      // 1. REDIGERING AV ENKELTAVTALE
       const singleData = {
         title, 
         group, 
         trinn: selectedTrinn,
         startDate: startDateStr, 
         startTime: startTime || null,
-        endDate: endDateStr || startDateStr, 
+        endDate: startDateStr, // 👈 Forhindrer at den strekker seg over dager
         endTime: endTime || null,
         description: description || '', 
         updatedAt: new Date().toISOString()
@@ -1771,12 +1792,11 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
       await updateDoc(doc(db, "school_events", eventId), singleData);
 
     } else if (isRecurring) {
-      // 🔑 2. Opprettelse av ny serie (KUN om "gjenta" eksplisitt er valgt)
+      // 2. REPETITIV SERIE (KUN dersom brukeren bevisst valgte dette)
       const eventsToCreate = [];
       const baseStart = new Date(startDateStr + "T00:00:00");
-      const baseEnd = new Date((endDateStr || startDateStr) + "T00:00:00");
+      const baseEnd = new Date(startDateStr + "T00:00:00"); // 👈 Enkelt-dag per repetisjon
 
-      const daySpan = Math.round((baseEnd - baseStart) / (1000 * 60 * 60 * 24));
       const iterations = (repeatPattern === 'monthly') ? 10 : (repeatPattern === 'biweekly' ? 20 : 40);
       const seriesId = 'series_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
 
@@ -1786,14 +1806,14 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
 
         if (repeatPattern === 'weekly') {
           nextStart.setDate(baseStart.getDate() + (i * 7));
-          nextEnd.setDate(baseStart.getDate() + (i * 7) + daySpan);
+          nextEnd.setDate(baseStart.getDate() + (i * 7));
         } else if (repeatPattern === 'biweekly') {
           nextStart.setDate(baseStart.getDate() + (i * 14));
-          nextEnd.setDate(baseStart.getDate() + (i * 14) + daySpan);
+          nextEnd.setDate(baseStart.getDate() + (i * 14));
         } else if (repeatPattern === 'monthly') {
           const targetMonth = baseStart.getMonth() + i;
           nextStart.setFullYear(baseStart.getFullYear(), targetMonth, baseStart.getDate());
-          nextEnd.setTime(nextStart.getTime() + (daySpan * 24 * 60 * 60 * 1000));
+          nextEnd.setFullYear(baseStart.getFullYear(), targetMonth, baseStart.getDate());
         }
 
         eventsToCreate.push({
@@ -1814,14 +1834,14 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
       await Promise.all(eventsToCreate.map(evt => addDoc(eventsRef, evt)));
 
     } else {
-      // 🔑 3. Opprettelse av ny enkelthendelse (KUN 1 DATO)
+      // 3. VANLIG ENKELTAVTALE (1 DAG)
       const singleData = {
         title, 
         group, 
         trinn: selectedTrinn,
         startDate: startDateStr, 
         startTime: startTime || null,
-        endDate: endDateStr || startDateStr, 
+        endDate: startDateStr, // 👈 Alltid KUN samme dag
         endTime: endTime || null,
         description: description || '', 
         createdAt: new Date().toISOString()
@@ -1833,6 +1853,9 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
     alert("Feil ved lagring til databasen.");
   }
 });
+
+
+
 
 
 function renderFilters() {
