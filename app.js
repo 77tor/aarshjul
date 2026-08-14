@@ -78,6 +78,10 @@ const redDateSet = new Set();
 const offDateSet = new Set();
 const schoolEventsFromJs = [];
 
+// ==========================================
+// TILGANGER OG INNLOGGINGSHÅNDTERING
+// ==========================================
+
 // --- ADMIN TILGANGSBEGRENSNING ---
 const ADMIN_EMAILS = [
   '77tor@ikrs.no',
@@ -88,10 +92,31 @@ const ADMIN_EMAILS = [
 
 let deletedStaticEventIds = new Set();
 
-// Sjekker om nåværende bruker har admin-rettigheter
+// 1. Sjekker om nåværende bruker har Hoved-Admin rettigheter
 function isCurrentUserAdmin() {
   const user = auth.currentUser;
-  return user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
+  return Boolean(user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase()));
+}
+
+// 2. Sjekker om bruker i det hele tatt er logget inn
+function isUserLoggedIn() {
+  return Boolean(auth.currentUser);
+}
+
+// 3. 🔑 TILGANGSKONTROLL FOR ENDRING/SLETTING
+// Sjekker om innlogget bruker har lov til å redigere eller slette en spesifikk hendelse
+function canUserModifyEvent(eventObj) {
+  if (!isUserLoggedIn()) return false; // Ikke logget inn = Ingen rettigheter
+  if (isCurrentUserAdmin()) return true;  // Hoved-Admin kan alt (inkl. .js-hendelser)
+
+  // Rene skoleruter (fridager/planleggingsdager) kan aldri endres
+  if (eventObj?.isSchoolRoute || eventObj?.extendedProps?.isSchoolRoute) return false;
+
+  // Sjekk om hendelsen kommer fra en statisk .js-fil (DKS, Felles, Svømming, Kartlegging osv.)
+  const isStaticJsEvent = Boolean(eventObj?.isStatic || eventObj?.extendedProps?.isStatic);
+
+  // Vanlige brukere kan endre/slette alt unntatt .js-hendelser
+  return !isStaticJsEvent;
 }
 
 // 🔑 Lytter på innloggingsstatus fra Firebase Auth
@@ -111,7 +136,7 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// 2. NÅ KAN DENNE LYTTE UTEN FEIL, SIDEN db DOKUMENTERES OVENFOR
+// Lytter på slettede statiske hendelser
 onSnapshot(collection(db, 'deleted_static_events'), (snapshot) => {
   deletedStaticEventIds = new Set(snapshot.docs.map(doc => doc.id));
   if (typeof updateCalendarEvents === 'function') {
@@ -711,18 +736,18 @@ function showViewMode() {
   document.getElementById('formSubmitBtn').style.display = 'none';
   document.getElementById('viewCancelBtn').style.display = 'inline-block';
 
-  // 1. Sjekk om dette er en skolerute (fridager/planleggingsdager)
-  const isSchoolRoute = activeEvent?.isSchoolRoute || activeEvent?.extendedProps?.isSchoolRoute;
+  // 🔑 Sjekk rettigheter med den nye tilgangsfunksjonen:
+  // - Admin: Kan redigere/slette Alt (også .js-filer)
+  // - Vanlig bruker: Kan redigere/slette Alt UNNTATT .js-filer og skoleruter
+  // - Ikke innlogget: Kan ikke redigere/slette noe
+  const canEditOrDelete = typeof canUserModifyEvent === 'function' && canUserModifyEvent(activeEvent);
 
-  // 2. Sjekk om innlogget bruker har admin-rettigheter
-  const admin = typeof isCurrentUserAdmin === 'function' && isCurrentUserAdmin();
+  // Vis eller skjul knapper basert på tilgang
+  const editBtn = document.getElementById('viewEditBtn');
+  const deleteBtn = document.getElementById('viewDeleteBtn');
 
-  // 3. Admin skal kunne slette/redigere ALT unntatt rene skoleruter/fridager
-  const canEditOrDelete = admin && !isSchoolRoute;
-
-  // Vis eller skjul knapper basert på rettigheter
-  document.getElementById('viewEditBtn').style.display = canEditOrDelete ? 'inline-block' : 'none';
-  document.getElementById('viewDeleteBtn').style.display = canEditOrDelete ? 'inline-block' : 'none';
+  if (editBtn) editBtn.style.display = canEditOrDelete ? 'inline-block' : 'none';
+  if (deleteBtn) deleteBtn.style.display = canEditOrDelete ? 'inline-block' : 'none';
 
   document.getElementById('eventModal').style.display = 'flex';
 }
