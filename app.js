@@ -500,7 +500,7 @@ function openCategoryGridModal(targetTrinn) {
     return isDirectTrinn || isIncludedInTrinnArray;
   });
 
-  // 4. Bygg kolonner bortover
+// 4. Bygg kolonner bortover
   columnsToDisplay.forEach(colName => {
     const colColor = (typeof categoryColors !== 'undefined' && categoryColors[colName]) ? categoryColors[colName] : '#2563eb';
 
@@ -514,8 +514,10 @@ function openCategoryGridModal(targetTrinn) {
     header.textContent = colName;
     col.appendChild(header);
 
+    // 🔑 Tvinger kolonneinnholdet til vertikal stabling (column)
     const content = document.createElement('div');
     content.className = 'category-grid-content';
+    content.style.cssText = 'display: flex; flex-direction: column; gap: 8px; padding: 8px; overflow-y: auto; width: 100%; box-sizing: border-box;';
 
     // Filtrer hendelsene som passer i DENNE kolonnen
     const colNameLower = colName.trim().toLowerCase();
@@ -541,7 +543,8 @@ function openCategoryGridModal(targetTrinn) {
       matchedEvents.forEach(evt => {
         const card = document.createElement('div');
         card.className = 'grid-event-card';
-        card.style.borderLeftColor = colColor;
+        // 🔑 Sørger for at kortet fyller hele kolonnebredden
+        card.style.cssText = `border-left: 4px solid ${colColor}; width: 100%; box-sizing: border-box;`;
 
         const titleText = evt.title || evt.extendedProps?.rawTitle || 'Uten tittel';
         const descText = evt.extendedProps?.description || '';
