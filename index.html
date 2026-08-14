@@ -29,19 +29,19 @@
 
   <div class="app-layout">
 
-<!-- Sidepanel -->
+    <!-- Sidepanel -->
     <aside class="sidebar">
       
-      <!-- 🔑 NY SIDEBAR HEADER MED INTEGRERT INNLOGGING -->
-<div class="sidebar-header-box">
-  <h1 class="sidebar-title">Skolekalender</h1>
-  
-  <!-- Innloggingsseksjon (kompakt linje under overskriften) -->
-  <div class="auth-compact-container">
-    <span id="userInfo" class="user-info-text"></span>
-    <button id="loginBtn" class="login-btn-compact">🔑 Logg inn</button>
-  </div>
-</div>
+      <!-- 🔑 SIDEBAR HEADER MED INTEGRERT INNLOGGING -->
+      <div class="sidebar-header-box">
+        <h1 class="sidebar-title">Skolekalender</h1>
+        
+        <!-- Innloggingsseksjon -->
+        <div class="auth-compact-container">
+          <span id="userInfo" class="user-info-text"></span>
+          <button id="loginBtn" class="login-btn-compact">🔑 Logg inn</button>
+        </div>
+      </div>
 
       <!-- Mini-kalender -->
       <div class="mini-calendar">
@@ -69,7 +69,6 @@
     </main>
   </div>
 
-
   <!-- Hurtigmeny-popover ved markering -->
   <div id="selectionPopover" class="popover">
     <button id="btnQuickNewEvent" type="button" class="btn btn-primary btn-sm">+ Ny avtale</button>
@@ -94,6 +93,8 @@
       <div id="viewMode" class="modal-body" style="display: none;">
         <h2 id="viewTitle" class="view-title"></h2>
         <div class="view-badge"><span id="viewGroup"></span></div>
+        <!-- NYTT FELT: Viser hvilke trinn avtalen gjelder for -->
+        <p class="view-detail"><strong>Gjelder for trinn:</strong> <span id="viewTrinn"></span></p>
         <p class="view-detail"><strong>Tid:</strong> <span id="viewTime"></span></p>
         <p id="viewRecurringRow" class="view-detail" style="display: none;">
           <strong>Gjentakelse:</strong> <span id="viewRecurring"></span>
@@ -115,6 +116,20 @@
         <div class="form-group">
           <label for="group">Kategori</label>
           <select id="group" required></select>
+        </div>
+
+        <!-- 🔑 NYTT FELT: Velg et eller flere trinn -->
+        <div class="form-group">
+          <label style="font-weight: 600; display: block; margin-bottom: 6px;">Gjelder for trinn:</label>
+          <div id="eventTrinnCheckboxes" class="trinn-checkbox-group">
+            <label><input type="checkbox" name="trinnOption" value="1. trinn"> 1. trinn</label>
+            <label><input type="checkbox" name="trinnOption" value="2. trinn"> 2. trinn</label>
+            <label><input type="checkbox" name="trinnOption" value="3. trinn"> 3. trinn</label>
+            <label><input type="checkbox" name="trinnOption" value="4. trinn"> 4. trinn</label>
+            <label><input type="checkbox" name="trinnOption" value="5. trinn"> 5. trinn</label>
+            <label><input type="checkbox" name="trinnOption" value="6. trinn"> 6. trinn</label>
+            <label><input type="checkbox" name="trinnOption" value="7. trinn"> 7. trinn</label>
+          </div>
         </div>
 
         <div class="form-row">
@@ -181,7 +196,7 @@
     </div>
   </div>
 
-<!-- Modal for Visning og Utskrift av Kategori -->
+  <!-- Modal for Visning og Utskrift av Kategori -->
   <div id="categoryModal" class="modal-overlay">
     <div class="modal-card modal-large">
       <div class="modal-header">
@@ -193,7 +208,6 @@
           <!-- Innholdet genereres dynamisk av JS -->
         </div>
       </div>
-      <!-- OPPDATERT FOOTER MED DEN NYE KNAPPEN -->
       <div class="modal-footer">
         <button id="btnCategoryModalGrid" type="button" class="btn btn-secondary" style="margin-right: auto;">📊 Filtrer kategorier (Rutenett)</button>
         <button id="btnCategoryModalClose" type="button" class="btn btn-secondary">Lukk</button>
@@ -202,7 +216,7 @@
     </div>
   </div>
 
-  <!-- NY: Modal for Rutenett / Matrisevisning av alle kategorier -->
+  <!-- Modal for Rutenett / Matrisevisning av alle kategorier -->
   <div id="gridOverviewModal" class="modal-overlay">
     <div class="modal-card modal-large" style="max-width: 95vw; width: 1400px; max-height: 90vh;">
       <div class="modal-header">
@@ -221,7 +235,7 @@
     </div>
   </div>
 
-  <!-- Hovedskript som vanlige JS-skript (fjernet type="module" for å unngå variabel-konflikter hvis du bruker globale variabler i app.js) -->
+  <!-- Hovedskript -->
   <script type="module" src="app.js"></script>
 </body>
 </html>

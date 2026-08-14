@@ -679,6 +679,9 @@ function showFormMode(title = "Ny avtale", isRecurring = false) {
   document.getElementById('eventForm').style.display = 'block';
   document.getElementById('isRecurringMode').value = isRecurring ? "true" : "false";
 
+  // 🔑 NULLSTILL TRINN-SJEKKBOKSER VED NY AVTALE
+  document.querySelectorAll('input[name="trinnOption"]').forEach(cb => cb.checked = false);
+
   const recurringGroup = document.getElementById('recurringGroup');
   if (recurringGroup) recurringGroup.style.display = isRecurring ? 'block' : 'none';
 
@@ -1135,7 +1138,7 @@ if (titleEl) {
       if (typeof hideContextMenu === 'function') hideContextMenu();
     },
 
-    eventClick: function(info) {
+eventClick: function(info) {
       if (info.jsEvent) info.jsEvent.preventDefault();
       if (typeof hideContextMenu === 'function') hideContextMenu();
       if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
@@ -1144,10 +1147,15 @@ if (titleEl) {
       const isSchoolRoute = ext.isSchoolRoute || false;
       const isReadOnly = ext.isReadOnly || isSchoolRoute;
 
+      // 🔑 1. Hent ut trinn som et array
+      const rawTrinn = ext.trinn || ext.group || [];
+      const trinnArray = Array.isArray(rawTrinn) ? rawTrinn : [rawTrinn];
+
       activeEvent = {
         id: info.event.id || '',
         title: ext.rawTitle || info.event.title || '',
         group: ext.group || '',
+        trinn: trinnArray, // 🔑 Lagre trinn-arrayet her
         startDate: ext.startDate || (info.event.startStr ? info.event.startStr.split('T')[0] : ''),
         startTime: ext.startTime || '',
         endDate: ext.endDate || (info.event.endStr ? info.event.endStr.split('T')[0] : ''),
@@ -1157,7 +1165,7 @@ if (titleEl) {
         recurringSeriesId: ext.recurringSeriesId || null,
         isSchoolRoute: isSchoolRoute,
         isReadOnly: isReadOnly,
-        isStatic: ext.isStatic || false, // Flagg for .js-hendelser
+        isStatic: ext.isStatic || false,
         url: ext.url || null,
         regUrl: ext.regUrl || null,
         regTekst: ext.regTekst || null
@@ -1170,6 +1178,17 @@ if (titleEl) {
 
       if (viewTitle) viewTitle.textContent = activeEvent.title;
       if (viewGroup) viewGroup.textContent = activeEvent.group;
+
+      // 🔑 2. VIS TRINN I VISNINGSMODUS (#viewTrinn)
+      const viewTrinnEl = document.getElementById('viewTrinn');
+      if (viewTrinnEl) {
+        viewTrinnEl.textContent = trinnArray.length > 0 ? trinnArray.join(', ') : 'Ingen trinn valgt';
+      }
+
+      // 🔑 3. KRYSS AV I SKJEMAET (Dersom brukeren velger å redigere denne hendelsen)
+      document.querySelectorAll('input[name="trinnOption"]').forEach(cb => {
+        cb.checked = trinnArray.some(t => String(t).trim().toLowerCase() === cb.value.trim().toLowerCase());
+      });
 
       let timeText = typeof formatNorwegianDate === 'function' ? formatNorwegianDate(activeEvent.startDate) : activeEvent.startDate;
       if (activeEvent.startTime) timeText += ` kl. ${activeEvent.startTime}`;
@@ -1567,7 +1586,6 @@ function updateCalendarEvents() {
   }
 }
 
-
 // --- MODAL & HENDELSES-LYTTERE ---
 document.getElementById('modalCloseX')?.addEventListener('click', closeModal);
 document.getElementById('formCancelBtn')?.addEventListener('click', closeModal);
@@ -1605,6 +1623,12 @@ document.getElementById('viewEditBtn')?.addEventListener('click', () => {
     document.getElementById('endDate').value = activeEvent.endDate;
     document.getElementById('endTime').value = activeEvent.endTime;
     document.getElementById('description').value = activeEvent.description;
+
+    // 🔑 MOTTAR OG KRYSSER AV EKSISTERENDE TRINN VED REDIGERING
+    const currentTrinn = activeEvent.extendedProps?.trinn || activeEvent.trinn || [];
+    document.querySelectorAll('input[name="trinnOption"]').forEach(cb => {
+      cb.checked = Array.isArray(currentTrinn) && currentTrinn.includes(cb.value);
+    });
 
     showFormMode("Rediger avtale", false);
   }
@@ -1730,17 +1754,29 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
   const endTime = document.getElementById('endTime').value;
   const description = document.getElementById('description').value;
 
+  // 🔑 HENTER ALLESVALGTE TRINN FRA SJEKKBOKSENE
+  const selectedTrinn = Array.from(document.querySelectorAll('input[name="trinnOption"]:checked'))
+    .map(cb => cb.value);
+
   closeModal();
 
   try {
     if (eventId) {
+      // 🔑 Redigering av hendelse med trinn
       const singleData = {
-        title, group, startDate: startDateStr, startTime: startTime || null,
-        endDate: endDateStr || startDateStr, endTime: endTime || null,
-        description: description || '', updatedAt: new Date().toISOString()
+        title, 
+        group, 
+        trinn: selectedTrinn, // Saved here
+        startDate: startDateStr, 
+        startTime: startTime || null,
+        endDate: endDateStr || startDateStr, 
+        endTime: endTime || null,
+        description: description || '', 
+        updatedAt: new Date().toISOString()
       };
       await updateDoc(doc(db, "school_events", eventId), singleData);
     } else if (isRecurring) {
+      // 🔑 Opprettelse av serie med trinn
       const eventsToCreate = [];
       let currentStart = new Date(startDateStr + "T00:00:00");
       let currentEnd = new Date((endDateStr || startDateStr) + "T00:00:00");
@@ -1768,6 +1804,7 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
         eventsToCreate.push({
           title: title,
           group: group,
+          trinn: selectedTrinn, // Saved here
           startDate: formatDate(nextStart),
           startTime: startTime || null,
           endDate: formatDate(nextEnd),
@@ -1782,10 +1819,17 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
       await Promise.all(eventsToCreate.map(evt => addDoc(eventsRef, evt)));
 
     } else {
+      // 🔑 Opprettelse av enkelthendelse med trinn
       const singleData = {
-        title, group, startDate: startDateStr, startTime: startTime || null,
-        endDate: endDateStr || startDateStr, endTime: endTime || null,
-        description: description || '', createdAt: new Date().toISOString()
+        title, 
+        group, 
+        trinn: selectedTrinn, // Saved here
+        startDate: startDateStr, 
+        startTime: startTime || null,
+        endDate: endDateStr || startDateStr, 
+        endTime: endTime || null,
+        description: description || '', 
+        createdAt: new Date().toISOString()
       };
       await addDoc(eventsRef, singleData);
     }
