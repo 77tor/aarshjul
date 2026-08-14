@@ -26,6 +26,7 @@ import { getSvommeAktiviteterSomEvents } from './svomming.js';
 import { getBirthdayEvents } from './ansatte.js';
 import { getKartleggingerSomEvents } from './Kartlegging.js';
 import { getMoteAktiviteterSomEvents } from './moter.js';
+import { getUiAAktiviteterSomEvents } from './uia.js';
 
 // Firebase-konfigurasjon
 const firebaseConfig = {
@@ -319,17 +320,22 @@ function openCategoryModal(categoryName) {
   if (title) title.textContent = `Kategori: ${catName}`;
   if (listContainer) listContainer.innerHTML = '';
 
+  // Hent Møter og UiA trygt fra .js-filene
+  const moterEventsFromJs = typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : [];
+  const uiaEventsFromJs = typeof getUiAAktiviteterSomEvents === 'function' ? getUiAAktiviteterSomEvents() : [];
+
   // Samle ALLE hendelser på tvers av JS-filer og brukeravtaler
-const allRawEvents = [
-  ...(typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []),
-  ...(typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []),
-  ...(typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []),
-  ...(typeof ansatteEventsFromJs !== 'undefined' ? ansatteEventsFromJs : []),
-  ...(typeof kartleggingEventsFromJs !== 'undefined' ? kartleggingEventsFromJs : []),
-  ...(typeof moterEventsFromJs !== 'undefined' ? moterEventsFromJs : []), // <-- LEGG TIL DENNE
-  ...(typeof schoolEventsFromJs !== 'undefined' ? schoolEventsFromJs : []),
-  ...rawEvents
-];
+  const allRawEvents = [
+    ...(typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []),
+    ...(typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []),
+    ...(typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []),
+    ...(typeof ansatteEventsFromJs !== 'undefined' ? ansatteEventsFromJs : []),
+    ...(typeof kartleggingEventsFromJs !== 'undefined' ? kartleggingEventsFromJs : []),
+    ...moterEventsFromJs,
+    ...uiaEventsFromJs, // <-- UiA ER NÅ MED!
+    ...(typeof schoolEventsFromJs !== 'undefined' ? schoolEventsFromJs : []),
+    ...rawEvents
+  ];
 
   // Filtrer ved å gjenbruke isEventInSelectedCategories
   const matchedEvents = allRawEvents.filter(evt => {
@@ -1211,7 +1217,11 @@ const categoryAliases = {
   'møte': 'Møter',
   'foreldremøte': 'Møter',
   'fellesmøte': 'Møter',
-  'samtaler': 'Møter'
+  'samtaler': 'Møter',
+   'uia': 'UiA',
+  'praksis': 'UiA',
+  'student': 'UiA',
+  'studenter': 'UiA'
 };
 
 // Hjelpefunksjon for å finne riktig farge basert på gruppenavn og alias
@@ -1328,6 +1338,7 @@ function updateCalendarEvents() {
 
   // Hent eksterne hendelser fra .js-filene
   const rawMoter = typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : []; // <-- NY LINJE
+  const rawUia = typeof getUiAAktiviteterSomEvents === 'function' ? getUiAAktiviteterSomEvents() : [];
   const rawKartlegginger = typeof getKartleggingerSomEvents === 'function' ? getKartleggingerSomEvents() : [];
   const rawFelles = typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : [];
   const rawDks = typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : [];
@@ -1367,6 +1378,7 @@ const allEvents = [
     ...processStaticEvents(filteredBursdagEvents), 
     ...processStaticEvents(rawKartlegginger), 
     ...processStaticEvents(rawMoter), // <-- LEGG TIL DENNE!
+    ...processStaticEvents(rawUia),
     ...filteredUserEvents
   ];
 
