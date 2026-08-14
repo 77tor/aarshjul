@@ -23,7 +23,7 @@ import { schoolYearsData } from "./fridager.js";
 import { getFellesaktiviteterSomEvents } from "./fellesaktiviteter.js";
 import { getDKSAktiviteterSomEvents } from './DKS.js';
 import { getSvommeAktiviteterSomEvents } from './svomming.js';
-import { getBirthdayEvents } from './ansatte.js';
+import { getBirthdayEvents, ALLOWED_USER_EMAILS } from './ansatte.js'; // 🔑 Samlet på én linje
 import { getKartleggingerSomEvents } from './Kartlegging.js';
 import { getMoteAktiviteterSomEvents } from './moter.js';
 import { getUiAAktiviteterSomEvents } from './uia.js';
@@ -82,7 +82,7 @@ const schoolEventsFromJs = [];
 // TILGANGER OG INNLOGGINGSHÅNDTERING
 // ==========================================
 
-// --- ADMIN TILGANGSBEGRENSNING ---
+// --- ADMIN OG TILGANGSBEGRENSNING ---
 const ADMIN_EMAILS = [
   '77tor@ikrs.no',
   '75thomas@ikrs.no',
@@ -98,24 +98,35 @@ function isCurrentUserAdmin() {
   return Boolean(user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase()));
 }
 
-// 2. Sjekker om bruker i det hele tatt er logget inn
-function isUserLoggedIn() {
-  return Boolean(auth.currentUser);
+// 2. 🔑 Sjekker om bruker har lov til å OPPRETTE nye hendelser (må stå i enten ADMIN_EMAILS eller ALLOWED_USER_EMAILS)
+function canUserCreateEvent() {
+  const user = auth.currentUser;
+  if (!user || !user.email) return false;
+
+  const userEmail = user.email.toLowerCase();
+  
+  // Sjekker om e-posten finnes i admin-listen ELLER i den importerte listen fra ansatte.js
+  const isAdmin = ADMIN_EMAILS.includes(userEmail);
+  const isAllowedUser = typeof ALLOWED_USER_EMAILS !== 'undefined' && ALLOWED_USER_EMAILS.some(e => e.toLowerCase() === userEmail);
+
+  return isAdmin || isAllowedUser;
 }
 
 // 3. 🔑 TILGANGSKONTROLL FOR ENDRING/SLETTING
-// Sjekker om innlogget bruker har lov til å redigere eller slette en spesifikk hendelse
 function canUserModifyEvent(eventObj) {
-  if (!isUserLoggedIn()) return false; // Ikke logget inn = Ingen rettigheter
-  if (isCurrentUserAdmin()) return true;  // Hoved-Admin kan alt (inkl. .js-hendelser)
+  // Sjekk først om brukeren i det hele tatt har skrivetilgang
+  if (!canUserCreateEvent()) return false; 
+  
+  // Hoved-Admin kan alt (inkl. .js-hendelser)
+  if (isCurrentUserAdmin()) return true;  
 
   // Rene skoleruter (fridager/planleggingsdager) kan aldri endres
   if (eventObj?.isSchoolRoute || eventObj?.extendedProps?.isSchoolRoute) return false;
 
-  // Sjekk om hendelsen kommer fra en statisk .js-fil (DKS, Felles, Svømming, Kartlegging osv.)
+  // Sjekk om hendelsen kommer fra en statisk .js-fil (DKS, Svømming, Kartlegging osv.)
   const isStaticJsEvent = Boolean(eventObj?.isStatic || eventObj?.extendedProps?.isStatic);
 
-  // Vanlige brukere kan endre/slette alt unntatt .js-hendelser
+  // Godkjente ansatte kan endre/slette alt UNNTATT .js-hendelser
   return !isStaticJsEvent;
 }
 
@@ -153,7 +164,6 @@ function updateAuthUI(user) {
   if (!loginBtn || !userInfo) return;
 
   if (user) {
-    // Viser kun første del av e-posten (f.eks. "tor.skarprud")
     const displayName = user.email ? user.email.split('@')[0] : 'Bruker';
     userInfo.textContent = `👤 ${displayName}`;
     loginBtn.textContent = '🚪 Logg ut';
@@ -1619,23 +1629,25 @@ document.getElementById('formCancelBtn')?.addEventListener('click', closeModal);
 document.getElementById('viewCancelBtn')?.addEventListener('click', closeModal);
 
 function updateModalAdminButtons() {
-  const isAdmin = isCurrentUserAdmin();
   const editBtn = document.getElementById('viewEditBtn');
   const deleteBtn = document.getElementById('viewDeleteBtn');
 
-  if (activeEvent && activeEvent.isSchoolRoute) {
+  if (!activeEvent || activeEvent.isSchoolRoute) {
     if (editBtn) editBtn.style.display = 'none';
     if (deleteBtn) deleteBtn.style.display = 'none';
     return;
   }
 
-  if (editBtn) editBtn.style.display = isAdmin ? 'inline-block' : 'none';
-  if (deleteBtn) deleteBtn.style.display = isAdmin ? 'inline-block' : 'none';
+  // Sjekker om innlogget bruker har lov til å endre/slette DENNE spesifikke hendelsen
+  const canModify = canUserModifyEvent(activeEvent);
+
+  if (editBtn) editBtn.style.display = canModify ? 'inline-block' : 'none';
+  if (deleteBtn) deleteBtn.style.display = canModify ? 'inline-block' : 'none';
 }
 
 document.getElementById('viewEditBtn')?.addEventListener('click', () => {
-  if (!isCurrentUserAdmin()) {
-    alert("Du må være administrator for å redigere denne hendelsen.");
+  if (!canUserModifyEvent(activeEvent)) {
+    alert("Du har ikke tilgang til å redigere denne hendelsen.");
     return;
   }
 
@@ -1667,8 +1679,8 @@ document.getElementById('viewEditBtn')?.addEventListener('click', () => {
 });
 
 document.getElementById('viewDeleteBtn')?.addEventListener('click', async () => {
-  if (!isCurrentUserAdmin()) {
-    alert("Du må være administrator for å slette hendelser.");
+  if (!canUserModifyEvent(activeEvent)) {
+    alert("Du har ikke tilgang til å slette denne hendelsen.");
     return;
   }
 
@@ -1764,16 +1776,23 @@ document.getElementById('deleteAllSeriesBtn')?.addEventListener('click', async (
   }
 });
 
+
 // --- LAGRE/OPPDATERE SKJEMA ---
 document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  if (!isCurrentUserAdmin()) {
-    alert("Du har ikke tilgang til å lagre endringer.");
+  const eventId = document.getElementById('eventId').value;
+
+  // 🔑 SJEKK TILGANG:
+  // Hvis eventId finnes -> vi redigerer (sjekk modify-rettighet)
+  // Hvis eventId er tom -> vi oppretter ny (sjekk create-rettighet)
+  const hasPermission = eventId ? canUserModifyEvent(activeEvent) : canUserCreateEvent();
+
+  if (!hasPermission) {
+    alert("Du har ikke tilgang til å lagre denne hendelsen.");
     return;
   }
 
-  const eventId = document.getElementById('eventId').value;
   const isRecurring = document.getElementById('isRecurringMode').value === "true";
   const repeatPattern = document.getElementById('repeatPattern').value;
   

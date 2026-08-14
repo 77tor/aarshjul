@@ -1,5 +1,51 @@
 // ansatte.js
 
+// Legg til dette i ansatte.js:
+
+export const ALLOWED_USER_EMAILS = [
+  '93siril@ikrs.no',
+  '97malin10@ikrs.no',
+  'tor.skarprud@gmail.com',
+  '98daniel19@ikrs.no',
+  '96elise1@ikrs.no',
+  '94christine1@ikrs.no',
+  '97truls@ikrs.no',
+  '71geir2@ikrs.no',
+  '67ase2@ikrs.no',
+  '93markus1@ikrs.no',
+  '60eddy@ikrs.no',
+  '92ingrid@ikrs.no',
+  '95anders5@ikrs.no',
+  '89tonje@ikrs.no',
+  '99hanne6@ikrs.no',
+  '71ingrid@ikrs.no',
+  '92filip1@ikrs.no',
+  '84lars2@ikrs.no',
+  '70gro@ikrs.no',
+  '93guro@ikrs.no',
+  '82silje2@ikrs.no',
+  '88rune@ikrs.no',
+  '75monica@ikrs.no',
+  '85thomas@ikrs.no',
+  '96smeland@ikrs.no',
+  '94espen@ikrs.no',
+  '92rebecca@ikrs.no',
+  '86kari@ikrs.no',
+  'marmyk@ikrs.no',
+  '64irene@ikrs.no',
+  '94mari@ikrs.no',
+  '82heidi@ikrs.no',
+  '64hans@ikrs.no',
+  '74anne5@ikrs.no',
+  '92camilla@ikrs.no',
+  '98marte3@ikrs.no',
+  'havkle@ikrs.no',
+  '72arild@ikrs.no',
+  '68malika@ikrs.no',
+  '76ole@ikrs.no'
+];
+
+
 const ansatteData = [
   { etternavn: "Abelsen", fornavn: "Anne", fodselsdato: "12.05.1974", epost: "anne.abelsen@kristiansand.kommune.no" },
   { etternavn: "Abrahamsen", fornavn: "Truls", fodselsdato: "29.11.1997", epost: "truls.abrahamsen@kristiansand.kommune.no" },
