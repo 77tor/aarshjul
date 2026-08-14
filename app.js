@@ -321,6 +321,20 @@ function openCategoryModal(categoryName) {
   if (title) title.textContent = `Kategorioversikt: ${catName}`;
   if (listContainer) listContainer.innerHTML = '';
 
+  // 🔑 NYTT: Vis matriseknappen KUN hvis kategorien er et trinn (1. - 7. trinn)
+  const isTrinn = /^([1-7]\.\s*trinn)$/i.test(catName.trim());
+  const gridBtn = document.getElementById('btnCategoryModalGrid');
+
+  if (gridBtn) {
+    if (isTrinn) {
+      gridBtn.style.display = 'inline-block';
+      gridBtn.textContent = `📊 Matrise for ${catName}`;
+      gridBtn.onclick = () => openCategoryGridModal(catName);
+    } else {
+      gridBtn.style.display = 'none';
+    }
+  }
+
   // Hent alle statiske og brukerdefinerte hendelser trygt
   const moterEvents = typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : [];
   const uiaEvents = typeof getUiAAktiviteterSomEvents === 'function' ? getUiAAktiviteterSomEvents() : [];
@@ -426,14 +440,32 @@ function openCategoryModal(categoryName) {
 
 
 // Åpne Rutenett / Matrise-modalen med alle kategorier bortover
-function openCategoryGridModal() {
+// Liste over fag/kategorier som skal vises som kolonner etter det valgte trinnet
+const TRINN_SUB_CATEGORIES = [
+  "DKS", 
+  "Svømming", 
+  "Fellesaktiviteter", 
+  "SFO", 
+  "Kartlegging", 
+  "Møter", 
+  "UiA", 
+  "Sosialt"
+];
+
+// Åpne Rutenett / Matrise-modalen KUN for det valgte trinnet
+function openCategoryGridModal(targetTrinn) {
   const gridModal = document.getElementById('gridOverviewModal');
   const gridContainer = document.getElementById('categoryGridContainer');
+  const gridTitle = document.getElementById('gridOverviewTitle');
   if (!gridModal || !gridContainer) return;
 
   gridContainer.innerHTML = '';
+  if (gridTitle) gridTitle.textContent = `Matriseoversikt: ${targetTrinn}`;
 
-  // Hent alle hendelser
+  // 1. Definer kolonnene: Først trinnet selv, deretter fag/kategoriene
+  const columnsToDisplay = [targetTrinn, ...TRINN_SUB_CATEGORIES];
+
+  // 2. Hent alle hendelser
   const moterEvents = typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : [];
   const uiaEvents = typeof getUiAAktiviteterSomEvents === 'function' ? getUiAAktiviteterSomEvents() : [];
   const fellesEvents = typeof getFellesaktiviteterSomEvents === 'function' ? getFellesaktiviteterSomEvents('2026-2027') : [];
@@ -454,35 +486,53 @@ function openCategoryGridModal() {
     ...rawEvents
   ];
 
-  // Bygg en kolonne per kategori i categoryColors
-  Object.entries(categoryColors).forEach(([catName, color]) => {
+  // 3. Filtrer ut KUN hendelser som gjelder dette trinnet
+  const trinnLower = targetTrinn.trim().toLowerCase();
+  const trinnEvents = allRawEvents.filter(evt => {
+    if (deletedStaticEventIds && deletedStaticEventIds.has(evt.id)) return false;
+
+    const grp = (evt.extendedProps?.group || evt.group || '').trim().toLowerCase();
+    const trinnArray = evt.extendedProps?.trinn || evt.trinn || [];
+
+    const isDirectTrinn = grp === trinnLower;
+    const isIncludedInTrinnArray = Array.isArray(trinnArray) && trinnArray.some(t => t.trim().toLowerCase() === trinnLower);
+
+    return isDirectTrinn || isIncludedInTrinnArray;
+  });
+
+  // 4. Bygg kolonner bortover
+  columnsToDisplay.forEach(colName => {
+    const colColor = (typeof categoryColors !== 'undefined' && categoryColors[colName]) ? categoryColors[colName] : '#2563eb';
+
     const col = document.createElement('div');
     col.className = 'category-grid-column';
 
-    // Kolonne-overskrift med farge
+    // Kolonne-overskrift
     const header = document.createElement('div');
     header.className = 'category-grid-header';
-    header.style.backgroundColor = color;
-    header.textContent = catName;
+    header.style.backgroundColor = colColor;
+    header.textContent = colName;
     col.appendChild(header);
 
     const content = document.createElement('div');
     content.className = 'category-grid-content';
 
-    // Filtrer hendelser som hører til denne kategorien
-    const matchedEvents = allRawEvents.filter(evt => {
-      if (deletedStaticEventIds && deletedStaticEventIds.has(evt.id)) return false;
-
+    // Filtrer hendelsene som passer i DENNE kolonnen
+    const colNameLower = colName.trim().toLowerCase();
+    
+    const matchedEvents = trinnEvents.filter(evt => {
       const grp = (evt.extendedProps?.group || evt.group || '').trim().toLowerCase();
-      const trinnArray = evt.extendedProps?.trinn || evt.trinn || [];
-      const target = catName.trim().toLowerCase();
 
-      const matchesGroup = grp === target;
-      const matchesTrinn = Array.isArray(trinnArray) && trinnArray.some(t => t.trim().toLowerCase() === target);
-
-      return matchesGroup || matchesTrinn;
+      // Første kolonne (f.eks. "1. trinn"): vis direkte trinnhandlinger
+      if (colNameLower === trinnLower) {
+        return grp === trinnLower;
+      }
+      
+      // Fag-kolonnene (f.eks. "DKS", "Svømming"): sjekk at hovedkategorien matcher fagnavnet
+      return grp === colNameLower;
     });
 
+    // Sorter kronologisk
     matchedEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
 
     if (matchedEvents.length === 0) {
@@ -491,9 +541,10 @@ function openCategoryGridModal() {
       matchedEvents.forEach(evt => {
         const card = document.createElement('div');
         card.className = 'grid-event-card';
-        card.style.borderLeftColor = color;
+        card.style.borderLeftColor = colColor;
 
         const titleText = evt.title || evt.extendedProps?.rawTitle || 'Uten tittel';
+        const descText = evt.extendedProps?.description || '';
         const startDateStr = evt.extendedProps?.startDate || (evt.start ? evt.start.split('T')[0] : '');
         
         let dateFormatted = '';
@@ -507,6 +558,7 @@ function openCategoryGridModal() {
         card.innerHTML = `
           <div class="grid-event-title">${titleText}</div>
           <div class="grid-event-time">📅 ${dateFormatted} ${startTime ? '⏰ kl. ' + startTime : ''}</div>
+          ${descText ? `<div class="grid-event-desc">${descText}</div>` : ''}
         `;
         content.appendChild(card);
       });
@@ -524,18 +576,11 @@ function closeCategoryGridModal() {
   if (gridModal) gridModal.style.display = 'none';
 }
 
-// Koble til lyttere ved oppstart
+// Koble til hendelseslyttere ved oppstart
 document.addEventListener('DOMContentLoaded', () => {
-  const btnGrid = document.getElementById('btnCategoryModalGrid');
   const closeX = document.getElementById('gridOverviewCloseX');
   const closeBtn = document.getElementById('btnGridOverviewClose');
   const printBtn = document.getElementById('btnGridOverviewPrint');
-
-  if (btnGrid) {
-    btnGrid.addEventListener('click', () => {
-      openCategoryGridModal();
-    });
-  }
 
   if (closeX) closeX.addEventListener('click', closeCategoryGridModal);
   if (closeBtn) closeBtn.addEventListener('click', closeCategoryGridModal);
