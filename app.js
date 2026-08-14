@@ -307,6 +307,7 @@ function renderCategoryFilters() {
 
 
 // Åpne kategorimodal og vis ALLE avtaler for valgt kategori (med klokkeslett og fra/til-dato)
+// Åpne kategorimodal og vis ALLE avtaler for valgt kategori/trinn
 function openCategoryModal(categoryName) {
   const modal = document.getElementById('categoryModal');
   const title = document.getElementById('categoryModalTitle');
@@ -315,51 +316,52 @@ function openCategoryModal(categoryName) {
   if (!modal) return;
 
   const catName = typeof categoryName === 'object' ? categoryName.name : categoryName;
-  const catColor = typeof categoryName === 'object' ? categoryName.color : (typeof getCategoryColor === 'function' ? getCategoryColor(catName) : '#2563eb');
+  const catColor = typeof categoryName === 'object' ? categoryName.color : (typeof categoryColors !== 'undefined' ? categoryColors[catName] : '#2563eb');
 
-  if (title) title.textContent = `Kategori: ${catName}`;
+  if (title) title.textContent = `Kategorioversikt: ${catName}`;
   if (listContainer) listContainer.innerHTML = '';
 
-  // Hent Møter og UiA trygt fra .js-filene
-  const moterEventsFromJs = typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : [];
-  const uiaEventsFromJs = typeof getUiAAktiviteterSomEvents === 'function' ? getUiAAktiviteterSomEvents() : [];
+  // Hent alle statiske og brukerdefinerte hendelser trygt
+  const moterEvents = typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : [];
+  const uiaEvents = typeof getUiAAktiviteterSomEvents === 'function' ? getUiAAktiviteterSomEvents() : [];
+  const fellesEvents = typeof getFellesaktiviteterSomEvents === 'function' ? getFellesaktiviteterSomEvents('2026-2027') : [];
+  const dksEvents = typeof getDKSAktiviteterSomEvents === 'function' ? getDKSAktiviteterSomEvents() : [];
+  const svommeEvents = typeof getSvommeAktiviteterSomEvents === 'function' ? getSvommeAktiviteterSomEvents('2026-2027') : [];
+  const bursdagEvents = typeof getBirthdayEvents === 'function' ? getBirthdayEvents(2026) : [];
+  const kartleggingEvents = typeof getKartleggingerSomEvents === 'function' ? getKartleggingerSomEvents() : [];
 
-  // Samle ALLE hendelser på tvers av JS-filer og brukeravtaler
   const allRawEvents = [
-    ...(typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []),
-    ...(typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []),
-    ...(typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []),
-    ...(typeof ansatteEventsFromJs !== 'undefined' ? ansatteEventsFromJs : []),
-    ...(typeof kartleggingEventsFromJs !== 'undefined' ? kartleggingEventsFromJs : []),
-    ...moterEventsFromJs,
-    ...uiaEventsFromJs, // <-- UiA ER NÅ MED!
+    ...fellesEvents,
+    ...dksEvents,
+    ...svommeEvents,
+    ...bursdagEvents,
+    ...kartleggingEvents,
+    ...moterEvents,
+    ...uiaEvents,
     ...(typeof schoolEventsFromJs !== 'undefined' ? schoolEventsFromJs : []),
     ...rawEvents
   ];
 
-  // Filtrer ved å gjenbruke isEventInSelectedCategories
+  // Presis filtrering for det valgte trinnet eller kategorien
   const matchedEvents = allRawEvents.filter(evt => {
-    if (typeof isEventInSelectedCategories === 'function') {
-      const originalSelected = [...selectedCategories];
-      selectedCategories = [catName];
-      const isMatch = isEventInSelectedCategories(evt);
-      selectedCategories = originalSelected; // Tilbakestill
-      if (isMatch) return true;
-    }
+    // 1. Sjekk om det er slettet av admin
+    if (deletedStaticEventIds && deletedStaticEventIds.has(evt.id)) return false;
 
-    const rawGrp = (evt.extendedProps?.group || evt.group || evt.extendedProps?.category || '').trim();
-    const mappedGrp = typeof categoryAliases !== 'undefined' && categoryAliases[rawGrp.toLowerCase()] 
-      ? categoryAliases[rawGrp.toLowerCase()] 
-      : rawGrp;
-
+    // 2. Hent ut gruppe/kategori og trinn-array
+    const grp = (evt.extendedProps?.group || evt.group || '').trim().toLowerCase();
     const trinnArray = evt.extendedProps?.trinn || evt.trinn || [];
-    const matchesGroup = mappedGrp.toLowerCase() === catName.toLowerCase();
-    const matchesTrinn = Array.isArray(trinnArray) && trinnArray.some(t => t.toLowerCase() === catName.toLowerCase());
+    const target = catName.trim().toLowerCase();
+
+    // Sjekk om kategorien matcher (f.eks. "DKS", "Møter", osv.)
+    const matchesGroup = grp === target;
+
+    // Sjekk om trinnet matcher (f.eks. at "1. trinn" finnes i ["1. trinn", "2. trinn"])
+    const matchesTrinn = Array.isArray(trinnArray) && trinnArray.some(t => t.trim().toLowerCase() === target);
 
     return matchesGroup || matchesTrinn;
   });
 
-  // Sorter hendelsene kronologisk
+  // Sorter hendelsene kronologisk på startdato
   matchedEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
 
   if (matchedEvents.length === 0) {
@@ -368,18 +370,12 @@ function openCategoryModal(categoryName) {
     matchedEvents.forEach(evt => {
       const card = document.createElement('div');
       card.className = 'category-event-card';
-      card.style.borderLeft = `4px solid ${catColor}`;
-      card.style.padding = '10px 14px';
-      card.style.marginBottom = '8px';
-      card.style.background = '#f8fafc';
-      card.style.borderRadius = '6px';
-      card.style.border = '1px solid #e2e8f0';
-      card.style.borderLeftWidth = '4px';
+      card.style.cssText = `border-left: 4px solid ${catColor}; padding: 10px 14px; margin-bottom: 8px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; border-left-width: 4px;`;
 
       const titleText = evt.title || evt.extendedProps?.rawTitle || 'Uten tittel';
       const descText = evt.extendedProps?.description || '';
 
-      // --- DATO- FORMATERING ---
+      // --- DATO-FORMATERING ---
       const startDateStr = evt.extendedProps?.startDate || (evt.start ? evt.start.split('T')[0] : '');
       const endDateStr = evt.extendedProps?.endDate || (evt.end ? evt.end.split('T')[0] : '');
 
@@ -397,7 +393,7 @@ function openCategoryModal(categoryName) {
         }
       }
 
-      // --- KLOKKESLETT- FORMATERING ---
+      // --- KLOKKESLETT-FORMATERING ---
       const startTime = evt.extendedProps?.startTime || (evt.start && evt.start.includes('T') ? evt.start.split('T')[1].substring(0, 5) : '');
       const endTime = evt.extendedProps?.endTime || (evt.end && evt.end.includes('T') ? evt.end.split('T')[1].substring(0, 5) : '');
 
@@ -406,7 +402,6 @@ function openCategoryModal(categoryName) {
         timeFormatted = endTime ? `kl. ${startTime} - ${endTime}` : `kl. ${startTime}`;
       }
 
-      // Kombiner dato og tid
       let datetimeLabel = '';
       if (dateFormatted && timeFormatted) {
         datetimeLabel = `📅 ${dateFormatted} &nbsp;•&nbsp; ⏰ ${timeFormatted}`;
@@ -421,7 +416,7 @@ function openCategoryModal(categoryName) {
         ${datetimeLabel ? `<div class="event-time" style="font-size: 0.82rem; color: #64748b; margin-top: 3px; display: flex; align-items: center; gap: 4px;">${datetimeLabel}</div>` : ''}
         ${descText ? `<div class="event-desc" style="font-size: 0.88rem; color: #334155; margin-top: 6px; white-space: pre-line;">${descText}</div>` : ''}
       `;
-      
+
       listContainer.appendChild(card);
     });
   }
