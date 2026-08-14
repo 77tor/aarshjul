@@ -1590,6 +1590,10 @@ document.getElementById('viewEditBtn')?.addEventListener('click', () => {
     document.getElementById('title').value = activeEvent.title || activeEvent.rawTitle || '';
     document.getElementById('group').value = activeEvent.extendedProps?.group || activeEvent.group || '1. trinn';
     
+    // Sikrer at redigering ALDRI utløser repeteringsmodus ved uhell
+    const recInput = document.getElementById('isRecurringMode');
+    if (recInput) recInput.value = "false";
+    
     // Håndter dato/tid trygt
     const startIso = activeEvent.startDate || (activeEvent.start ? new Date(activeEvent.start).toISOString().split('T')[0] : '');
     const endIso = activeEvent.endDate || (activeEvent.end ? new Date(activeEvent.end).toISOString().split('T')[0] : startIso);
@@ -1723,19 +1727,25 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
     return;
   }
 
-  const eventId = document.getElementById('eventId').value;
-  const isRecurring = document.getElementById('isRecurringMode').value === "true";
-  const repeatPattern = document.getElementById('repeatPattern').value;
+  const eventId = document.getElementById('eventId')?.value;
   
-  const title = document.getElementById('title').value;
-  const group = document.getElementById('group').value;
-  const startDateStr = document.getElementById('startDate').value;
-  const startTime = document.getElementById('startTime').value;
-  const endDateStr = document.getElementById('endDate').value;
-  const endTime = document.getElementById('endTime').value;
-  const description = document.getElementById('description').value;
+  // 🔑 RIGID SJEKK FOR GJENTAKELSE: Sjekker både hidden input OG eventuell sjekkboks.
+  // isRecurring kan KUN bli sann om det er en NY hendelse (!eventId)
+  const isRecurringInput = document.getElementById('isRecurringMode')?.value;
+  const repeatCheckbox = document.getElementById('isRecurringCheckbox');
+  const isRecurring = !eventId && (isRecurringInput === "true" || repeatCheckbox?.checked === true);
 
-  // 🔑 HENTER ALLESVALGTE TRINN FRA SJEKKBOKSENE
+  const repeatPattern = document.getElementById('repeatPattern')?.value || 'weekly';
+  
+  const title = document.getElementById('title')?.value;
+  const group = document.getElementById('group')?.value;
+  const startDateStr = document.getElementById('startDate')?.value;
+  const startTime = document.getElementById('startTime')?.value;
+  const endDateStr = document.getElementById('endDate')?.value;
+  const endTime = document.getElementById('endTime')?.value;
+  const description = document.getElementById('description')?.value;
+
+  // 🔑 HENTER ALLE VALGTE TRINN FRA SJEKKBOKSENE
   const selectedTrinn = Array.from(document.querySelectorAll('input[name="trinnOption"]:checked'))
     .map(cb => cb.value);
 
@@ -1746,7 +1756,7 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
 
   try {
     if (eventId) {
-      // 🔑 Redigering av eksisterende hendelse
+      // 🔑 1. Redigering av eksisterende hendelse (Kun én oppdateres)
       const singleData = {
         title, 
         group, 
@@ -1759,29 +1769,30 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
         updatedAt: new Date().toISOString()
       };
       await updateDoc(doc(db, "school_events", eventId), singleData);
-    } else if (isRecurring) {
-      // 🔑 Opprettelse av ny serie
-      const eventsToCreate = [];
-      let currentStart = new Date(startDateStr + "T00:00:00");
-      let currentEnd = new Date((endDateStr || startDateStr) + "T00:00:00");
 
-      const daySpan = Math.round((currentEnd - currentStart) / (1000 * 60 * 60 * 24));
+    } else if (isRecurring) {
+      // 🔑 2. Opprettelse av ny serie (KUN om "gjenta" eksplisitt er valgt)
+      const eventsToCreate = [];
+      const baseStart = new Date(startDateStr + "T00:00:00");
+      const baseEnd = new Date((endDateStr || startDateStr) + "T00:00:00");
+
+      const daySpan = Math.round((baseEnd - baseStart) / (1000 * 60 * 60 * 24));
       const iterations = (repeatPattern === 'monthly') ? 10 : (repeatPattern === 'biweekly' ? 20 : 40);
       const seriesId = 'series_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
 
       for (let i = 0; i < iterations; i++) {
-        const nextStart = new Date(currentStart);
-        const nextEnd = new Date(currentEnd);
+        let nextStart = new Date(baseStart);
+        let nextEnd = new Date(baseEnd);
 
         if (repeatPattern === 'weekly') {
-          nextStart.setDate(currentStart.getDate() + (i * 7));
-          nextEnd.setDate(currentStart.getDate() + (i * 7) + daySpan);
+          nextStart.setDate(baseStart.getDate() + (i * 7));
+          nextEnd.setDate(baseStart.getDate() + (i * 7) + daySpan);
         } else if (repeatPattern === 'biweekly') {
-          nextStart.setDate(currentStart.getDate() + (i * 14));
-          nextEnd.setDate(currentStart.getDate() + (i * 14) + daySpan);
+          nextStart.setDate(baseStart.getDate() + (i * 14));
+          nextEnd.setDate(baseStart.getDate() + (i * 14) + daySpan);
         } else if (repeatPattern === 'monthly') {
-          const targetMonth = currentStart.getMonth() + i;
-          nextStart.setFullYear(currentStart.getFullYear(), targetMonth, currentStart.getDate());
+          const targetMonth = baseStart.getMonth() + i;
+          nextStart.setFullYear(baseStart.getFullYear(), targetMonth, baseStart.getDate());
           nextEnd.setTime(nextStart.getTime() + (daySpan * 24 * 60 * 60 * 1000));
         }
 
@@ -1803,7 +1814,7 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
       await Promise.all(eventsToCreate.map(evt => addDoc(eventsRef, evt)));
 
     } else {
-      // 🔑 Opprettelse av ny enkelthendelse
+      // 🔑 3. Opprettelse av ny enkelthendelse (KUN 1 DATO)
       const singleData = {
         title, 
         group, 
