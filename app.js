@@ -1347,6 +1347,7 @@ viewDescription.innerHTML = content;
 });
 
 
+
 // Firestore Realtime Lytter
 onSnapshot(eventsRef, (snapshot) => {
   rawEvents = snapshot.docs.map(doc => {
@@ -1365,13 +1366,27 @@ onSnapshot(eventsRef, (snapshot) => {
     // Bruker den nye getCategoryColor-funksjonen for å fange opp aliases (f.eks. "Felles" -> "Fellesaktiviteter")
     const eventColor = getCategoryColor(eventGroup);
 
+    // Sørg for at trinn alltid er en matrise
+    const trinnArray = Array.isArray(data.trinn) ? data.trinn : [];
+
     return {
       id: doc.id,
+      // 🔑 Legger til rot-egenskaper direkte på objektet slik at modalen finner dem lett uansett
       title: `${iconPrefix}${eventGroup ? '[' + eventGroup + '] ' : ''}${data.title}`,
+      rawTitle: data.title,
+      group: eventGroup,
+      startDate: data.startDate,
+      startTime: data.startTime || '',
+      endDate: data.endDate || data.startDate,
+      endTime: data.endTime || '',
+      description: data.description || '',
+      trinn: trinnArray, // 👈 Direkte på objektet
+      
       start: startIso,
       end: endIso,
       backgroundColor: eventColor,
       borderColor: eventColor,
+      
       extendedProps: { 
         group: eventGroup,
         rawTitle: data.title,
@@ -1382,7 +1397,8 @@ onSnapshot(eventsRef, (snapshot) => {
         description: data.description || '',
         repeatPattern: data.repeatPattern || null,
         recurringSeriesId: data.recurringSeriesId || null,
-        trinn: Array.isArray(data.trinn) ? data.trinn : []
+        trinn: trinnArray,      // 👈 I extendedProps for FullCalendar
+        trinnArray: trinnArray // 👈 Ekstra sikkerhetskopifelt
       }
     };
   });
@@ -1429,7 +1445,6 @@ function getCategoryColor(groupName) {
   return categoryColors[matchedKey] || categoryColors[groupName] || '#3788d8';
 }
 
-
 // Sjekker om en hendelse tilhører de valgte kategoriene
 function isEventInSelectedCategories(event) {
   if (!selectedCategories || selectedCategories.length === 0) return false;
@@ -1439,9 +1454,14 @@ function isEventInSelectedCategories(event) {
   // Sørger for at "kartlegging" og "kartlegginger" blir behandlet likt i categoryAliases
   const mappedGroup = (categoryAliases[rawGroup.toLowerCase()] || rawGroup).toLowerCase();
   
-  const trinnArray = event.extendedProps?.trinn || event.trinn || [];
+  // 🔑 HENTER UT TRINN TRYGT FRA ALLE MULIGE STEDER (trinn, trinnArray eller direkte)
+  const trinnArray = event.extendedProps?.trinn 
+                  || event.extendedProps?.trinnArray 
+                  || event.trinn 
+                  || [];
+
   const title = (event.title || event.extendedProps?.rawTitle || '').toLowerCase();
-  const description = (event.extendedProps?.description || '').toLowerCase();
+  const description = (event.extendedProps?.description || event.description || '').toLowerCase();
   const altInnhold = `${rawGroup} ${title} ${description}`.toLowerCase();
 
   for (const cat of selectedCategories) {
@@ -1459,13 +1479,13 @@ function isEventInSelectedCategories(event) {
       return true;
     }
 
-    // 2. Sjekk om hendelsen matcher et spesifikt TRINN (f.eks. "3. trinn")
-    if (isTrinnCategory) {
-      // A) Eksplisitt trinn satt i datastrukturen
-      if (Array.isArray(trinnArray) && trinnArray.some(t => t.toLowerCase() === catLower)) {
-        return true;
-      }
+    // 2. SJEKK DIREKTE PA VALGTE TRINN I SKJEMAET (Uavhengig av om cat slutter på '. trinn')
+    if (Array.isArray(trinnArray) && trinnArray.some(t => t.toLowerCase().trim() === catLower)) {
+      return true;
+    }
 
+    // 3. Sjekk om hendelsen matcher et spesifikt TRINN (f.eks. "3. trinn")
+    if (isTrinnCategory) {
       // B) Felles for absolutt alle trinn
       if (altInnhold.includes("alle trinn") || altInnhold.includes("1.-7. trinn") || altInnhold.includes("1-7. trinn") || mappedGroup === "fellesaktiviteter") {
         return true;
@@ -1503,11 +1523,11 @@ function isEventInSelectedCategories(event) {
       }
     }
 
-    // 3. Samlekategorier
-    if (cat === "Alle på Heståsen" && (altInnhold.includes("heståsen") || trinnArray.some(t => ["1. trinn", "2. trinn", "3. trinn"].includes(t)))) {
+    // 4. Samlekategorier
+    if (cat === "Alle på Heståsen" && (altInnhold.includes("heståsen") || (Array.isArray(trinnArray) && trinnArray.some(t => ["1. trinn", "2. trinn", "3. trinn"].includes(t))))) {
       return true;
     }
-    if (cat === "Alle på Brattbakken" && (altInnhold.includes("brattbakken") || trinnArray.some(t => ["4. trinn", "5. trinn", "6. trinn", "7. trinn"].includes(t)))) {
+    if (cat === "Alle på Brattbakken" && (altInnhold.includes("brattbakken") || (Array.isArray(trinnArray) && trinnArray.some(t => ["4. trinn", "5. trinn", "6. trinn", "7. trinn"].includes(t))))) {
       return true;
     }
   }
@@ -1616,18 +1636,35 @@ document.getElementById('viewEditBtn')?.addEventListener('click', () => {
 
   if (activeEvent && !activeEvent.isSchoolRoute) {
     document.getElementById('eventId').value = activeEvent.id;
-    document.getElementById('title').value = activeEvent.title;
-    document.getElementById('group').value = activeEvent.group;
-    document.getElementById('startDate').value = activeEvent.startDate;
-    document.getElementById('startTime').value = activeEvent.startTime;
-    document.getElementById('endDate').value = activeEvent.endDate;
-    document.getElementById('endTime').value = activeEvent.endTime;
-    document.getElementById('description').value = activeEvent.description;
+    document.getElementById('title').value = activeEvent.title || '';
+    document.getElementById('group').value = activeEvent.extendedProps?.group || activeEvent.group || '1. trinn';
+    
+    // Håndter dato/tid (både FullCalendar-objekter og strenger)
+    const startObj = activeEvent.start ? new Date(activeEvent.start) : null;
+    const endObj = activeEvent.end ? new Date(activeEvent.end) : null;
 
-    // 🔑 MOTTAR OG KRYSSER AV EKSISTERENDE TRINN VED REDIGERING
-    const currentTrinn = activeEvent.extendedProps?.trinn || activeEvent.trinn || [];
+    if (startObj) {
+      document.getElementById('startDate').value = startObj.toISOString().split('T')[0];
+      document.getElementById('startTime').value = activeEvent.allDay ? '' : startObj.toTimeString().substring(0, 5);
+    } else {
+      document.getElementById('startDate').value = activeEvent.startDate || '';
+      document.getElementById('startTime').value = activeEvent.startTime || '';
+    }
+
+    if (endObj) {
+      document.getElementById('endDate').value = endObj.toISOString().split('T')[0];
+      document.getElementById('endTime').value = activeEvent.allDay ? '' : endObj.toTimeString().substring(0, 5);
+    } else {
+      document.getElementById('endDate').value = activeEvent.endDate || activeEvent.startDate || '';
+      document.getElementById('endTime').value = activeEvent.endTime || '';
+    }
+
+    document.getElementById('description').value = activeEvent.extendedProps?.description || activeEvent.description || '';
+
+    // 🔑 MOTTAR OG KRYSSER AV FOR TRINN (sjekker alle mulige plasseringer)
+    const trinnValues = activeEvent.extendedProps?.trinn || activeEvent.extendedProps?.trinnArray || activeEvent.trinn || [];
     document.querySelectorAll('input[name="trinnOption"]').forEach(cb => {
-      cb.checked = Array.isArray(currentTrinn) && currentTrinn.includes(cb.value);
+      cb.checked = Array.isArray(trinnValues) && trinnValues.includes(cb.value);
     });
 
     showFormMode("Rediger avtale", false);
