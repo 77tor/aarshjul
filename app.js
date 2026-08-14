@@ -12,6 +12,7 @@ import {
   addDoc, 
   updateDoc,
   deleteDoc,
+  setDoc, // <-- Legg til denne her!
   doc,
   getDocs,
   query,
@@ -1686,14 +1687,14 @@ document.getElementById('viewDeleteBtn')?.addEventListener('click', async () => 
 
   if (!activeEvent || activeEvent.isSchoolRoute) return;
 
-  // Håndtering dersom det er en statisk .js-hendelse
+// Håndtering dersom det er en statisk .js-hendelse
   if (activeEvent.extendedProps?.isStatic || activeEvent.isStatic) {
     if (confirm(`Vil du slette den faste hendelsen "${activeEvent.title}" for alle?`)) {
       const targetId = activeEvent.id;
       closeModal();
       try {
         await setDoc(doc(db, "deleted_static_events", targetId), {
-          deletedBy: firebase.auth().currentUser?.email || 'admin',
+          deletedBy: auth.currentUser?.email || 'admin', // <-- Endret her!
           deletedAt: new Date().toISOString()
         });
       } catch (err) {
@@ -2009,7 +2010,8 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
     return isEventInSelectedCategories(evt);
   };
 
-  const getFelles = typeof getFellesAktiviteterSomEvents === 'function' ? getFellesAktiviteterSomEvents() : (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []);
+
+  const getFelles = typeof getFellesaktiviteterSomEvents === 'function' ? getFellesaktiviteterSomEvents() : (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []);
   const getDks = typeof getDksAktiviteterSomEvents === 'function' ? getDksAktiviteterSomEvents() : (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []);
   const getSvomme = typeof getSvommeAktiviteterSomEvents === 'function' ? getSvommeAktiviteterSomEvents() : (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []);
   const getMoter = typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : (typeof moterEventsFromJs !== 'undefined' ? moterEventsFromJs : []);
