@@ -679,8 +679,11 @@ function showFormMode(title = "Ny avtale", isRecurring = false) {
   document.getElementById('eventForm').style.display = 'block';
   document.getElementById('isRecurringMode').value = isRecurring ? "true" : "false";
 
-  // 🔑 NULLSTILL TRINN-SJEKKBOKSER VED NY AVTALE
-  document.querySelectorAll('input[name="trinnOption"]').forEach(cb => cb.checked = false);
+  // 🔑 NULLSTILL TRINN KUN DERSOM DET ER EN NY AVTALE (eventId er tom)
+  const isEditing = Boolean(document.getElementById('eventId').value);
+  if (!isEditing) {
+    document.querySelectorAll('input[name="trinnOption"]').forEach(cb => cb.checked = false);
+  }
 
   const recurringGroup = document.getElementById('recurringGroup');
   if (recurringGroup) recurringGroup.style.display = isRecurring ? 'block' : 'none';
@@ -1612,7 +1615,10 @@ document.getElementById('viewEditBtn')?.addEventListener('click', () => {
   }
 
   if (activeEvent && !activeEvent.isSchoolRoute) {
+    // 1. Sett eventId FØRST (slik at showFormMode skjønner at dette er redigering)
     document.getElementById('eventId').value = activeEvent.id || '';
+    
+    // 2. Fyll inn de andre feltene
     document.getElementById('title').value = activeEvent.title || '';
     document.getElementById('group').value = activeEvent.group || '';
     document.getElementById('startDate').value = activeEvent.startDate || '';
@@ -1621,17 +1627,16 @@ document.getElementById('viewEditBtn')?.addEventListener('click', () => {
     document.getElementById('endTime').value = activeEvent.endTime || '';
     document.getElementById('description').value = activeEvent.description || '';
 
-    // 🔑 1. Hent trinnene trygt (sjekk activeEvent.trinn FØRST)
+    // 3. Hent trinnene (sjekker både activeEvent.trinn og extendedProps)
     const rawTrinn = activeEvent.trinn || activeEvent.extendedProps?.trinn || [];
-    const currentTrinn = Array.isArray(rawTrinn) ? rawTrinn : [rawTrinn];
+    const trinnArray = Array.isArray(rawTrinn) ? rawTrinn : [rawTrinn];
 
-    // 🔑 2. Huk av sjekkboksene med en robust sammenligning (trim + toLowerCase)
+    // 4. Huk av boksene
     document.querySelectorAll('input[name="trinnOption"]').forEach(cb => {
-      cb.checked = currentTrinn.some(t => 
-        String(t).trim().toLowerCase() === cb.value.trim().toLowerCase()
-      );
+      cb.checked = trinnArray.some(t => String(t).trim().toLowerCase() === cb.value.trim().toLowerCase());
     });
 
+    // 5. Åpne skjemaet (nå vil IKKE showFormMode tømme boksene fordi eventId er satt!)
     showFormMode("Rediger avtale", false);
   }
 });
