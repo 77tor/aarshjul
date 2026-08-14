@@ -1347,7 +1347,9 @@ viewDescription.innerHTML = content;
 });
 
 
-// Firestore Realtime Lytter
+
+
+// --- FIRESTORE REALTIME LYTTER ---
 onSnapshot(eventsRef, (snapshot) => {
   rawEvents = snapshot.docs.map(doc => {
     const data = doc.data();
@@ -1362,7 +1364,7 @@ onSnapshot(eventsRef, (snapshot) => {
     const iconPrefix = isRecurring ? "🔁 " : "";
 
     const eventGroup = data.group || '';
-    // Bruker den nye getCategoryColor-funksjonen for å fange opp aliases (f.eks. "Felles" -> "Fellesaktiviteter")
+    // Bruker getCategoryColor-funksjonen for å fange opp aliases (f.eks. "Felles" -> "Fellesaktiviteter")
     const eventColor = getCategoryColor(eventGroup);
 
     return {
@@ -1389,7 +1391,7 @@ onSnapshot(eventsRef, (snapshot) => {
   updateCalendarEvents();
 });
 
-// Sjekker om en hendelse tilhører de valgte kategoriene
+// --- ALIASES & FARGE-HJELPERE ---
 // Alias-mapping for å koble ulike gruppenavn til menykategoriene
 const categoryAliases = {
   'felles': 'Fellesaktiviteter',
@@ -1403,13 +1405,12 @@ const categoryAliases = {
   'kartlegginger': 'Kartlegging',
   'prøve': 'Kartlegging',
   'test': 'Kartlegging',
-  // --- LEGG TIL DISSE FOR MØTER ---
   'møter': 'Møter',
   'møte': 'Møter',
   'foreldremøte': 'Møter',
   'fellesmøte': 'Møter',
   'samtaler': 'Møter',
-   'uia': 'UiA',
+  'uia': 'UiA',
   'praksis': 'UiA',
   'student': 'UiA',
   'studenter': 'UiA'
@@ -1429,8 +1430,7 @@ function getCategoryColor(groupName) {
   return categoryColors[matchedKey] || categoryColors[groupName] || '#3788d8';
 }
 
-
-// Sjekker om en hendelse tilhører de valgte kategoriene
+// --- KATEGORI- OG TRINN-VALIDERINGS-LOGIKK ---
 function isEventInSelectedCategories(event) {
   if (!selectedCategories || selectedCategories.length === 0) return false;
 
@@ -1448,7 +1448,7 @@ function isEventInSelectedCategories(event) {
     const catLower = cat.toLowerCase().trim();
     const isTrinnCategory = catLower.endsWith('. trinn');
 
-    // 1. Direkte match på Kategori/Gruppe (f.eks. "Fellesaktiviteter", "Svømming" eller "Kartlegginger")
+    // 1. Direkte match på Kategori/Gruppe
     if (mappedGroup === catLower) {
       return true;
     }
@@ -1474,11 +1474,11 @@ function isEventInSelectedCategories(event) {
       const trinnNummer = parseInt(cat.split('.')[0].trim(), 10);
 
       if (!isNaN(trinnNummer)) {
-        // C) Sjekk om teksten inneholder et SPESIFIKT trinn eller klasse (f.eks. "3. trinn", "3a", "7a-b", "3.trinn")
+        // C) Sjekk om teksten inneholder et SPESIFIKT trinn eller klasse
         const spesifiktTrinnRegex = new RegExp(`\\b${trinnNummer}(\\.|a|b|c|d|\\s*-\\s*|\\s*\\.\\s*trinn|\\s*trinn)`, 'i');
         const harSpesifiktTrinnITekst = spesifiktTrinnRegex.test(altInnhold);
 
-        // Sjekk om teksten matcher et tallområde (f.eks "1.-3. trinn" eller "1-3. trinn")
+        // Sjekk om teksten matcher et tallområde (f.eks "1.-3. trinn")
         let matcherOmrade = false;
         const rangeMatch = altInnhold.match(/(\d+)\s*[\.\-]\s*(\d+)\.?\s*trinn/i);
         if (rangeMatch) {
@@ -1490,10 +1490,10 @@ function isEventInSelectedCategories(event) {
         }
 
         if (harSpesifiktTrinnITekst || matcherOmrade) {
-          return true; // Matcher nøyaktig det trinnet eller et definert intervall
+          return true;
         }
 
-        // D) FALLBACK: Bruk Heståsen / Brattbakken KUN dersom INGEN andre spesifikke trinn er nevnt i teksten
+        // D) FALLBACK: Heståsen / Brattbakken
         const harAndreTrinnTekst = /\b[1-7](\.|a|b|c|d|\s*trinn)/i.test(altInnhold);
 
         if (!harAndreTrinnTekst) {
@@ -1515,7 +1515,6 @@ function isEventInSelectedCategories(event) {
   return false;
 }
 
-
 // --- KALENDER OPPDATERING ---
 function updateCalendarEvents() {
   const isAdmin = isCurrentUserAdmin();
@@ -1527,7 +1526,7 @@ function updateCalendarEvents() {
     filteredBursdagEvents = rawBursdager.filter(event => isEventInSelectedCategories(event));
   }
 
-  // --- HENT HENDELSER TRYGT (Støtter eksakte funksjonsnavn fra de nye filene) ---
+  // Hent hendelser trygt fra globale funksjoner/variabler
   const getFellesFn = window.getFellesaktiviteterSomEvents || (typeof getFellesaktiviteterSomEvents === 'function' ? getFellesaktiviteterSomEvents : null);
   const getDksFn = window.getDKSAktiviteterSomEvents || window.getDksAktiviteterSomEvents || (typeof getDKSAktiviteterSomEvents === 'function' ? getDKSAktiviteterSomEvents : (typeof getDksAktiviteterSomEvents === 'function' ? getDksAktiviteterSomEvents : null));
   const getSvommeFn = window.getSvommeAktiviteterSomEvents || (typeof getSvommeAktiviteterSomEvents === 'function' ? getSvommeAktiviteterSomEvents : null);
@@ -1586,12 +1585,11 @@ function updateCalendarEvents() {
   }
 }
 
-// --- MODAL & HENDELSES-LYTTERE ---
+// --- MODAL & HANDLERE ---
 document.getElementById('modalCloseX')?.addEventListener('click', closeModal);
 document.getElementById('formCancelBtn')?.addEventListener('click', closeModal);
 document.getElementById('viewCancelBtn')?.addEventListener('click', closeModal);
 
-// Sjekker om slette/rediger-knapper skal vises når en modal åpnes
 function updateModalAdminButtons() {
   const isAdmin = isCurrentUserAdmin();
   const editBtn = document.getElementById('viewEditBtn');
@@ -1603,7 +1601,6 @@ function updateModalAdminButtons() {
     return;
   }
 
-  // Kun vis knapper dersom brukeren er logget inn som Admin
   if (editBtn) editBtn.style.display = isAdmin ? 'inline-block' : 'none';
   if (deleteBtn) deleteBtn.style.display = isAdmin ? 'inline-block' : 'none';
 }
@@ -1624,7 +1621,6 @@ document.getElementById('viewEditBtn')?.addEventListener('click', () => {
     document.getElementById('endTime').value = activeEvent.endTime;
     document.getElementById('description').value = activeEvent.description;
 
-    // 🔑 MOTTAR OG KRYSSER AV EKSISTERENDE TRINN VED REDIGERING
     const currentTrinn = activeEvent.extendedProps?.trinn || activeEvent.trinn || [];
     document.querySelectorAll('input[name="trinnOption"]').forEach(cb => {
       cb.checked = Array.isArray(currentTrinn) && currentTrinn.includes(cb.value);
@@ -1642,7 +1638,6 @@ document.getElementById('viewDeleteBtn')?.addEventListener('click', async () => 
 
   if (!activeEvent || activeEvent.isSchoolRoute) return;
 
-  // Håndtering dersom det er en statisk .js-hendelse (f.eks. DKS/Svømming/Kartlegging)
   if (activeEvent.extendedProps?.isStatic || activeEvent.isStatic) {
     if (confirm(`Vil du slette den faste hendelsen "${activeEvent.title}" for alle?`)) {
       const targetId = activeEvent.id;
@@ -1660,7 +1655,6 @@ document.getElementById('viewDeleteBtn')?.addEventListener('click', async () => 
     return;
   }
 
-  // Sletting av repetitive serier eller enkle brukerskapte hendelser
   if (activeEvent.recurringSeriesId) {
     document.getElementById('normalFooter').style.display = 'none';
     document.getElementById('deleteConfirmMode').style.display = 'flex';
@@ -1734,6 +1728,7 @@ document.getElementById('deleteAllSeriesBtn')?.addEventListener('click', async (
   }
 });
 
+// --- LAGRE/OPPDATERE SKJEMA ---
 document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -1754,7 +1749,6 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
   const endTime = document.getElementById('endTime').value;
   const description = document.getElementById('description').value;
 
-  // 🔑 HENTER ALLESVALGTE TRINN FRA SJEKKBOKSENE
   const selectedTrinn = Array.from(document.querySelectorAll('input[name="trinnOption"]:checked'))
     .map(cb => cb.value);
 
@@ -1762,11 +1756,11 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
 
   try {
     if (eventId) {
-      // 🔑 Redigering av hendelse med trinn
+      // Redigering
       const singleData = {
         title, 
         group, 
-        trinn: selectedTrinn, // Saved here
+        trinn: selectedTrinn,
         startDate: startDateStr, 
         startTime: startTime || null,
         endDate: endDateStr || startDateStr, 
@@ -1776,7 +1770,7 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
       };
       await updateDoc(doc(db, "school_events", eventId), singleData);
     } else if (isRecurring) {
-      // 🔑 Opprettelse av serie med trinn
+      // Opprettelse av repeterende serie
       const eventsToCreate = [];
       let currentStart = new Date(startDateStr + "T00:00:00");
       let currentEnd = new Date((endDateStr || startDateStr) + "T00:00:00");
@@ -1804,7 +1798,7 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
         eventsToCreate.push({
           title: title,
           group: group,
-          trinn: selectedTrinn, // Saved here
+          trinn: selectedTrinn,
           startDate: formatDate(nextStart),
           startTime: startTime || null,
           endDate: formatDate(nextEnd),
@@ -1819,11 +1813,11 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
       await Promise.all(eventsToCreate.map(evt => addDoc(eventsRef, evt)));
 
     } else {
-      // 🔑 Opprettelse av enkelthendelse med trinn
+      // Opprettelse av enkelthendelse
       const singleData = {
         title, 
         group, 
-        trinn: selectedTrinn, // Saved here
+        trinn: selectedTrinn,
         startDate: startDateStr, 
         startTime: startTime || null,
         endDate: endDateStr || startDateStr, 
@@ -1839,7 +1833,7 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
   }
 });
 
-
+// --- RENDER MENSY / FILTRE ---
 function renderFilters() {
   const filterContainer = document.getElementById('filterList');
   if (!filterContainer) return;
@@ -1849,14 +1843,13 @@ function renderFilters() {
     const item = document.createElement('div');
     item.className = 'filter-item-vert';
     
-    // Checkbox for av/på filtrering
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = selectedCategories.includes(cat);
     checkbox.value = cat;
     
     checkbox.addEventListener('change', (e) => {
-      e.stopPropagation(); // Hindrer at modalen åpnes når man bare vil sjekke av boksen
+      e.stopPropagation();
       if (e.target.checked) {
         if (!selectedCategories.includes(cat)) selectedCategories.push(cat);
       } else {
@@ -1867,18 +1860,15 @@ function renderFilters() {
       checkSingleCategorySelection();
     });
 
-    // Fargeprikk
     const colorDot = document.createElement('span');
     colorDot.className = 'color-dot';
     const catColor = categoryColors[cat] || '#3788d8';
     colorDot.style.backgroundColor = catColor;
 
-    // Tekst (Kategorinavn)
     const labelText = document.createElement('span');
     labelText.className = 'filter-label';
     labelText.textContent = cat;
 
-    // Klikkområde for fargeprikk og tekst som ÅPNER MODALEN
     const clickArea = document.createElement('div');
     clickArea.style.cssText = 'display: flex; align-items: center; gap: 8px; flex: 1; cursor: pointer;';
     clickArea.appendChild(colorDot);
@@ -1890,11 +1880,10 @@ function renderFilters() {
       } else if (typeof showCategoryModal === 'function') {
         showCategoryModal(cat);
       } else {
-        console.warn('Fant ingen modal-funksjon (f.eks. openCategoryModal) for kategorien:', cat);
+        console.warn('Fant ingen modal-funksjon for kategorien:', cat);
       }
     });
 
-    // Sett sammen elementet
     item.appendChild(checkbox);
     item.appendChild(clickArea);
     
@@ -1917,7 +1906,7 @@ function checkSingleCategorySelection() {
   }
 }
 
-// Lytter på utskriftsknappen for valgt kategori
+// --- UTSKRIFT KATEGORI ---
 document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (selectedCategories.length !== 1) return;
 
@@ -1940,7 +1929,6 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
     return isEventInSelectedCategories(evt);
   };
 
-  // --- HENGER UT ALLE STATISKE KILDER TRYGT (Støtter både nye funksjoner og variabler) ---
   const getFelles = typeof getFellesAktiviteterSomEvents === 'function' ? getFellesAktiviteterSomEvents() : (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []);
   const getDks = typeof getDksAktiviteterSomEvents === 'function' ? getDksAktiviteterSomEvents() : (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []);
   const getSvomme = typeof getSvommeAktiviteterSomEvents === 'function' ? getSvommeAktiviteterSomEvents() : (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []);
@@ -1948,7 +1936,6 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   const getUia = typeof getUiAAktiviteterSomEvents === 'function' ? getUiAAktiviteterSomEvents() : (typeof uiaEventsFromJs !== 'undefined' ? uiaEventsFromJs : []);
   const getKartlegging = typeof getKartleggingerSomEvents === 'function' ? getKartleggingerSomEvents() : (typeof kartleggingEventsFromJs !== 'undefined' ? kartleggingEventsFromJs : []);
 
-  // Filtrerer alle kildene basert på valgt kategori
   const filteredUserEvents = rawEvents.filter(shouldIncludeEvent);
   const filteredFellesEvents = getFelles.filter(shouldIncludeEvent);
   const filteredDksEvents = getDks.filter(shouldIncludeEvent);
@@ -1962,7 +1949,6 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
     filteredBursdager = getBirthdayEvents(startYear).filter(shouldIncludeEvent);
   }
 
-  // Samler alt i én matrise før utskrift
   const allRawEvents = [
     ...filteredFellesEvents, 
     ...filteredDksEvents, 
