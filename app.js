@@ -1147,9 +1147,9 @@ eventClick: function(info) {
       const isSchoolRoute = ext.isSchoolRoute || false;
       const isReadOnly = ext.isReadOnly || isSchoolRoute;
 
-      // 🔑 1. Hent ut trinn som et array
-      const rawTrinn = ext.trinn || ext.group || [];
-      const trinnArray = Array.isArray(rawTrinn) ? rawTrinn : [rawTrinn];
+// 🔑 Hent ut trinn (sjekker både ext.trinn og direkte felt)
+const rawTrinn = ext.trinn || info.event.trinn || [];
+const trinnArray = Array.isArray(rawTrinn) ? rawTrinn : (rawTrinn ? [rawTrinn] : []);
 
       activeEvent = {
         id: info.event.id || '',
@@ -1612,18 +1612,24 @@ document.getElementById('viewEditBtn')?.addEventListener('click', () => {
   }
 
   if (activeEvent && !activeEvent.isSchoolRoute) {
-    document.getElementById('eventId').value = activeEvent.id;
-    document.getElementById('title').value = activeEvent.title;
-    document.getElementById('group').value = activeEvent.group;
-    document.getElementById('startDate').value = activeEvent.startDate;
-    document.getElementById('startTime').value = activeEvent.startTime;
-    document.getElementById('endDate').value = activeEvent.endDate;
-    document.getElementById('endTime').value = activeEvent.endTime;
-    document.getElementById('description').value = activeEvent.description;
+    document.getElementById('eventId').value = activeEvent.id || '';
+    document.getElementById('title').value = activeEvent.title || '';
+    document.getElementById('group').value = activeEvent.group || '';
+    document.getElementById('startDate').value = activeEvent.startDate || '';
+    document.getElementById('startTime').value = activeEvent.startTime || '';
+    document.getElementById('endDate').value = activeEvent.endDate || '';
+    document.getElementById('endTime').value = activeEvent.endTime || '';
+    document.getElementById('description').value = activeEvent.description || '';
 
-    const currentTrinn = activeEvent.extendedProps?.trinn || activeEvent.trinn || [];
+    // 🔑 1. Hent trinnene trygt (sjekk activeEvent.trinn FØRST)
+    const rawTrinn = activeEvent.trinn || activeEvent.extendedProps?.trinn || [];
+    const currentTrinn = Array.isArray(rawTrinn) ? rawTrinn : [rawTrinn];
+
+    // 🔑 2. Huk av sjekkboksene med en robust sammenligning (trim + toLowerCase)
     document.querySelectorAll('input[name="trinnOption"]').forEach(cb => {
-      cb.checked = Array.isArray(currentTrinn) && currentTrinn.includes(cb.value);
+      cb.checked = currentTrinn.some(t => 
+        String(t).trim().toLowerCase() === cb.value.trim().toLowerCase()
+      );
     });
 
     showFormMode("Rediger avtale", false);
