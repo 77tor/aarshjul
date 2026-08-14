@@ -1548,8 +1548,55 @@ function updateCalendarEvents() {
       });
   };
 
+  // 🔑 NØKKELFORBEDRING: Konverter brukerskapte hendelser til gyldig FullCalendar-format!
   const userEventsSource = typeof rawEvents !== 'undefined' ? rawEvents : [];
-  const filteredUserEvents = userEventsSource.filter(event => isEventInSelectedCategories(event));
+  const processedUserEvents = userEventsSource
+    .filter(event => isEventInSelectedCategories(event))
+    .map(evt => {
+      // Hent datoer
+      const sDate = evt.startDate || (evt.start ? evt.start.split('T')[0] : '');
+      const eDate = evt.endDate || sDate;
+      const sTime = evt.startTime || '';
+      const eTime = evt.endTime || '';
+
+      // Tving start/end ISO-streng slik at FullCalendar skjønner NØYAKTIG hvilken dag det er
+      let fullStart = sDate;
+      let fullEnd = eDate;
+
+      if (sDate && sTime) {
+        fullStart = `${sDate}T${sTime}:00`;
+      }
+      if (eDate && eTime) {
+        fullEnd = `${eDate}T${eTime}:00`;
+      } else if (eDate && sTime) {
+        // Hvis sluttid mangler, sett sluttid til 30 min etter start
+        fullEnd = fullStart;
+      }
+
+      const grp = evt.group || evt.extendedProps?.group || '';
+      const colorKey = typeof categoryColors !== 'undefined' 
+        ? Object.keys(categoryColors).find(k => k.toLowerCase() === grp.toLowerCase()) 
+        : null;
+      const c = (categoryColors && categoryColors[colorKey]) || evt.backgroundColor || evt.color || '#e74c3c';
+
+      return {
+        ...evt,
+        id: evt.id,
+        title: evt.title,
+        start: fullStart,  // 👈 FullCalendar MÅ ha denne egenskapen (heter 'start', IKKE 'startDate')
+        end: fullEnd,      // 👈 FullCalendar MÅ ha denne egenskapen (heter 'end', IKKE 'endDate')
+        allDay: !sTime,    // Hvis klokkeslett mangler, marker som allDay
+        backgroundColor: c,
+        borderColor: c,
+        extendedProps: {
+          ...evt.extendedProps,
+          group: grp,
+          trinn: evt.trinn || [],
+          description: evt.description || '',
+          recurringSeriesId: evt.recurringSeriesId || null
+        }
+      };
+    });
 
   const allEvents = [
     ...schoolEvents, 
@@ -1560,7 +1607,7 @@ function updateCalendarEvents() {
     ...processStaticEvents(rawKartlegginger), 
     ...processStaticEvents(rawMoter),
     ...processStaticEvents(rawUia),
-    ...filteredUserEvents
+    ...processedUserEvents // 👈 Bruker de ferdig vaskede hendelsene
   ];
 
   if (typeof calendar !== 'undefined' && calendar) {
@@ -1568,6 +1615,7 @@ function updateCalendarEvents() {
     calendar.addEventSource(allEvents);
   }
 }
+
 
 // --- MODAL & HENDELSES-LYTTERE ---
 document.getElementById('modalCloseX')?.addEventListener('click', closeModal);
