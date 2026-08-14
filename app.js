@@ -500,10 +500,32 @@ function openCategoryGridModal(targetTrinn) {
     return isDirectTrinn || isIncludedInTrinnArray;
   });
 
-// 4. Bygg kolonner bortover
+
+// 4. Bygg kolonner bortover (vis KUN kolonner som har hendelser)
   columnsToDisplay.forEach(colName => {
     const colColor = (typeof categoryColors !== 'undefined' && categoryColors[colName]) ? categoryColors[colName] : '#2563eb';
+    const colNameLower = colName.trim().toLowerCase();
+    
+    // Filtrer hendelsene som passer i DENNE kolonnen
+    const matchedEvents = trinnEvents.filter(evt => {
+      const grp = (evt.extendedProps?.group || evt.group || '').trim().toLowerCase();
 
+      // Første kolonne (f.eks. "4. trinn"): vis direkte trinnhandlinger
+      if (colNameLower === trinnLower) {
+        return grp === trinnLower;
+      }
+      
+      // Fag-kolonnene (f.eks. "DKS", "Svømming"): sjekk at hovedkategorien matcher fagnavnet
+      return grp === colNameLower;
+    });
+
+    // 🔑 KJERNEENDRING: Hvis det IKKE finnes hendelser for denne kategorien, hopper vi over hele kolonnen!
+    if (matchedEvents.length === 0) return;
+
+    // Sorter hendelsene kronologisk
+    matchedEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+    // Opprett kolonnen
     const col = document.createElement('div');
     col.className = 'category-grid-column';
 
@@ -514,62 +536,45 @@ function openCategoryGridModal(targetTrinn) {
     header.textContent = colName;
     col.appendChild(header);
 
-    // 🔑 Tvinger kolonneinnholdet til vertikal stabling (column)
+    // Vertikal stabling for kortene
     const content = document.createElement('div');
     content.className = 'category-grid-content';
     content.style.cssText = 'display: flex; flex-direction: column; gap: 8px; padding: 8px; overflow-y: auto; width: 100%; box-sizing: border-box;';
 
-    // Filtrer hendelsene som passer i DENNE kolonnen
-    const colNameLower = colName.trim().toLowerCase();
-    
-    const matchedEvents = trinnEvents.filter(evt => {
-      const grp = (evt.extendedProps?.group || evt.group || '').trim().toLowerCase();
+    // Legg til kortene
+    matchedEvents.forEach(evt => {
+      const card = document.createElement('div');
+      card.className = 'grid-event-card';
+      card.style.cssText = `border-left: 4px solid ${colColor}; width: 100%; box-sizing: border-box;`;
 
-      // Første kolonne (f.eks. "1. trinn"): vis direkte trinnhandlinger
-      if (colNameLower === trinnLower) {
-        return grp === trinnLower;
-      }
+      const titleText = evt.title || evt.extendedProps?.rawTitle || 'Uten tittel';
+      const descText = evt.extendedProps?.description || '';
+      const startDateStr = evt.extendedProps?.startDate || (evt.start ? evt.start.split('T')[0] : '');
       
-      // Fag-kolonnene (f.eks. "DKS", "Svømming"): sjekk at hovedkategorien matcher fagnavnet
-      return grp === colNameLower;
+      let dateFormatted = '';
+      if (startDateStr) {
+        const startObj = new Date(startDateStr + 'T00:00:00');
+        dateFormatted = !isNaN(startObj) ? startObj.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' }) : startDateStr;
+      }
+
+      const startTime = evt.extendedProps?.startTime || (evt.start && evt.start.includes('T') ? evt.start.split('T')[1].substring(0, 5) : '');
+
+      card.innerHTML = `
+        <div class="grid-event-title">${titleText}</div>
+        <div class="grid-event-time">📅 ${dateFormatted} ${startTime ? '⏰ kl. ' + startTime : ''}</div>
+        ${descText ? `<div class="grid-event-desc">${descText}</div>` : ''}
+      `;
+      content.appendChild(card);
     });
-
-    // Sorter kronologisk
-    matchedEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
-
-    if (matchedEvents.length === 0) {
-      content.innerHTML = '<div style="font-size:0.75rem; color:#94a3b8; font-style:italic; padding:6px; text-align:center;">Ingen avtaler</div>';
-    } else {
-      matchedEvents.forEach(evt => {
-        const card = document.createElement('div');
-        card.className = 'grid-event-card';
-        // 🔑 Sørger for at kortet fyller hele kolonnebredden
-        card.style.cssText = `border-left: 4px solid ${colColor}; width: 100%; box-sizing: border-box;`;
-
-        const titleText = evt.title || evt.extendedProps?.rawTitle || 'Uten tittel';
-        const descText = evt.extendedProps?.description || '';
-        const startDateStr = evt.extendedProps?.startDate || (evt.start ? evt.start.split('T')[0] : '');
-        
-        let dateFormatted = '';
-        if (startDateStr) {
-          const startObj = new Date(startDateStr + 'T00:00:00');
-          dateFormatted = !isNaN(startObj) ? startObj.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' }) : startDateStr;
-        }
-
-        const startTime = evt.extendedProps?.startTime || (evt.start && evt.start.includes('T') ? evt.start.split('T')[1].substring(0, 5) : '');
-
-        card.innerHTML = `
-          <div class="grid-event-title">${titleText}</div>
-          <div class="grid-event-time">📅 ${dateFormatted} ${startTime ? '⏰ kl. ' + startTime : ''}</div>
-          ${descText ? `<div class="grid-event-desc">${descText}</div>` : ''}
-        `;
-        content.appendChild(card);
-      });
-    }
 
     col.appendChild(content);
     gridContainer.appendChild(col);
   });
+
+  // Hvis INGEN av kategoriene har noen avtaler for trinnet
+  if (gridContainer.children.length === 0) {
+    gridContainer.innerHTML = '<p style="color: #64748b; font-style: italic; padding: 20px;">Ingen avtaler registrert for dette trinnet.</p>';
+  }
 
   gridModal.style.display = 'flex';
 }
