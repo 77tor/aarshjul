@@ -181,7 +181,7 @@
     </div>
   </div>
 
-  <!-- Modal for Visning og Utskrift av Kategori -->
+<!-- Modal for Visning og Utskrift av Kategori -->
   <div id="categoryModal" class="modal-overlay">
     <div class="modal-card modal-large">
       <div class="modal-header">
@@ -193,9 +193,30 @@
           <!-- Innholdet genereres dynamisk av JS -->
         </div>
       </div>
+      <!-- OPPDATERT FOOTER MED DEN NYE KNAPPEN -->
       <div class="modal-footer">
+        <button id="btnCategoryModalGrid" type="button" class="btn btn-secondary" style="margin-right: auto;">📊 Filtrer kategorier (Rutenett)</button>
         <button id="btnCategoryModalClose" type="button" class="btn btn-secondary">Lukk</button>
         <button id="btnCategoryModalPrint" type="button" class="btn btn-primary">🖨️ Skriv ut</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NY: Modal for Rutenett / Matrisevisning av alle kategorier -->
+  <div id="gridOverviewModal" class="modal-overlay">
+    <div class="modal-card modal-large" style="max-width: 95vw; width: 1400px; max-height: 90vh;">
+      <div class="modal-header">
+        <h3 id="gridOverviewTitle">Kategori-matrise</h3>
+        <button id="gridOverviewCloseX" type="button" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body" style="overflow-x: auto; overflow-y: auto;">
+        <div id="categoryGridContainer" class="category-grid-container">
+          <!-- Rutenett med kolonner genereres dynamisk av JS -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnGridOverviewClose" type="button" class="btn btn-secondary">Lukk</button>
+        <button id="btnGridOverviewPrint" type="button" class="btn btn-primary">🖨️ Skriv ut matrise</button>
       </div>
     </div>
   </div>

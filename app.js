@@ -306,7 +306,7 @@ function renderCategoryFilters() {
 }
 
 
-// Åpne kategorimodal og vis ALLE avtaler for valgt kategori (med klokkeslett og fra/til-dato)
+
 // Åpne kategorimodal og vis ALLE avtaler for valgt kategori/trinn
 function openCategoryModal(categoryName) {
   const modal = document.getElementById('categoryModal');
@@ -423,6 +423,130 @@ function openCategoryModal(categoryName) {
 
   modal.style.display = 'flex';
 }
+
+
+// Åpne Rutenett / Matrise-modalen med alle kategorier bortover
+function openCategoryGridModal() {
+  const gridModal = document.getElementById('gridOverviewModal');
+  const gridContainer = document.getElementById('categoryGridContainer');
+  if (!gridModal || !gridContainer) return;
+
+  gridContainer.innerHTML = '';
+
+  // Hent alle hendelser
+  const moterEvents = typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : [];
+  const uiaEvents = typeof getUiAAktiviteterSomEvents === 'function' ? getUiAAktiviteterSomEvents() : [];
+  const fellesEvents = typeof getFellesaktiviteterSomEvents === 'function' ? getFellesaktiviteterSomEvents('2026-2027') : [];
+  const dksEvents = typeof getDKSAktiviteterSomEvents === 'function' ? getDKSAktiviteterSomEvents() : [];
+  const svommeEvents = typeof getSvommeAktiviteterSomEvents === 'function' ? getSvommeAktiviteterSomEvents('2026-2027') : [];
+  const bursdagEvents = typeof getBirthdayEvents === 'function' ? getBirthdayEvents(2026) : [];
+  const kartleggingEvents = typeof getKartleggingerSomEvents === 'function' ? getKartleggingerSomEvents() : [];
+
+  const allRawEvents = [
+    ...fellesEvents,
+    ...dksEvents,
+    ...svommeEvents,
+    ...bursdagEvents,
+    ...kartleggingEvents,
+    ...moterEvents,
+    ...uiaEvents,
+    ...(typeof schoolEventsFromJs !== 'undefined' ? schoolEventsFromJs : []),
+    ...rawEvents
+  ];
+
+  // Bygg en kolonne per kategori i categoryColors
+  Object.entries(categoryColors).forEach(([catName, color]) => {
+    const col = document.createElement('div');
+    col.className = 'category-grid-column';
+
+    // Kolonne-overskrift med farge
+    const header = document.createElement('div');
+    header.className = 'category-grid-header';
+    header.style.backgroundColor = color;
+    header.textContent = catName;
+    col.appendChild(header);
+
+    const content = document.createElement('div');
+    content.className = 'category-grid-content';
+
+    // Filtrer hendelser som hører til denne kategorien
+    const matchedEvents = allRawEvents.filter(evt => {
+      if (deletedStaticEventIds && deletedStaticEventIds.has(evt.id)) return false;
+
+      const grp = (evt.extendedProps?.group || evt.group || '').trim().toLowerCase();
+      const trinnArray = evt.extendedProps?.trinn || evt.trinn || [];
+      const target = catName.trim().toLowerCase();
+
+      const matchesGroup = grp === target;
+      const matchesTrinn = Array.isArray(trinnArray) && trinnArray.some(t => t.trim().toLowerCase() === target);
+
+      return matchesGroup || matchesTrinn;
+    });
+
+    matchedEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+    if (matchedEvents.length === 0) {
+      content.innerHTML = '<div style="font-size:0.75rem; color:#94a3b8; font-style:italic; padding:6px; text-align:center;">Ingen avtaler</div>';
+    } else {
+      matchedEvents.forEach(evt => {
+        const card = document.createElement('div');
+        card.className = 'grid-event-card';
+        card.style.borderLeftColor = color;
+
+        const titleText = evt.title || evt.extendedProps?.rawTitle || 'Uten tittel';
+        const startDateStr = evt.extendedProps?.startDate || (evt.start ? evt.start.split('T')[0] : '');
+        
+        let dateFormatted = '';
+        if (startDateStr) {
+          const startObj = new Date(startDateStr + 'T00:00:00');
+          dateFormatted = !isNaN(startObj) ? startObj.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' }) : startDateStr;
+        }
+
+        const startTime = evt.extendedProps?.startTime || (evt.start && evt.start.includes('T') ? evt.start.split('T')[1].substring(0, 5) : '');
+
+        card.innerHTML = `
+          <div class="grid-event-title">${titleText}</div>
+          <div class="grid-event-time">📅 ${dateFormatted} ${startTime ? '⏰ kl. ' + startTime : ''}</div>
+        `;
+        content.appendChild(card);
+      });
+    }
+
+    col.appendChild(content);
+    gridContainer.appendChild(col);
+  });
+
+  gridModal.style.display = 'flex';
+}
+
+function closeCategoryGridModal() {
+  const gridModal = document.getElementById('gridOverviewModal');
+  if (gridModal) gridModal.style.display = 'none';
+}
+
+// Koble til lyttere ved oppstart
+document.addEventListener('DOMContentLoaded', () => {
+  const btnGrid = document.getElementById('btnCategoryModalGrid');
+  const closeX = document.getElementById('gridOverviewCloseX');
+  const closeBtn = document.getElementById('btnGridOverviewClose');
+  const printBtn = document.getElementById('btnGridOverviewPrint');
+
+  if (btnGrid) {
+    btnGrid.addEventListener('click', () => {
+      openCategoryGridModal();
+    });
+  }
+
+  if (closeX) closeX.addEventListener('click', closeCategoryGridModal);
+  if (closeBtn) closeBtn.addEventListener('click', closeCategoryGridModal);
+
+  if (printBtn) {
+    printBtn.addEventListener('click', () => {
+      window.print();
+    });
+  }
+});
+
 
 function closeCategoryModal() {
   const modal = document.getElementById('categoryModal');

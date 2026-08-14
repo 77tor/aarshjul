@@ -87,7 +87,72 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .btn-ghost-danger:hover { background-color: #fee2e2; color: #b91c1c; }
 .delete-options { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 
+/* --- RUTENETT / KATEGORI-MATRISE --- */
+.category-grid-container {
+  display: flex;
+  gap: 12px;
+  min-width: min-content;
+  align-items: flex-start;
+  padding-bottom: 10px;
+}
 
+.category-grid-column {
+  flex: 0 0 220px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+}
+
+.category-grid-header {
+  padding: 10px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-top-left-radius: 7px;
+  border-top-right-radius: 7px;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.category-grid-content {
+  padding: 8px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: flex-col;
+  gap: 8px;
+}
+
+.grid-event-card {
+  background: white;
+  border-left: 3px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  font-size: 0.8rem;
+}
+
+.grid-event-title {
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.grid-event-time {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.grid-event-desc {
+  color: #475569;
+  font-size: 0.75rem;
+  margin-top: 4px;
+  white-space: pre-line;
+}
 
 /* Sidebar Header & Innlogging under overskriften */
 .sidebar-header {
