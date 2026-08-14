@@ -452,6 +452,7 @@ const TRINN_SUB_CATEGORIES = [
   "Sosialt"
 ];
 
+
 // Åpne Rutenett / Matrise-modalen KUN for det valgte trinnet
 function openCategoryGridModal(targetTrinn) {
   const gridModal = document.getElementById('gridOverviewModal');
@@ -492,7 +493,7 @@ function openCategoryGridModal(targetTrinn) {
     if (deletedStaticEventIds && deletedStaticEventIds.has(evt.id)) return false;
 
     const grp = (evt.extendedProps?.group || evt.group || '').trim().toLowerCase();
-    const trinnArray = evt.extendedProps?.trinn || evt.trinn || [];
+    const trinnArray = evt.extendedProps?.trinn || evt.extendedProps?.trinnArray || evt.trinn || [];
 
     const isDirectTrinn = grp === trinnLower;
     const isIncludedInTrinnArray = Array.isArray(trinnArray) && trinnArray.some(t => t.trim().toLowerCase() === trinnLower);
@@ -500,26 +501,26 @@ function openCategoryGridModal(targetTrinn) {
     return isDirectTrinn || isIncludedInTrinnArray;
   });
 
-
-// 4. Bygg kolonner bortover (vis KUN kolonner som har hendelser)
+  // 4. Bygg kolonner bortover (vis KUN kolonner som har hendelser)
   columnsToDisplay.forEach(colName => {
     const colColor = (typeof categoryColors !== 'undefined' && categoryColors[colName]) ? categoryColors[colName] : '#2563eb';
     const colNameLower = colName.trim().toLowerCase();
     
-    // Filtrer hendelsene som passer i DENNE kolonnen
+    // 🔑 KJERNEENDRING: Sjekker riktig tilhørighet per kolonne
     const matchedEvents = trinnEvents.filter(evt => {
       const grp = (evt.extendedProps?.group || evt.group || '').trim().toLowerCase();
 
-      // Første kolonne (f.eks. "4. trinn"): vis direkte trinnhandlinger
+      // Første kolonne (f.eks. "1. trinn"): vis avtaler der Hovedkategorien er "1. trinn"
       if (colNameLower === trinnLower) {
         return grp === trinnLower;
       }
       
-      // Fag-kolonnene (f.eks. "DKS", "Svømming"): sjekk at hovedkategorien matcher fagnavnet
+      // Fag-kolonnene (f.eks. "DKS", "Svømming", "Fellesaktiviteter"): 
+      // Vis dersom hovedkategorien matcher faget ELLER om tittelen/teksten inneholder faget
       return grp === colNameLower;
     });
 
-    // 🔑 KJERNEENDRING: Hvis det IKKE finnes hendelser for denne kategorien, hopper vi over hele kolonnen!
+    // Hvis det IKKE finnes hendelser for denne kategorien på dette trinnet, hoppes kolonnen over
     if (matchedEvents.length === 0) return;
 
     // Sorter hendelsene kronologisk
@@ -548,7 +549,7 @@ function openCategoryGridModal(targetTrinn) {
       card.style.cssText = `border-left: 4px solid ${colColor}; width: 100%; box-sizing: border-box;`;
 
       const titleText = evt.title || evt.extendedProps?.rawTitle || 'Uten tittel';
-      const descText = evt.extendedProps?.description || '';
+      const descText = evt.extendedProps?.description || evt.description || '';
       const startDateStr = evt.extendedProps?.startDate || (evt.start ? evt.start.split('T')[0] : '');
       
       let dateFormatted = '';
@@ -578,6 +579,7 @@ function openCategoryGridModal(targetTrinn) {
 
   gridModal.style.display = 'flex';
 }
+
 
 function closeCategoryGridModal() {
   const gridModal = document.getElementById('gridOverviewModal');
@@ -696,7 +698,7 @@ function showFormMode(title = "Ny avtale", isRecurring = false) {
 }
 
 function showViewMode() {
-  console.log("Aktiv hendelse:", activeEvent.id, activeEvent.extendedProps);
+  console.log("Aktiv hendelse:", activeEvent?.id, activeEvent?.extendedProps);
   hideContextMenu();
   document.getElementById('modalHeaderTitle').textContent = "Avtaledetaljer";
   document.getElementById('eventForm').style.display = 'none';
@@ -723,7 +725,6 @@ function showViewMode() {
 
   document.getElementById('eventModal').style.display = 'flex';
 }
-
 
 function formatDate(dateObj) {
   const year = dateObj.getFullYear();
@@ -787,8 +788,7 @@ function highlightDateInHeader(selectedDateStr) {
   }
 }
 
-
-// Hjelpefunksjon for å beregne ISO-ukenummer
+// Global hjelpefunksjon for å beregne ISO-ukenummer
 function getISOWeekNumber(d) {
   const date = new Date(d.getTime());
   date.setHours(0, 0, 0, 0);
@@ -827,7 +827,6 @@ function renderMiniCalendar() {
   const todayStr = formatDate(new Date());
   const selectedStr = calendar ? formatDate(calendar.getDate()) : todayStr;
 
-  // Samle alle dagene som skal inn i rutenettet (forrige mnd, denne mnd, neste mnd)
   const allDays = [];
 
   // Dager fra forrige måned
@@ -843,7 +842,7 @@ function renderMiniCalendar() {
     allDays.push({ dayNum: day, type: 'current', dateObj });
   }
 
-  // Fyll ut med neste måneds dager slik at alle uker (rader) blir komplette (multipler av 7)
+  // Neste måneds dager
   let nextMonthDay = 1;
   while (allDays.length % 7 !== 0) {
     const dateObj = new Date(year, month + 1, nextMonthDay);
@@ -851,21 +850,17 @@ function renderMiniCalendar() {
     nextMonthDay++;
   }
 
-  // 2. Bygg rutenettet uke for uke (7 dager av gangen)
+  // 2. Bygg rutenettet uke for uke
   for (let i = 0; i < allDays.length; i += 7) {
     const weekDays = allDays.slice(i, i + 7);
-    
-    // Beregn ukenummer ut fra mandagen i denne uken (første element i uken)
     const mondayDate = weekDays[0].dateObj;
     const weekNum = getISOWeekNumber(mondayDate);
 
-    // Legg til ukenummer-celle helt først i raden
     const weekDiv = document.createElement('div');
     weekDiv.className = 'mini-week-num';
     weekDiv.textContent = weekNum;
     grid.appendChild(weekDiv);
 
-    // Legg til de 7 dagene for denne uken
     weekDays.forEach(item => {
       const div = document.createElement('div');
       div.textContent = item.dayNum;
@@ -889,7 +884,6 @@ function renderMiniCalendar() {
           if (calendar) {
             calendar.gotoDate(item.dateObj);
             renderMiniCalendar();
-            
             setTimeout(() => {
               highlightDateInHeader(dateStr);
             }, 50);
@@ -901,18 +895,15 @@ function renderMiniCalendar() {
   }
 }
 
-
-document.getElementById('miniPrevBtn').addEventListener('click', () => {
+document.getElementById('miniPrevBtn')?.addEventListener('click', () => {
   miniCalCurrentDate.setMonth(miniCalCurrentDate.getMonth() - 1);
   renderMiniCalendar();
 });
 
-document.getElementById('miniNextBtn').addEventListener('click', () => {
+document.getElementById('miniNextBtn')?.addEventListener('click', () => {
   miniCalCurrentDate.setMonth(miniCalCurrentDate.getMonth() + 1);
   renderMiniCalendar();
 });
-
-
 
 /* Oppstart & FullCalendar */
 document.addEventListener('DOMContentLoaded', () => {
@@ -923,23 +914,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const calendarEl = document.getElementById('calendar');
   if (!calendarEl) return;
 
-  // Hjelpefunksjon for presis ISO-ukenummerberegning
-  function getISOWeekNumber(d) {
-    const date = new Date(d.getTime());
-    date.setHours(0, 0, 0, 0);
-    date.setDate(date.getDate() + 3 - ((date.getDay() + 6) % 7));
-    const week1 = new Date(date.getFullYear(), 0, 4);
-    return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
-  }
-
-calendar = new FullCalendar.Calendar(calendarEl, {
+  calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'timeGridWeek',
-    // initialDate er fjernet herfra!
     selectable: true,
     selectMirror: true,
     unselectAuto: false,
-
-    // Skjul helg som standard (viser man-fre)
     weekends: false,
 
     views: {
@@ -957,7 +936,6 @@ calendar = new FullCalendar.Calendar(calendarEl, {
           const showWeekends = calendar.getOption('weekends');
           const nextState = !showWeekends;
 
-          // Oppdater kalenderens status og knappe-tekst synkronisert
           calendar.setOption('weekends', nextState);
           calendar.setOption('customButtons', {
             ...calendar.getOption('customButtons'),
@@ -975,29 +953,22 @@ calendar = new FullCalendar.Calendar(calendarEl, {
           if (typeof hideContextMenu === 'function') hideContextMenu();
           if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
 
-          // 1. Hent aktiv periode (start og slutt for uken i kalenderen)
           const view = calendar.view;
           const viewStart = view.activeStart;
           const viewEnd = view.activeEnd;
-
-          // 2. Beregn ISO-ukenummer for tittelen
           const weekNum = getISOWeekNumber(view.currentStart);
 
-          // 3. Sett tittel i modal-headeren
           const titleEl = document.getElementById('categoryModalTitle');
           if (titleEl) {
             titleEl.textContent = `Ukeplan – Uke ${weekNum}`;
           }
 
-          // 4. Hent kun de SYNLEGE/FILTRERTE hendelsene fra FullCalendar for uken
           const currentEvents = calendar.getEvents().filter(evt => {
             const evtStart = evt.start;
             const evtEnd = evt.end || evtStart;
-            // Sjekk at avtalen er innenfor ukesvisningen OG at den ikke er eksplisitt skjult
             return evtStart < viewEnd && evtEnd >= viewStart && evt.display !== 'none';
           });
 
-          // Fjern duplikater/filtrer unike hendelser basert på tittel + startdato
           const uniqueEventsMap = new Map();
           currentEvents.forEach(evt => {
             const key = `${evt.title}_${evt.startStr}`;
@@ -1008,7 +979,6 @@ calendar = new FullCalendar.Calendar(calendarEl, {
 
           const sortedEvents = Array.from(uniqueEventsMap.values()).sort((a, b) => a.start - b.start);
 
-          // 5. Bygg opp den ultrakompakte lista inne i categoryEventsList
           const listContainer = document.getElementById('categoryEventsList');
           if (listContainer) {
             listContainer.innerHTML = '';
@@ -1021,10 +991,7 @@ calendar = new FullCalendar.Calendar(calendarEl, {
                 const card = document.createElement('div');
                 card.className = 'category-event-card';
 
-                // Tittel
                 const titleText = evt.title || ext.rawTitle || 'Uten tittel';
-
-                // Formater datoer (f.eks. "14. aug." eller "14. aug. – 18. aug.")
                 const startD = evt.start;
                 const endD = evt.end ? new Date(evt.end.getTime() - (evt.allDay ? 86400000 : 0)) : startD;
 
@@ -1034,7 +1001,6 @@ calendar = new FullCalendar.Calendar(calendarEl, {
                   dateStr += ` – ${endD.toLocaleDateString('no-NO', fmt)}`;
                 }
 
-                // Formater klokkeslett
                 let timeStr = '';
                 if (!evt.allDay && evt.start) {
                   const startTime = evt.start.toTimeString().substring(0, 5);
@@ -1058,7 +1024,6 @@ calendar = new FullCalendar.Calendar(calendarEl, {
             }
           }
 
-          // 6. Utfør utskriften med 'printing-week'-klassen aktivert
           document.body.classList.add('printing-week');
           window.print();
 
@@ -1093,24 +1058,19 @@ calendar = new FullCalendar.Calendar(calendarEl, {
         }, 50);
       }
 
-      // Legg til ukenummer i tittelen for ukesvisninger
       const view = info.view;
       if (view.type === 'timeGridWeek' || view.type === 'dayGridWeek' || view.type === 'listWeek') {
         const weekNum = getISOWeekNumber(view.currentStart);
+        const titleEl = document.querySelector('.fc-toolbar-title');
+        if (titleEl) {
+          const startDay = view.currentStart.getDate();
+          const endDate = new Date(view.currentEnd);
+          endDate.setDate(endDate.getDate() - 1);
+          const endDay = endDate.getDate();
+          const monthName = view.currentStart.toLocaleDateString('no-NO', { month: 'short' });
 
-// Oppdater overskriften i kalenderen (Kompakt versjon for å spare plass)
-const titleEl = document.querySelector('.fc-toolbar-title');
-if (titleEl) {
-  const startDay = view.currentStart.getDate();
-  const endDate = new Date(view.currentEnd);
-  endDate.setDate(endDate.getDate() - 1); // FullCalendar setter end til lørdag/søndag
-  const endDay = endDate.getDate();
-  
-  // Henter kort månedsnavn på norsk (f.eks. "aug.")
-  const monthName = view.currentStart.toLocaleDateString('no-NO', { month: 'short' });
-
-  titleEl.textContent = `Uke ${weekNum}: ${startDay}.–${endDay}. ${monthName}`;
-}
+          titleEl.textContent = `Uke ${weekNum}: ${startDay}.–${endDay}. ${monthName}`;
+        }
       }
     },
 
@@ -1138,7 +1098,7 @@ if (titleEl) {
       if (typeof hideContextMenu === 'function') hideContextMenu();
     },
 
-eventClick: function(info) {
+    eventClick: function(info) {
       if (info.jsEvent) info.jsEvent.preventDefault();
       if (typeof hideContextMenu === 'function') hideContextMenu();
       if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
@@ -1147,15 +1107,15 @@ eventClick: function(info) {
       const isSchoolRoute = ext.isSchoolRoute || false;
       const isReadOnly = ext.isReadOnly || isSchoolRoute;
 
-      // 🔑 1. Hent ut trinn som et array
-      const rawTrinn = ext.trinn || ext.group || [];
-      const trinnArray = Array.isArray(rawTrinn) ? rawTrinn : [rawTrinn];
+      // 🔑 SØRG FOR AT TRINN BLIR HENTET RIKTIG SOM ARRAY
+      const rawTrinn = ext.trinn || ext.trinnArray || info.event.trinn || [];
+      const trinnArray = Array.isArray(rawTrinn) ? rawTrinn : (rawTrinn ? [rawTrinn] : []);
 
       activeEvent = {
         id: info.event.id || '',
         title: ext.rawTitle || info.event.title || '',
-        group: ext.group || '',
-        trinn: trinnArray, // 🔑 Lagre trinn-arrayet her
+        group: ext.group || info.event.group || '',
+        trinn: trinnArray, 
         startDate: ext.startDate || (info.event.startStr ? info.event.startStr.split('T')[0] : ''),
         startTime: ext.startTime || '',
         endDate: ext.endDate || (info.event.endStr ? info.event.endStr.split('T')[0] : ''),
@@ -1179,13 +1139,13 @@ eventClick: function(info) {
       if (viewTitle) viewTitle.textContent = activeEvent.title;
       if (viewGroup) viewGroup.textContent = activeEvent.group;
 
-      // 🔑 2. VIS TRINN I VISNINGSMODUS (#viewTrinn)
+      // 🔑 VIS TRINN I VISNINGSMODUS (#viewTrinn)
       const viewTrinnEl = document.getElementById('viewTrinn');
       if (viewTrinnEl) {
         viewTrinnEl.textContent = trinnArray.length > 0 ? trinnArray.join(', ') : 'Ingen trinn valgt';
       }
 
-      // 🔑 3. KRYSS AV I SKJEMAET (Dersom brukeren velger å redigere denne hendelsen)
+      // 🔑 KRYSS AV RIKTIGE BOKSER I SKJEMAET VED REDIGERING
       document.querySelectorAll('input[name="trinnOption"]').forEach(cb => {
         cb.checked = trinnArray.some(t => String(t).trim().toLowerCase() === cb.value.trim().toLowerCase());
       });
@@ -1209,32 +1169,20 @@ eventClick: function(info) {
         }
       }
 
-      // Viser beskrivelse + lenker dersom de finnes
       if (viewDescription) {
         let content = activeEvent.description || "Ingen beskrivelse oppgitt.";
-        
-        // Hovedlenke (Informasjonsside)
         if (activeEvent.url) {
           content += `<br><br>🔗 <strong>Informasjon:</strong> <a href="${activeEvent.url}" target="_blank" rel="noopener noreferrer" style="color: #0284c7; font-weight: 600; text-decoration: underline;">Les mer ↗</a>`;
         }
-        
-        // Registreringslenke (f.eks. Conexus eller GitHub)
         if (activeEvent.regUrl) {
           content += `<br>📝 <strong>Registrering:</strong> <a href="${activeEvent.regUrl}" target="_blank" rel="noopener noreferrer" style="color: #059669; font-weight: 600; text-decoration: underline;">${activeEvent.regTekst || 'Åpne registrering ↗'}</a>`;
         }
-
-viewDescription.innerHTML = content;
+        viewDescription.innerHTML = content;
       }
 
-      // 🔑 OPPDATER SYNLIGHET PÅ REDIGER/SLETT-KNAPPER BASERT PÅ ADMIN-E-POST
-      if (typeof updateModalAdminButtons === 'function') {
-        updateModalAdminButtons();
-      }
-
-      if (typeof showViewMode === 'function') showViewMode(activeEvent);
+      showViewMode();
     },
 
-// ERSTATT events: [] MED DETTE:
     events: function(fetchInfo, successCallback, failureCallback) {
       if (typeof getCombinedEvents === 'function') {
         const events = getCombinedEvents();
@@ -1251,7 +1199,7 @@ viewDescription.innerHTML = content;
   });
 
   calendar.render();
-  if (typeof renderFilters === 'function') renderFilters();
+  if (typeof renderCategoryFilters === 'function') renderCategoryFilters();
   if (typeof renderMiniCalendar === 'function') renderMiniCalendar();
 
   if (typeof updateCalendarEvents === 'function') {
@@ -1346,8 +1294,6 @@ viewDescription.innerHTML = content;
   }
 });
 
-
-
 // Firestore Realtime Lytter
 onSnapshot(eventsRef, (snapshot) => {
   rawEvents = snapshot.docs.map(doc => {
@@ -1363,15 +1309,14 @@ onSnapshot(eventsRef, (snapshot) => {
     const iconPrefix = isRecurring ? "🔁 " : "";
 
     const eventGroup = data.group || '';
-    // Bruker den nye getCategoryColor-funksjonen for å fange opp aliases (f.eks. "Felles" -> "Fellesaktiviteter")
-    const eventColor = getCategoryColor(eventGroup);
+    const eventColor = typeof getCategoryColor === 'function' 
+      ? getCategoryColor(eventGroup) 
+      : (categoryColors[eventGroup] || '#2563eb');
 
-    // Sørg for at trinn alltid er en matrise
     const trinnArray = Array.isArray(data.trinn) ? data.trinn : [];
 
     return {
       id: doc.id,
-      // 🔑 Legger til rot-egenskaper direkte på objektet slik at modalen finner dem lett uansett
       title: `${iconPrefix}${eventGroup ? '[' + eventGroup + '] ' : ''}${data.title}`,
       rawTitle: data.title,
       group: eventGroup,
@@ -1380,7 +1325,7 @@ onSnapshot(eventsRef, (snapshot) => {
       endDate: data.endDate || data.startDate,
       endTime: data.endTime || '',
       description: data.description || '',
-      trinn: trinnArray, // 👈 Direkte på objektet
+      trinn: trinnArray,
       
       start: startIso,
       end: endIso,
@@ -1397,12 +1342,14 @@ onSnapshot(eventsRef, (snapshot) => {
         description: data.description || '',
         repeatPattern: data.repeatPattern || null,
         recurringSeriesId: data.recurringSeriesId || null,
-        trinn: trinnArray,      // 👈 I extendedProps for FullCalendar
-        trinnArray: trinnArray // 👈 Ekstra sikkerhetskopifelt
+        trinn: trinnArray,
+        trinnArray: trinnArray
       }
     };
   });
-  updateCalendarEvents();
+  if (typeof updateCalendarEvents === 'function') {
+    updateCalendarEvents();
+  }
 });
 
 // Sjekker om en hendelse tilhører de valgte kategoriene
@@ -1419,13 +1366,12 @@ const categoryAliases = {
   'kartlegginger': 'Kartlegging',
   'prøve': 'Kartlegging',
   'test': 'Kartlegging',
-  // --- LEGG TIL DISSE FOR MØTER ---
   'møter': 'Møter',
   'møte': 'Møter',
   'foreldremøte': 'Møter',
   'fellesmøte': 'Møter',
   'samtaler': 'Møter',
-   'uia': 'UiA',
+  'uia': 'UiA',
   'praksis': 'UiA',
   'student': 'UiA',
   'studenter': 'UiA'
@@ -1438,16 +1384,18 @@ function getCategoryColor(groupName) {
   const rawGroup = groupName.toLowerCase().trim();
   const targetCategory = categoryAliases[rawGroup] || groupName;
   
-  const matchedKey = Object.keys(categoryColors).find(
-    k => k.toLowerCase() === targetCategory.toLowerCase()
-  );
+  const matchedKey = typeof categoryColors !== 'undefined' 
+    ? Object.keys(categoryColors).find(k => k.toLowerCase() === targetCategory.toLowerCase())
+    : null;
   
-  return categoryColors[matchedKey] || categoryColors[groupName] || '#3788d8';
+  return (categoryColors && categoryColors[matchedKey]) 
+      || (categoryColors && categoryColors[groupName]) 
+      || '#3788d8';
 }
 
 // Sjekker om en hendelse tilhører de valgte kategoriene
 function isEventInSelectedCategories(event) {
-  if (!selectedCategories || selectedCategories.length === 0) return false;
+  if (typeof selectedCategories === 'undefined' || !selectedCategories || selectedCategories.length === 0) return false;
 
   const rawGroup = (event.extendedProps?.group || event.group || '').trim();
   
@@ -1479,8 +1427,8 @@ function isEventInSelectedCategories(event) {
       return true;
     }
 
-    // 2. SJEKK DIREKTE PA VALGTE TRINN I SKJEMAET (Uavhengig av om cat slutter på '. trinn')
-    if (Array.isArray(trinnArray) && trinnArray.some(t => t.toLowerCase().trim() === catLower)) {
+    // 2. SJEKK DIREKTE PÅ VALGTE TRINN I SKJEMAET (Uavhengig av om cat slutter på '. trinn')
+    if (Array.isArray(trinnArray) && trinnArray.some(t => String(t).toLowerCase().trim() === catLower)) {
       return true;
     }
 
@@ -1538,16 +1486,16 @@ function isEventInSelectedCategories(event) {
 
 // --- KALENDER OPPDATERING ---
 function updateCalendarEvents() {
-  const isAdmin = isCurrentUserAdmin();
+  const isAdmin = typeof isCurrentUserAdmin === 'function' && isCurrentUserAdmin();
 
   let filteredBursdagEvents = [];
-  if (typeof getBirthdayEvents === 'function' && calendar) {
+  if (typeof getBirthdayEvents === 'function' && typeof calendar !== 'undefined' && calendar) {
     const currentYear = calendar.getDate().getFullYear();
     const rawBursdager = getBirthdayEvents(currentYear);
     filteredBursdagEvents = rawBursdager.filter(event => isEventInSelectedCategories(event));
   }
 
-  // --- HENT HENDELSER TRYGT (Støtter eksakte funksjonsnavn fra de nye filene) ---
+  // --- HENT HENDELSER TRYGT ---
   const getFellesFn = window.getFellesaktiviteterSomEvents || (typeof getFellesaktiviteterSomEvents === 'function' ? getFellesaktiviteterSomEvents : null);
   const getDksFn = window.getDKSAktiviteterSomEvents || window.getDksAktiviteterSomEvents || (typeof getDKSAktiviteterSomEvents === 'function' ? getDKSAktiviteterSomEvents : (typeof getDksAktiviteterSomEvents === 'function' ? getDksAktiviteterSomEvents : null));
   const getSvommeFn = window.getSvommeAktiviteterSomEvents || (typeof getSvommeAktiviteterSomEvents === 'function' ? getSvommeAktiviteterSomEvents : null);
@@ -1566,13 +1514,16 @@ function updateCalendarEvents() {
 
   // Vasker, fargelegger og merker statiske hendelser
   const processStaticEvents = (events) => {
+    if (!Array.isArray(events)) return [];
     return events
-      .filter(evt => !deletedStaticEventIds.has(evt.id))
+      .filter(evt => typeof deletedStaticEventIds !== 'undefined' ? !deletedStaticEventIds.has(evt.id) : true)
       .filter(event => isEventInSelectedCategories(event))
       .map(evt => {
         const grp = evt.extendedProps?.group || evt.group || '';
-        const colorKey = Object.keys(categoryColors).find(k => k.toLowerCase() === grp.toLowerCase());
-        const c = categoryColors[colorKey] || evt.backgroundColor || evt.color || '#3788d8';
+        const colorKey = typeof categoryColors !== 'undefined' 
+          ? Object.keys(categoryColors).find(k => k.toLowerCase() === grp.toLowerCase()) 
+          : null;
+        const c = (categoryColors && categoryColors[colorKey]) || evt.backgroundColor || evt.color || '#3788d8';
         
         return {
           ...evt,
@@ -1586,7 +1537,8 @@ function updateCalendarEvents() {
       });
   };
 
-  const filteredUserEvents = rawEvents.filter(event => isEventInSelectedCategories(event));
+  const userEventsSource = typeof rawEvents !== 'undefined' ? rawEvents : [];
+  const filteredUserEvents = userEventsSource.filter(event => isEventInSelectedCategories(event));
 
   const allEvents = [
     ...schoolEvents, 
@@ -1600,7 +1552,7 @@ function updateCalendarEvents() {
     ...filteredUserEvents
   ];
 
-  if (calendar) {
+  if (typeof calendar !== 'undefined' && calendar) {
     calendar.removeAllEvents();
     calendar.addEventSource(allEvents);
   }
@@ -1613,7 +1565,7 @@ document.getElementById('viewCancelBtn')?.addEventListener('click', closeModal);
 
 // Sjekker om slette/rediger-knapper skal vises når en modal åpnes
 function updateModalAdminButtons() {
-  const isAdmin = isCurrentUserAdmin();
+  const isAdmin = typeof isCurrentUserAdmin === 'function' && isCurrentUserAdmin();
   const editBtn = document.getElementById('viewEditBtn');
   const deleteBtn = document.getElementById('viewDeleteBtn');
 
@@ -1623,48 +1575,40 @@ function updateModalAdminButtons() {
     return;
   }
 
-  // Kun vis knapper dersom brukeren er logget inn som Admin
   if (editBtn) editBtn.style.display = isAdmin ? 'inline-block' : 'none';
   if (deleteBtn) deleteBtn.style.display = isAdmin ? 'inline-block' : 'none';
 }
 
 document.getElementById('viewEditBtn')?.addEventListener('click', () => {
-  if (!isCurrentUserAdmin()) {
+  if (typeof isCurrentUserAdmin === 'function' && !isCurrentUserAdmin()) {
     alert("Du må være administrator for å redigere denne hendelsen.");
     return;
   }
 
   if (activeEvent && !activeEvent.isSchoolRoute) {
-    document.getElementById('eventId').value = activeEvent.id;
-    document.getElementById('title').value = activeEvent.title || '';
+    document.getElementById('eventId').value = activeEvent.id || '';
+    document.getElementById('title').value = activeEvent.title || activeEvent.rawTitle || '';
     document.getElementById('group').value = activeEvent.extendedProps?.group || activeEvent.group || '1. trinn';
     
-    // Håndter dato/tid (både FullCalendar-objekter og strenger)
-    const startObj = activeEvent.start ? new Date(activeEvent.start) : null;
-    const endObj = activeEvent.end ? new Date(activeEvent.end) : null;
+    // Håndter dato/tid trygt
+    const startIso = activeEvent.startDate || (activeEvent.start ? new Date(activeEvent.start).toISOString().split('T')[0] : '');
+    const endIso = activeEvent.endDate || (activeEvent.end ? new Date(activeEvent.end).toISOString().split('T')[0] : startIso);
 
-    if (startObj) {
-      document.getElementById('startDate').value = startObj.toISOString().split('T')[0];
-      document.getElementById('startTime').value = activeEvent.allDay ? '' : startObj.toTimeString().substring(0, 5);
-    } else {
-      document.getElementById('startDate').value = activeEvent.startDate || '';
-      document.getElementById('startTime').value = activeEvent.startTime || '';
-    }
-
-    if (endObj) {
-      document.getElementById('endDate').value = endObj.toISOString().split('T')[0];
-      document.getElementById('endTime').value = activeEvent.allDay ? '' : endObj.toTimeString().substring(0, 5);
-    } else {
-      document.getElementById('endDate').value = activeEvent.endDate || activeEvent.startDate || '';
-      document.getElementById('endTime').value = activeEvent.endTime || '';
-    }
+    document.getElementById('startDate').value = startIso;
+    document.getElementById('startTime').value = activeEvent.startTime || '';
+    document.getElementById('endDate').value = endIso;
+    document.getElementById('endTime').value = activeEvent.endTime || '';
 
     document.getElementById('description').value = activeEvent.extendedProps?.description || activeEvent.description || '';
 
-    // 🔑 MOTTAR OG KRYSSER AV FOR TRINN (sjekker alle mulige plasseringer)
-    const trinnValues = activeEvent.extendedProps?.trinn || activeEvent.extendedProps?.trinnArray || activeEvent.trinn || [];
+    // 🔑 KRYSS AV RIKTIGE TRINN TIGHT MATCH
+    const trinnValues = activeEvent.extendedProps?.trinn 
+                     || activeEvent.extendedProps?.trinnArray 
+                     || activeEvent.trinn 
+                     || [];
+
     document.querySelectorAll('input[name="trinnOption"]').forEach(cb => {
-      cb.checked = Array.isArray(trinnValues) && trinnValues.includes(cb.value);
+      cb.checked = Array.isArray(trinnValues) && trinnValues.some(v => String(v).trim().toLowerCase() === cb.value.trim().toLowerCase());
     });
 
     showFormMode("Rediger avtale", false);
@@ -1672,21 +1616,21 @@ document.getElementById('viewEditBtn')?.addEventListener('click', () => {
 });
 
 document.getElementById('viewDeleteBtn')?.addEventListener('click', async () => {
-  if (!isCurrentUserAdmin()) {
+  if (typeof isCurrentUserAdmin === 'function' && !isCurrentUserAdmin()) {
     alert("Du må være administrator for å slette hendelser.");
     return;
   }
 
   if (!activeEvent || activeEvent.isSchoolRoute) return;
 
-  // Håndtering dersom det er en statisk .js-hendelse (f.eks. DKS/Svømming/Kartlegging)
+  // Håndtering dersom det er en statisk .js-hendelse
   if (activeEvent.extendedProps?.isStatic || activeEvent.isStatic) {
     if (confirm(`Vil du slette den faste hendelsen "${activeEvent.title}" for alle?`)) {
       const targetId = activeEvent.id;
       closeModal();
       try {
         await setDoc(doc(db, "deleted_static_events", targetId), {
-          deletedBy: firebase.auth().currentUser.email,
+          deletedBy: firebase.auth().currentUser?.email || 'admin',
           deletedAt: new Date().toISOString()
         });
       } catch (err) {
@@ -1721,7 +1665,7 @@ document.getElementById('cancelDeleteModeBtn')?.addEventListener('click', () => 
 });
 
 document.getElementById('deleteSingleBtn')?.addEventListener('click', async () => {
-  if (!activeEvent || !isCurrentUserAdmin()) return;
+  if (!activeEvent || (typeof isCurrentUserAdmin === 'function' && !isCurrentUserAdmin())) return;
   const targetId = activeEvent.id;
   closeModal();
   try {
@@ -1733,7 +1677,7 @@ document.getElementById('deleteSingleBtn')?.addEventListener('click', async () =
 });
 
 document.getElementById('deleteFutureBtn')?.addEventListener('click', async () => {
-  if (!activeEvent || !activeEvent.recurringSeriesId || !isCurrentUserAdmin()) return;
+  if (!activeEvent || !activeEvent.recurringSeriesId || (typeof isCurrentUserAdmin === 'function' && !isCurrentUserAdmin())) return;
   const seriesId = activeEvent.recurringSeriesId;
   const currentDate = activeEvent.startDate;
 
@@ -1755,7 +1699,7 @@ document.getElementById('deleteFutureBtn')?.addEventListener('click', async () =
 });
 
 document.getElementById('deleteAllSeriesBtn')?.addEventListener('click', async () => {
-  if (!activeEvent || !activeEvent.recurringSeriesId || !isCurrentUserAdmin()) return;
+  if (!activeEvent || !activeEvent.recurringSeriesId || (typeof isCurrentUserAdmin === 'function' && !isCurrentUserAdmin())) return;
   const seriesId = activeEvent.recurringSeriesId;
 
   closeModal();
@@ -1774,7 +1718,7 @@ document.getElementById('deleteAllSeriesBtn')?.addEventListener('click', async (
 document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  if (!isCurrentUserAdmin()) {
+  if (typeof isCurrentUserAdmin === 'function' && !isCurrentUserAdmin()) {
     alert("Du har ikke tilgang til å lagre endringer.");
     return;
   }
@@ -1797,13 +1741,16 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
 
   closeModal();
 
+  // Lokal datoforberedelse
+  const safeFormatDate = typeof formatDate === 'function' ? formatDate : (d) => d.toISOString().split('T')[0];
+
   try {
     if (eventId) {
-      // 🔑 Redigering av hendelse med trinn
+      // 🔑 Redigering av eksisterende hendelse
       const singleData = {
         title, 
         group, 
-        trinn: selectedTrinn, // Saved here
+        trinn: selectedTrinn,
         startDate: startDateStr, 
         startTime: startTime || null,
         endDate: endDateStr || startDateStr, 
@@ -1813,7 +1760,7 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
       };
       await updateDoc(doc(db, "school_events", eventId), singleData);
     } else if (isRecurring) {
-      // 🔑 Opprettelse av serie med trinn
+      // 🔑 Opprettelse av ny serie
       const eventsToCreate = [];
       let currentStart = new Date(startDateStr + "T00:00:00");
       let currentEnd = new Date((endDateStr || startDateStr) + "T00:00:00");
@@ -1841,10 +1788,10 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
         eventsToCreate.push({
           title: title,
           group: group,
-          trinn: selectedTrinn, // Saved here
-          startDate: formatDate(nextStart),
+          trinn: selectedTrinn,
+          startDate: safeFormatDate(nextStart),
           startTime: startTime || null,
-          endDate: formatDate(nextEnd),
+          endDate: safeFormatDate(nextEnd),
           endTime: endTime || null,
           description: description || '',
           repeatPattern: repeatPattern,
@@ -1856,11 +1803,11 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
       await Promise.all(eventsToCreate.map(evt => addDoc(eventsRef, evt)));
 
     } else {
-      // 🔑 Opprettelse av enkelthendelse med trinn
+      // 🔑 Opprettelse av ny enkelthendelse
       const singleData = {
         title, 
         group, 
-        trinn: selectedTrinn, // Saved here
+        trinn: selectedTrinn,
         startDate: startDateStr, 
         startTime: startTime || null,
         endDate: endDateStr || startDateStr, 
@@ -1882,18 +1829,22 @@ function renderFilters() {
   if (!filterContainer) return;
   filterContainer.innerHTML = '';
 
+  if (typeof categoryColors === 'undefined') return;
+
   Object.keys(categoryColors).forEach(cat => {
     const item = document.createElement('div');
     item.className = 'filter-item-vert';
     
-    // Checkbox for av/på filtrering
+    // Checkbox for filtrering
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
-    checkbox.checked = selectedCategories.includes(cat);
+    checkbox.checked = typeof selectedCategories !== 'undefined' && selectedCategories.includes(cat);
     checkbox.value = cat;
     
     checkbox.addEventListener('change', (e) => {
-      e.stopPropagation(); // Hindrer at modalen åpnes når man bare vil sjekke av boksen
+      e.stopPropagation();
+      if (typeof selectedCategories === 'undefined') return;
+
       if (e.target.checked) {
         if (!selectedCategories.includes(cat)) selectedCategories.push(cat);
       } else {
@@ -1910,12 +1861,12 @@ function renderFilters() {
     const catColor = categoryColors[cat] || '#3788d8';
     colorDot.style.backgroundColor = catColor;
 
-    // Tekst (Kategorinavn)
+    // Kategori-navn
     const labelText = document.createElement('span');
     labelText.className = 'filter-label';
     labelText.textContent = cat;
 
-    // Klikkområde for fargeprikk og tekst som ÅPNER MODALEN
+    // Klikkområde som åpner modalen
     const clickArea = document.createElement('div');
     clickArea.style.cssText = 'display: flex; align-items: center; gap: 8px; flex: 1; cursor: pointer;';
     clickArea.appendChild(colorDot);
@@ -1927,11 +1878,10 @@ function renderFilters() {
       } else if (typeof showCategoryModal === 'function') {
         showCategoryModal(cat);
       } else {
-        console.warn('Fant ingen modal-funksjon (f.eks. openCategoryModal) for kategorien:', cat);
+        console.warn('Fant ingen modal-funksjon for kategorien:', cat);
       }
     });
 
-    // Sett sammen elementet
     item.appendChild(checkbox);
     item.appendChild(clickArea);
     
@@ -1945,7 +1895,7 @@ function checkSingleCategorySelection() {
   const printBtn = document.getElementById('btnPrintCategory');
   if (!printBtn) return;
 
-  if (selectedCategories.length === 1) {
+  if (typeof selectedCategories !== 'undefined' && selectedCategories.length === 1) {
     const activeCat = selectedCategories[0];
     printBtn.textContent = `🖨️ Skriv ut liste for "${activeCat}"`;
     printBtn.style.display = 'block';
@@ -1954,9 +1904,9 @@ function checkSingleCategorySelection() {
   }
 }
 
-// Lytter på utskriftsknappen for valgt kategori
+// Utskrift for enkeltkategori
 document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
-  if (selectedCategories.length !== 1) return;
+  if (typeof selectedCategories === 'undefined' || selectedCategories.length !== 1) return;
 
   const selectedCategory = selectedCategories[0];
   const originalView = calendar.view.type;
@@ -1970,14 +1920,13 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   calendar.gotoDate(schoolYearStart);
 
   const shouldIncludeEvent = (evt) => {
-    const trinnArray = evt.extendedProps?.trinn || [];
+    const trinnArray = evt.extendedProps?.trinn || evt.trinn || [];
     if (Array.isArray(trinnArray) && trinnArray.includes(selectedCategory)) {
       return true;
     }
     return isEventInSelectedCategories(evt);
   };
 
-  // --- HENGER UT ALLE STATISKE KILDER TRYGT (Støtter både nye funksjoner og variabler) ---
   const getFelles = typeof getFellesAktiviteterSomEvents === 'function' ? getFellesAktiviteterSomEvents() : (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []);
   const getDks = typeof getDksAktiviteterSomEvents === 'function' ? getDksAktiviteterSomEvents() : (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []);
   const getSvomme = typeof getSvommeAktiviteterSomEvents === 'function' ? getSvommeAktiviteterSomEvents() : (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []);
@@ -1985,8 +1934,9 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   const getUia = typeof getUiAAktiviteterSomEvents === 'function' ? getUiAAktiviteterSomEvents() : (typeof uiaEventsFromJs !== 'undefined' ? uiaEventsFromJs : []);
   const getKartlegging = typeof getKartleggingerSomEvents === 'function' ? getKartleggingerSomEvents() : (typeof kartleggingEventsFromJs !== 'undefined' ? kartleggingEventsFromJs : []);
 
-  // Filtrerer alle kildene basert på valgt kategori
-  const filteredUserEvents = rawEvents.filter(shouldIncludeEvent);
+  const userEventsSource = typeof rawEvents !== 'undefined' ? rawEvents : [];
+
+  const filteredUserEvents = userEventsSource.filter(shouldIncludeEvent);
   const filteredFellesEvents = getFelles.filter(shouldIncludeEvent);
   const filteredDksEvents = getDks.filter(shouldIncludeEvent);
   const filteredSvommeEvents = getSvomme.filter(shouldIncludeEvent);
@@ -1999,7 +1949,6 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
     filteredBursdager = getBirthdayEvents(startYear).filter(shouldIncludeEvent);
   }
 
-  // Samler alt i én matrise før utskrift
   const allRawEvents = [
     ...filteredFellesEvents, 
     ...filteredDksEvents, 
