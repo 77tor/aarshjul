@@ -1047,23 +1047,35 @@ window.addEventListener('click', (e) => {
 function renderTrinnTimeline(trinn, filterSearch = '') {
   const container = document.getElementById('trinnCalendarTimeline');
   if (!container) return;
-  container.innerHTML = `<p style="padding: 20px; color: #64748b; text-align: center;">Laster avtaler for ${trinn}...</p>`;
+  container.innerHTML = '';
 
-  // Hent alle hendelser
   let allEvents = [];
-  if (typeof getCombinedEvents === 'function') {
-    allEvents = getCombinedEvents();
-  } else if (window.calendar) {
-    allEvents = window.calendar.getEvents().map(e => ({
-      title: e.title,
-      start: e.start,
-      extendedProps: e.extendedProps
-    }));
+
+  // Trygg henting av hendelser uansett hvordan de er lagret
+  try {
+    if (typeof getCombinedEvents === 'function') {
+      allEvents = getCombinedEvents();
+    } else if (window.calendar && typeof window.calendar.getEvents === 'function') {
+      allEvents = window.calendar.getEvents().map(evt => {
+        const plain = evt.toPlainObject ? evt.toPlainObject() : evt;
+        return {
+          title: evt.title || plain.title,
+          start: evt.start || plain.start,
+          endDate: evt.end || plain.end,
+          backgroundColor: evt.backgroundColor || plain.backgroundColor,
+          extendedProps: evt.extendedProps || plain.extendedProps || plain
+        };
+      });
+    } else if (Array.isArray(window.events)) {
+      allEvents = window.events;
+    }
+  } catch (err) {
+    console.error("Feil ved uthenting av hendelser:", err);
   }
 
   const trinnNum = trinn.replace(/\D/g, ''); 
 
-  // Filtrer ut relevante hendelser
+  // Filtrer hendelser basert på trinn og søkeord
   const trinnEvents = allEvents.filter(evt => {
     const ext = evt.extendedProps || evt;
     const title = evt.title || ext.title || '';
@@ -1091,14 +1103,58 @@ function renderTrinnTimeline(trinn, filterSearch = '') {
     return;
   }
 
-  container.innerHTML = '';
+  // Sorter hendelsene kronologisk etter dato
+  trinnEvents.sort((a, b) => new Date(a.start || a.startDate) - new Date(b.start || b.startDate));
+
+  // Grupper per uke
+  const weeksMap = new Map();
   trinnEvents.forEach(evt => {
-    const ext = evt.extendedProps || evt;
-    const card = document.createElement('div');
-    card.className = 'trinn-event-card';
-    card.style.cssText = 'background: #fff; padding: 10px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #e2e8f0; border-left: 4px solid #0284c7;';
-    card.innerHTML = `<strong>${evt.title || ext.title}</strong><br><small style="color:#64748b">${new Date(evt.start).toLocaleDateString('no-NO')}</small>`;
-    container.appendChild(card);
+    const startVal = evt.start || evt.startDate;
+    if (!startVal) return;
+
+    const d = new Date(startVal);
+    const weekNum = typeof getISOWeekNumber === 'function' ? getISOWeekNumber(d) : 1;
+    const year = d.getFullYear();
+    const key = `Uke ${weekNum} (${year})`;
+
+    if (!weeksMap.has(key)) weeksMap.set(key, []);
+    weeksMap.get(key).push(evt);
+  });
+
+  // Bygg tidslinjen
+  weeksMap.forEach((eventsInWeek, weekTitle) => {
+    const weekBlock = document.createElement('div');
+    weekBlock.className = 'trinn-week-block';
+
+    let eventsHtml = '';
+    eventsInWeek.forEach(evt => {
+      const ext = evt.extendedProps || evt;
+      const color = evt.backgroundColor || ext.color || '#0284c7';
+      const startD = new Date(evt.start || evt.startDate);
+      
+      const dateFmt = startD.toLocaleDateString('no-NO', { weekday: 'short', day: 'numeric', month: 'short' });
+      const timeFmt = evt.allDay ? 'Hele dagen' : startD.toTimeString().substring(0, 5);
+
+      eventsHtml += `
+        <div class="trinn-event-card" style="border-left: 5px solid ${color}; background: #ffffff; padding: 10px 14px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+          <div style="font-weight: 600; color: #1e293b; font-size: 0.95rem;">${evt.title || ext.title}</div>
+          <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">
+            📅 ${dateFmt} &nbsp;•&nbsp; ⏰ ${timeFmt} ${ext.group ? `&nbsp;•&nbsp; 🏷️ ${ext.group}` : ''}
+          </div>
+          ${ext.description ? `<div style="font-size: 0.85rem; color: #475569; margin-top: 6px;">${ext.description}</div>` : ''}
+        </div>
+      `;
+    });
+
+    weekBlock.innerHTML = `
+      <div class="trinn-week-header" style="font-weight: 700; margin: 16px 0 8px 0; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; display: flex; justify-content: space-between;">
+        <span>📌 ${weekTitle}</span>
+        <span style="font-weight: normal; font-size: 0.85rem; color: #64748b;">${eventsInWeek.length} avtale(r)</span>
+      </div>
+      <div>${eventsHtml}</div>
+    `;
+
+    container.appendChild(weekBlock);
   });
 }
 
