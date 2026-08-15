@@ -950,113 +950,161 @@ document.getElementById('miniNextBtn').addEventListener('click', () => {
   renderMiniCalendar();
 });
 
+
+
+
 /* TRINN-KALENDER */
+/* ==========================================
+   TRINN-KALENDER LOGIKK
+   ========================================== */
 let activeSelectedTrinn = "";
 
-// Funksjon for å oppdatere synligheten på trinnknappen i kategorimodalen
+// 1. Oppdaterer knappens synlighet og tekstavstand i kategorimodalen
 function updateTrinnCalButtonVisibility() {
   const catTitle = document.getElementById('categoryModalTitle')?.textContent || '';
   const match = catTitle.match(/\d\.\s*trinn/i);
   const btn = document.getElementById('btnTrinnCalendar');
+  const labelEl = document.getElementById('trinnCalBtnLabel');
 
   if (btn) {
     if (match) {
-      // Vis knappen kun dersom tittelen gjelder et trinn (1.-7. trinn)
-      btn.style.display = 'inline-flex';
+      btn.style.setProperty('display', 'inline-flex', 'important');
       activeSelectedTrinn = match[0];
-      const labelEl = document.getElementById('trinnCalBtnLabel');
-      if (labelEl) labelEl.textContent = activeSelectedTrinn;
+      if (labelEl) labelEl.textContent = ' ' + activeSelectedTrinn; // Sørger for mellomrom før trinnet
     } else {
-      // Skjul knappen for DKS, Svømming, SFO osv.
-      btn.style.display = 'none';
+      btn.style.setProperty('display', 'none', 'important');
     }
   }
 }
 
-// 1. Åpne og generer trinnkalenderen
-function openTrinnCalendar(trinn) {
+// 2. Åpner trinnmodalen trygt
+window.openTrinnCalendar = function(trinn) {
   activeSelectedTrinn = trinn || "1. trinn";
 
   const titleEl = document.getElementById('trinnCalendarTitle');
   if (titleEl) titleEl.textContent = `📅 Kalender for ${activeSelectedTrinn}`;
 
-  renderTrinnTimeline(activeSelectedTrinn);
+  // Prøv å rendre tidslinjen trygt uten å krasje åpningen
+  try {
+    if (typeof renderTrinnTimeline === 'function') {
+      renderTrinnTimeline(activeSelectedTrinn);
+    }
+  } catch (err) {
+    console.error("Feil ved generering av trinn-tidslinje:", err);
+  }
 
+  // Tving modalen frem
   const modal = document.getElementById('trinnCalendarModal');
   if (modal) {
-    // Tving visning med direkte inline-styles
     modal.classList.add('active', 'show');
-    modal.style.setProperty('display', 'flex', 'important');
-    modal.style.setProperty('z-index', '999999', 'important');
-    modal.style.setProperty('visibility', 'visible', 'important');
-    modal.style.setProperty('opacity', '1', 'important');
+    modal.setAttribute('style', 'display: flex !important; z-index: 9999999 !important; opacity: 1 !important; visibility: visible !important;');
+  } else {
+    alert("Fant ikke #trinnCalendarModal i HTML-koden!");
   }
+};
+
+// 3. Følg med på når kategorimodalen endrer seg (åpnes/bytter trinn)
+const categoryModalEl = document.getElementById('categoryModal');
+if (categoryModalEl) {
+  const observer = new MutationObserver(updateTrinnCalButtonVisibility);
+  observer.observe(categoryModalEl, { attributes: true, attributeFilter: ['style', 'class'] });
 }
 
-// 3. Hendelseslyttere
-document.addEventListener('DOMContentLoaded', () => {
+// 4. Global klikk-lytter
+window.addEventListener('click', (e) => {
+  const trinnBtn = e.target.closest('#btnTrinnCalendar');
+  
+  if (trinnBtn) {
+    e.preventDefault();
+    e.stopPropagation();
 
-  // Observer som følger med på når kategorimodalen åpnes/endres
-  const categoryModal = document.getElementById('categoryModal');
-  if (categoryModal) {
-    const observer = new MutationObserver(() => {
-      updateTrinnCalButtonVisibility();
-    });
-    observer.observe(categoryModal, { attributes: true, attributeFilter: ['style', 'class'] });
+    const catTitle = document.getElementById('categoryModalTitle')?.textContent || '';
+    const match = catTitle.match(/\d\.\s*trinn/i);
+    const targetTrinn = match ? match[0] : (activeSelectedTrinn || '1. trinn');
+
+    // Lukker kategorimodalen
+    if (categoryModalEl) {
+      categoryModalEl.style.display = 'none';
+      categoryModalEl.classList.remove('show', 'active');
+    }
+
+    // Åpner trinnkalenderen
+    window.openTrinnCalendar(targetTrinn);
+    return;
   }
 
-  // Global klikk-lytter
-  document.addEventListener('click', (e) => {
+  // Lukking av Trinnkalender-modalen
+  if (e.target.closest('#closeTrinnCalModalBtn') || e.target.closest('#btnTrinnCalClose') || e.target.id === 'trinnCalendarModal') {
+    const modal = document.getElementById('trinnCalendarModal');
+    if (modal) {
+      modal.style.display = 'none';
+      modal.classList.remove('show', 'active');
+    }
+  }
+}, true);
+
+
+function renderTrinnTimeline(trinn, filterSearch = '') {
+  const container = document.getElementById('trinnCalendarTimeline');
+  if (!container) return;
+  container.innerHTML = `<p style="padding: 20px; color: #64748b; text-align: center;">Laster avtaler for ${trinn}...</p>`;
+
+  // Hent alle hendelser
+  let allEvents = [];
+  if (typeof getCombinedEvents === 'function') {
+    allEvents = getCombinedEvents();
+  } else if (window.calendar) {
+    allEvents = window.calendar.getEvents().map(e => ({
+      title: e.title,
+      start: e.start,
+      extendedProps: e.extendedProps
+    }));
+  }
+
+  const trinnNum = trinn.replace(/\D/g, ''); 
+
+  // Filtrer ut relevante hendelser
+  const trinnEvents = allEvents.filter(evt => {
+    const ext = evt.extendedProps || evt;
+    const title = evt.title || ext.title || '';
+    const desc = ext.description || '';
     
-    // Klikk på "Kalender for [trinn]"
-    const trinnBtn = e.target.closest('#btnTrinnCalendar');
-    if (trinnBtn) {
-      e.preventDefault();
-      e.stopPropagation();
+    const rawTrinn = ext.trinn || evt.trinn || [];
+    const trinnArray = Array.isArray(rawTrinn) ? rawTrinn : [rawTrinn];
 
-      const catTitle = document.getElementById('categoryModalTitle')?.textContent || '';
-      const match = catTitle.match(/\d\.\s*trinn/i);
-      
-      // Sikkerhet: Kun åpne hvis det faktisk er et trinn
-      if (match) {
-        const catModal = document.getElementById('categoryModal');
-        if (catModal) {
-          catModal.style.display = 'none';
-          catModal.classList.remove('show', 'active');
-        }
+    const hasTrinnMatch = trinnArray.some(t => {
+      const str = String(t).toLowerCase();
+      return str.includes(trinn.toLowerCase()) || (trinnNum && str === trinnNum);
+    });
 
-        // Åpne trinnkalenderen med litt forsinkelse så ikke lukk-events kolliderer
-        setTimeout(() => {
-          openTrinnCalendar(match[0]);
-        }, 50);
-      }
-      return;
-    }
+    const isForEveryone = trinnArray.length === 0 || trinnArray.some(t => String(t).toLowerCase().includes('alle'));
+    const textMatch = title.toLowerCase().includes(trinn.toLowerCase()) || (trinnNum && title.toLowerCase().includes(`${trinnNum}. trinn`));
 
-    // Lukking av Trinnkalenderen
-    if (e.target.closest('#closeTrinnCalModalBtn') || e.target.closest('#btnTrinnCalClose') || e.target.id === 'trinnCalendarModal') {
-      const modal = document.getElementById('trinnCalendarModal');
-      if (modal) {
-        modal.style.display = 'none';
-        modal.classList.remove('show', 'active');
-      }
-    }
+    const matchesTrinn = hasTrinnMatch || isForEveryone || textMatch;
+    const matchesSearch = !filterSearch || title.toLowerCase().includes(filterSearch.toLowerCase()) || desc.toLowerCase().includes(filterSearch.toLowerCase());
+
+    return matchesTrinn && matchesSearch;
   });
 
-  // Søkefelt
-  document.getElementById('trinnCalSearch')?.addEventListener('input', (e) => {
-    const currentTitle = document.getElementById('trinnCalendarTitle')?.textContent || '';
-    const match = currentTitle.match(/\d\.\s*trinn/i);
-    const currentTrinn = match ? match[0] : (activeSelectedTrinn || '1. trinn');
+  if (trinnEvents.length === 0) {
+    container.innerHTML = `<p style="padding: 20px; color: #64748b; text-align: center;">Ingen avtaler funnet for ${trinn}.</p>`;
+    return;
+  }
 
-    renderTrinnTimeline(currentTrinn, e.target.value);
+  container.innerHTML = '';
+  trinnEvents.forEach(evt => {
+    const ext = evt.extendedProps || evt;
+    const card = document.createElement('div');
+    card.className = 'trinn-event-card';
+    card.style.cssText = 'background: #fff; padding: 10px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #e2e8f0; border-left: 4px solid #0284c7;';
+    card.innerHTML = `<strong>${evt.title || ext.title}</strong><br><small style="color:#64748b">${new Date(evt.start).toLocaleDateString('no-NO')}</small>`;
+    container.appendChild(card);
   });
-});
+}
 
 
 
-
-/* Oppstart & FullCalendar */
+/* OPPSTART & FULLCALENDAR */
 document.addEventListener('DOMContentLoaded', () => {
   if (typeof populateGroupDropdown === 'function') {
     populateGroupDropdown();
