@@ -1069,53 +1069,67 @@ function renderTrinnTimeline(trinn, filterSearch = '') {
 // 3. Hendelseslyttere
 document.addEventListener('DOMContentLoaded', () => {
 
-  // Les inn hvilket trinn som er valgt når kategorimodalen åpnes
-  const categoryModal = document.getElementById('categoryModal');
-  if (categoryModal) {
-    const observer = new MutationObserver(() => {
-      if (categoryModal.style.display !== 'none') {
-        const titleText = document.getElementById('categoryModalTitle')?.textContent || '';
-        const match = titleText.match(/\d\.\s*trinn/i);
-        const labelEl = document.getElementById('trinnCalBtnLabel');
-        if (match) {
-          activeSelectedTrinn = match[0];
-          if (labelEl) labelEl.textContent = activeSelectedTrinn;
-        }
-      }
-    });
-    observer.observe(categoryModal, { attributes: true, attributeFilter: ['style'] });
-  }
+  // Global klikk-lytter (Event Delegation) - fanger opp klikket UANSETT når knappen lages
+  document.addEventListener('click', (e) => {
+    
+    // Sjekk om det ble klikket på #btnTrinnCalendar eller noe inni den
+    const trinnBtn = e.target.closest('#btnTrinnCalendar');
+    if (trinnBtn) {
+      e.preventDefault();
+      
+      // Hent tittel fra enten kategorimodal eller matrisemodal
+      const catTitle = document.getElementById('categoryModalTitle')?.textContent || '';
+      const gridTitle = document.getElementById('gridOverviewTitle')?.textContent || '';
+      const fullText = catTitle + ' ' + gridTitle;
+      
+      // Finn trinn (f.eks. "4. trinn")
+      const match = fullText.match(/\d\.\s*trinn/i);
+      const trinnToOpen = match ? match[0] : (activeSelectedTrinn || '1. trinn');
 
-  // Klikk på knappen
-  document.getElementById('btnTrinnCalendar')?.addEventListener('click', () => {
-    const titleText = document.getElementById('categoryModalTitle')?.textContent || '';
-    const match = titleText.match(/\d\.\s*trinn/i);
-    const trinnToOpen = match ? match[0] : (activeSelectedTrinn || '1. trinn');
+      openTrinnCalendar(trinnToOpen);
+      return;
+    }
 
-    openTrinnCalendar(trinnToOpen);
-  });
+    // Lukk-knapp oppe (X)
+    if (e.target.closest('#closeTrinnCalModalBtn')) {
+      const modal = document.getElementById('trinnCalendarModal');
+      if (modal) modal.style.display = 'none';
+      return;
+    }
 
-  // Lukking
-  document.getElementById('closeTrinnCalModalBtn')?.addEventListener('click', () => {
-    document.getElementById('trinnCalendarModal').style.display = 'none';
-  });
+    // Lukk-knapp nede
+    if (e.target.closest('#btnTrinnCalClose')) {
+      const modal = document.getElementById('trinnCalendarModal');
+      if (modal) modal.style.display = 'none';
+      return;
+    }
 
-  document.getElementById('btnTrinnCalClose')?.addEventListener('click', () => {
-    document.getElementById('trinnCalendarModal').style.display = 'none';
-  });
-
-  document.getElementById('trinnCalendarModal')?.addEventListener('click', (e) => {
+    // Klikk på mørk bakgrunn
     if (e.target.id === 'trinnCalendarModal') {
-      document.getElementById('trinnCalendarModal').style.display = 'none';
+      e.target.style.display = 'none';
+      return;
     }
   });
 
-// Søkefelt i Trinnkalenderen
+  // Oppdater knappe-tekst dynamisk når brukeren klikker på et trinn i sidebaren
+  document.addEventListener('click', (e) => {
+    const trinnEl = e.target.closest('[data-trinn], .trinn-btn, .category-item');
+    if (trinnEl) {
+      const txt = trinnEl.textContent || '';
+      const match = txt.match(/\d\.\s*trinn/i);
+      if (match) {
+        activeSelectedTrinn = match[0];
+        const labelEl = document.getElementById('trinnCalBtnLabel');
+        if (labelEl) labelEl.textContent = activeSelectedTrinn;
+      }
+    }
+  });
+
+  // Søkefelt i Trinnkalenderen
   document.getElementById('trinnCalSearch')?.addEventListener('input', (e) => {
-    // Hent ut trinnet fra modalens tittel for å være 100% sikker
     const currentTitle = document.getElementById('trinnCalendarTitle')?.textContent || '';
     const match = currentTitle.match(/\d\.\s*trinn/i);
-    const currentTrinn = match ? match[0] : activeSelectedTrinn;
+    const currentTrinn = match ? match[0] : (activeSelectedTrinn || '1. trinn');
 
     renderTrinnTimeline(currentTrinn, e.target.value);
   });

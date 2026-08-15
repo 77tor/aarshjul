@@ -187,7 +187,9 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
   border-radius: 4px;
   font-weight: 600;
 }
-
+#trinnCalendarModal {
+  z-index: 99999 !important; /* Legger seg over categoryModal og gridOverviewModal */
+}
 
 /* Utskriftstilpasning for trinnkalenderen */
 @media print {
