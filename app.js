@@ -1056,57 +1056,71 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
 
   const categories = ['Fellesakt.', 'DKS', 'Kartlegging', 'Svømming', 'Møter', 'Annet'];
 
-  // Generer skoleåret (Uke 32 til 52, deretter Uke 1 til 25)
+  // Generer skoleåret i rekkefølge (Uke 32–52, deretter Uke 1–25)
   const schoolWeeks = [];
   for (let w = 32; w <= 52; w++) schoolWeeks.push(w);
   for (let w = 1; w <= 25; w++) schoolWeeks.push(w);
 
-  let eventsList = [];
+  // Generisk beregning av ISO-uke hvis global funksjon mangler
+  function calcISOWeek(d) {
+    if (typeof getISOWeekNumber === 'function') return getISOWeekNumber(d);
+    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dayNum = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+  }
 
-  // Hjelper for å hente ut ukenummer fra vilkårlig dato/tekst
+  // Robust uke-parser fra alle mønstre i tekst eller datoobjekt
   function parseWeekNumber(text, evtObj = {}) {
-    // 1. Direkte match på "uke 33" eller "(uke 33)"
+    // A. Direkte tekstmatch "Uke 37" eller "(uke 37)"
     const matchUke = text.match(/uke\s*(\d+)/i);
     if (matchUke) return parseInt(matchUke[1], 10);
 
-    // 2. Fra e.start / e.startDate
-    const rawDate = evtObj.start || evtObj.startDate || (evtObj.extendedProps && evtObj.extendedProps.start);
+    // B. Reelt Date-objekt fra kalenderelementet
+    const rawDate = evtObj.start || evtObj.startDate || (evtObj.extendedProps && (evtObj.extendedProps.start || evtObj.extendedProps.start_date));
     if (rawDate) {
       const d = new Date(rawDate);
-      if (!isNaN(d.getTime())) {
-        return typeof getISOWeekNumber === 'function' ? getISOWeekNumber(d) : null;
-      }
+      if (!isNaN(d.getTime())) return calcISOWeek(d);
     }
 
-    // 3. Fra tekstformater som "13. aug" eller "13.08"
-    const months = ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"];
-    const matchDate = text.match(/(\d{1,2})\.\s*([a-zæøå]{3})/i);
-    if (matchDate) {
-      const day = parseInt(matchDate[1], 10);
-      const mIdx = months.findIndex(m => matchDate[2].toLowerCase().startsWith(m));
-      if (mIdx !== -1) {
-        // Skoleår-logikk: aug-des er inneværende år, jan-jul er neste år
-        const now = new Date();
-        const year = mIdx >= 7 ? now.getFullYear() : now.getFullYear() + 1;
+    // C. Parsing fra datostrenger i teksten (f.eks. "9. sep", "15. feb", "10. jan", "18. juni")
+    const monthMap = {
+      jan: 0, feb: 1, mar: 2, apr: 3, mai: 4, jun: 5, 
+      jul: 6, aug: 7, sep: 8, okt: 9, nov: 10, des: 11
+    };
+
+    // Matcher mønstre som "9. sep", "15. feb.", "18. juni"
+    const dateMatch = text.match(/(\d{1,2})\.\s*([a-zæøå]{3,4})/i);
+    if (dateMatch) {
+      const day = parseInt(dateMatch[1], 10);
+      const mStr = dateMatch[2].toLowerCase().substring(0, 3);
+      if (monthMap.hasOwnProperty(mStr)) {
+        const mIdx = monthMap[mStr];
+        // Skoleårslogikk: Aug–Des er innværende år (høst), Jan–Jul er neste år (vår)
+        const currentYear = new Date().getFullYear();
+        const year = mIdx >= 7 ? currentYear : currentYear + 1;
         const d = new Date(year, mIdx, day);
-        return typeof getISOWeekNumber === 'function' ? getISOWeekNumber(d) : null;
+        return calcISOWeek(d);
       }
     }
     return null;
   }
 
-  // Hjelper for kategori-kmapping
+  // Presis kategorikartlegging med prioritering
   function mapCategory(text) {
     const t = text.toLowerCase();
-    if (t.includes('felles') || t.includes('samling') || t.includes('aktivitet') || t.includes('beintøft') || t.includes('blimE')) return 'Fellesakt.';
+    if (t.includes('møte') || t.includes('foreldre') || t.includes('samtale') || t.includes('fau') || t.includes('dialogmodell')) return 'Møter';
     if (t.includes('dks') || t.includes('kultur') || t.includes('konsert')) return 'DKS';
     if (t.includes('kartlegg') || t.includes('prøv') || t.includes('trivsel') || t.includes('nasjonal')) return 'Kartlegging';
     if (t.includes('svømm')) return 'Svømming';
-    if (t.includes('møte') || t.includes('foreldre') || t.includes('samtale') || t.includes('fau')) return 'Møter';
+    if (t.includes('felles') || t.includes('samling') || t.includes('aktivitet') || t.includes('beintøft') || t.includes('blime') || t.includes('fadder')) return 'Fellesakt.';
     return 'Annet';
   }
 
-  // 1. Hent hendelser fra globale kalenderdata
+  let eventsList = [];
+
+  // 1. Hent hendelser fra globale kalendervariabler
   let allEvents = [];
   if (typeof getCombinedEvents === 'function') allEvents = getCombinedEvents();
   else if (window.calendar && typeof window.calendar.getEvents === 'function') allEvents = window.calendar.getEvents();
@@ -1136,7 +1150,7 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
     }
   });
 
-  // 2. Hvis vi må fall-backe til HTML-kortene som ble sendt med
+  // 2. Fallback til preloadedCards dersom kildedata var tom
   if (eventsList.length === 0 && preloadedCards.length > 0) {
     preloadedCards.forEach(card => {
       const text = card.fullText || '';
@@ -1147,7 +1161,7 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
         title: title,
         week: parseWeekNumber(text),
         category: mapCategory(text),
-        dateStr: lines[1] || '',
+        dateStr: lines.find(l => l.includes('📅') || l.match(/\d{1,2}\./)) || '',
         fullText: text
       });
     });
@@ -1158,7 +1172,7 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
     eventsList = eventsList.filter(e => e.fullText.toLowerCase().includes(filterSearch.toLowerCase()));
   }
 
-  // 3. Bygg tabellen
+  // 3. Generer tabell-HTML
   let tableHtml = `
     <div style="overflow-x: auto; max-height: 520px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 8px;">
       <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: left; background: #fff;">
@@ -1171,7 +1185,7 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
         <tbody>
   `;
 
-  // Iterer gjennom uker
+  // Iterer gjennom alle uker i skoleåret
   schoolWeeks.forEach(w => {
     const weekEvents = eventsList.filter(e => e.week === w);
     if (weekEvents.length === 0) return;
@@ -1186,7 +1200,7 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
         tableHtml += `
           <div style="background: #f0f9ff; border-left: 3px solid #0284c7; padding: 6px; margin-bottom: 4px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
             <div style="font-weight: 600; color: #0f172a;">${evt.title}</div>
-            ${evt.dateStr ? `<div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">📅 ${evt.dateStr}</div>` : ''}
+            ${evt.dateStr ? `<div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">${evt.dateStr}</div>` : ''}
           </div>
         `;
       });
@@ -1196,7 +1210,7 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
     tableHtml += `</tr>`;
   });
 
-  // Rad for udefinerte datoer (dersom uke ikke kunne beregnes)
+  // Eventuelle hendelser der dato overhodet ikke kunne finnes
   const noWeekEvents = eventsList.filter(e => !e.week);
   if (noWeekEvents.length > 0) {
     tableHtml += `<tr style="border-bottom: 1px solid #e2e8f0; background: #fffbebfb;">`;
@@ -1209,7 +1223,7 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
         tableHtml += `
           <div style="background: #ffffff; border-left: 3px solid #f59e0b; padding: 6px; margin-bottom: 4px; border-radius: 4px; border: 1px solid #fde68a;">
             <div style="font-weight: 600; color: #0f172a;">${evt.title}</div>
-            ${evt.dateStr ? `<div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">📅 ${evt.dateStr}</div>` : ''}
+            ${evt.dateStr ? `<div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">${evt.dateStr}</div>` : ''}
           </div>
         `;
       });
