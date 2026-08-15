@@ -1288,7 +1288,11 @@ viewDescription.innerHTML = content;
     }
   });
 
-  calendar.render();
+calendar.render();
+  
+  // 🔑 LEGG TIL DENNE LINJEN FOR Å TVINGE TIL DAGENS DATO:
+  calendar.today();
+
   if (typeof renderFilters === 'function') renderFilters();
   if (typeof renderMiniCalendar === 'function') renderMiniCalendar();
 
