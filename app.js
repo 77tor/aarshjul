@@ -939,24 +939,18 @@ function renderMiniCalendar() {
   }
 }
 
-
-document.getElementById('miniPrevBtn').addEventListener('click', () => {
+document.getElementById('miniPrevBtn')?.addEventListener('click', () => {
   miniCalCurrentDate.setMonth(miniCalCurrentDate.getMonth() - 1);
   renderMiniCalendar();
 });
 
-document.getElementById('miniNextBtn').addEventListener('click', () => {
+document.getElementById('miniNextBtn')?.addEventListener('click', () => {
   miniCalCurrentDate.setMonth(miniCalCurrentDate.getMonth() + 1);
   renderMiniCalendar();
 });
 
 
-
-
 /* TRINN-KALENDER */
-/* ==========================================
-   TRINN-KALENDER LOGIKK
-   ========================================== */
 let activeSelectedTrinn = "";
 
 // 1. Oppdaterer knappens synlighet og tekstavstand i kategorimodalen
@@ -970,7 +964,7 @@ function updateTrinnCalButtonVisibility() {
     if (match) {
       btn.style.setProperty('display', 'inline-flex', 'important');
       activeSelectedTrinn = match[0];
-      if (labelEl) labelEl.textContent = ' ' + activeSelectedTrinn; // Sørger for mellomrom før trinnet
+      if (labelEl) labelEl.textContent = ' ' + activeSelectedTrinn;
     } else {
       btn.style.setProperty('display', 'none', 'important');
     }
@@ -978,22 +972,20 @@ function updateTrinnCalButtonVisibility() {
 }
 
 // 2. Åpner trinnmodalen trygt
-window.openTrinnCalendar = function(trinn) {
+window.openTrinnCalendar = function(trinn, savedHtmlCards = []) {
   activeSelectedTrinn = trinn || "1. trinn";
 
   const titleEl = document.getElementById('trinnCalendarTitle');
   if (titleEl) titleEl.textContent = `📅 Kalender for ${activeSelectedTrinn}`;
 
-  // Prøv å rendre tidslinjen trygt uten å krasje åpningen
   try {
     if (typeof renderTrinnTimeline === 'function') {
-      renderTrinnTimeline(activeSelectedTrinn);
+      renderTrinnTimeline(activeSelectedTrinn, '', savedHtmlCards);
     }
   } catch (err) {
     console.error("Feil ved generering av trinn-tidslinje:", err);
   }
 
-  // Tving modalen frem
   const modal = document.getElementById('trinnCalendarModal');
   if (modal) {
     modal.classList.add('active', 'show');
@@ -1003,7 +995,7 @@ window.openTrinnCalendar = function(trinn) {
   }
 };
 
-// 3. Følg med på når kategorimodalen endrer seg (åpnes/bytter trinn)
+// 3. Følg med på når kategorimodalen endrer seg
 const categoryModalEl = document.getElementById('categoryModal');
 if (categoryModalEl) {
   const observer = new MutationObserver(updateTrinnCalButtonVisibility);
@@ -1022,14 +1014,27 @@ window.addEventListener('click', (e) => {
     const match = catTitle.match(/\d\.\s*trinn/i);
     const targetTrinn = match ? match[0] : (activeSelectedTrinn || '1. trinn');
 
+    // Kopier kortene fra kategorimodalen FØR den lukkes
+    const catListCards = document.querySelectorAll('#categoryEventsList > div, #categoryEventsList .event-card, #categoryEventsList .category-event-card');
+    const savedHtmlCards = [];
+    catListCards.forEach(card => {
+      const text = card.innerText || card.textContent || '';
+      if (text.trim()) {
+        savedHtmlCards.push({
+          htmlContent: card.innerHTML,
+          fullText: text
+        });
+      }
+    });
+
     // Lukker kategorimodalen
     if (categoryModalEl) {
       categoryModalEl.style.display = 'none';
       categoryModalEl.classList.remove('show', 'active');
     }
 
-    // Åpner trinnkalenderen
-    window.openTrinnCalendar(targetTrinn);
+    // Åpner trinnkalenderen med de lagrede kortene
+    window.openTrinnCalendar(targetTrinn, savedHtmlCards);
     return;
   }
 
@@ -1043,120 +1048,75 @@ window.addEventListener('click', (e) => {
   }
 }, true);
 
-
-function renderTrinnTimeline(trinn, filterSearch = '') {
+// 5. Render-funksjon som bygger tidslinjen
+function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
   const container = document.getElementById('trinnCalendarTimeline');
   if (!container) return;
   container.innerHTML = '';
 
-  let allEvents = [];
+  let rawEvents = [...preloadedCards];
 
-  // Trygg henting av hendelser uansett hvordan de er lagret
-  try {
-    if (typeof getCombinedEvents === 'function') {
-      allEvents = getCombinedEvents();
-    } else if (window.calendar && typeof window.calendar.getEvents === 'function') {
-      allEvents = window.calendar.getEvents().map(evt => {
-        const plain = evt.toPlainObject ? evt.toPlainObject() : evt;
-        return {
-          title: evt.title || plain.title,
-          start: evt.start || plain.start,
-          endDate: evt.end || plain.end,
-          backgroundColor: evt.backgroundColor || plain.backgroundColor,
-          extendedProps: evt.extendedProps || plain.extendedProps || plain
-        };
-      });
-    } else if (Array.isArray(window.events)) {
-      allEvents = window.events;
-    }
-  } catch (err) {
-    console.error("Feil ved uthenting av hendelser:", err);
+  // Hvis ingen forhåndslagrede kort ble sendt med, prøv direkte henting fra kalender-data
+  if (rawEvents.length === 0) {
+    let all = [];
+    if (typeof getCombinedEvents === 'function') all = getCombinedEvents();
+    else if (window.calendar && typeof window.calendar.getEvents === 'function') all = window.calendar.getEvents();
+    else if (Array.isArray(window.events)) all = window.events;
+
+    const trinnNum = trinn.replace(/\D/g, '');
+    all.forEach(evt => {
+      const ext = evt.extendedProps || evt;
+      const title = evt.title || ext.title || '';
+      const desc = ext.description || '';
+      const fullText = `${title} ${desc} ${JSON.stringify(ext)}`;
+
+      const trinnMatch = fullText.toLowerCase().includes(trinn.toLowerCase()) || 
+                         (trinnNum && fullText.includes(`${trinnNum}. trinn`)) ||
+                         fullText.includes('1.-7. trinn') ||
+                         fullText.includes('alle trinn');
+
+      if (trinnMatch) {
+        rawEvents.push({
+          title: title,
+          date: evt.start ? new Date(evt.start).toLocaleDateString('no-NO') : '',
+          fullText: fullText,
+          description: desc
+        });
+      }
+    });
   }
 
-  const trinnNum = trinn.replace(/\D/g, ''); 
-
-  // Filtrer hendelser basert på trinn og søkeord
-  const trinnEvents = allEvents.filter(evt => {
-    const ext = evt.extendedProps || evt;
-    const title = evt.title || ext.title || '';
-    const desc = ext.description || '';
-    
-    const rawTrinn = ext.trinn || evt.trinn || [];
-    const trinnArray = Array.isArray(rawTrinn) ? rawTrinn : [rawTrinn];
-
-    const hasTrinnMatch = trinnArray.some(t => {
-      const str = String(t).toLowerCase();
-      return str.includes(trinn.toLowerCase()) || (trinnNum && str === trinnNum);
-    });
-
-    const isForEveryone = trinnArray.length === 0 || trinnArray.some(t => String(t).toLowerCase().includes('alle'));
-    const textMatch = title.toLowerCase().includes(trinn.toLowerCase()) || (trinnNum && title.toLowerCase().includes(`${trinnNum}. trinn`));
-
-    const matchesTrinn = hasTrinnMatch || isForEveryone || textMatch;
-    const matchesSearch = !filterSearch || title.toLowerCase().includes(filterSearch.toLowerCase()) || desc.toLowerCase().includes(filterSearch.toLowerCase());
-
-    return matchesTrinn && matchesSearch;
+  // Filtrer på søkeord i toppfeltet
+  const filtered = rawEvents.filter(item => {
+    if (!filterSearch) return true;
+    return item.fullText.toLowerCase().includes(filterSearch.toLowerCase());
   });
 
-  if (trinnEvents.length === 0) {
+  if (filtered.length === 0) {
     container.innerHTML = `<p style="padding: 20px; color: #64748b; text-align: center;">Ingen avtaler funnet for ${trinn}.</p>`;
     return;
   }
 
-  // Sorter hendelsene kronologisk etter dato
-  trinnEvents.sort((a, b) => new Date(a.start || a.startDate) - new Date(b.start || b.startDate));
+  // Bygg visningen
+  filtered.forEach(item => {
+    const cardDiv = document.createElement('div');
+    cardDiv.className = 'trinn-event-card';
+    cardDiv.style.cssText = 'background: #ffffff; padding: 12px 16px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e2e8f0; border-left: 5px solid #0284c7;';
 
-  // Grupper per uke
-  const weeksMap = new Map();
-  trinnEvents.forEach(evt => {
-    const startVal = evt.start || evt.startDate;
-    if (!startVal) return;
-
-    const d = new Date(startVal);
-    const weekNum = typeof getISOWeekNumber === 'function' ? getISOWeekNumber(d) : 1;
-    const year = d.getFullYear();
-    const key = `Uke ${weekNum} (${year})`;
-
-    if (!weeksMap.has(key)) weeksMap.set(key, []);
-    weeksMap.get(key).push(evt);
-  });
-
-  // Bygg tidslinjen
-  weeksMap.forEach((eventsInWeek, weekTitle) => {
-    const weekBlock = document.createElement('div');
-    weekBlock.className = 'trinn-week-block';
-
-    let eventsHtml = '';
-    eventsInWeek.forEach(evt => {
-      const ext = evt.extendedProps || evt;
-      const color = evt.backgroundColor || ext.color || '#0284c7';
-      const startD = new Date(evt.start || evt.startDate);
-      
-      const dateFmt = startD.toLocaleDateString('no-NO', { weekday: 'short', day: 'numeric', month: 'short' });
-      const timeFmt = evt.allDay ? 'Hele dagen' : startD.toTimeString().substring(0, 5);
-
-      eventsHtml += `
-        <div class="trinn-event-card" style="border-left: 5px solid ${color}; background: #ffffff; padding: 10px 14px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
-          <div style="font-weight: 600; color: #1e293b; font-size: 0.95rem;">${evt.title || ext.title}</div>
-          <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">
-            📅 ${dateFmt} &nbsp;•&nbsp; ⏰ ${timeFmt} ${ext.group ? `&nbsp;•&nbsp; 🏷️ ${ext.group}` : ''}
-          </div>
-          ${ext.description ? `<div style="font-size: 0.85rem; color: #475569; margin-top: 6px;">${ext.description}</div>` : ''}
-        </div>
+    if (item.htmlContent) {
+      cardDiv.innerHTML = item.htmlContent;
+    } else {
+      cardDiv.innerHTML = `
+        <div style="font-weight: 600; color: #1e293b;">${item.title}</div>
+        ${item.date ? `<div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">📅 ${item.date}</div>` : ''}
+        ${item.description ? `<div style="font-size: 0.85rem; color: #475569; margin-top: 6px;">${item.description}</div>` : ''}
       `;
-    });
+    }
 
-    weekBlock.innerHTML = `
-      <div class="trinn-week-header" style="font-weight: 700; margin: 16px 0 8px 0; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; display: flex; justify-content: space-between;">
-        <span>📌 ${weekTitle}</span>
-        <span style="font-weight: normal; font-size: 0.85rem; color: #64748b;">${eventsInWeek.length} avtale(r)</span>
-      </div>
-      <div>${eventsHtml}</div>
-    `;
-
-    container.appendChild(weekBlock);
+    container.appendChild(cardDiv);
   });
 }
+
 
 
 
