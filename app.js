@@ -950,45 +950,61 @@ document.getElementById('miniNextBtn').addEventListener('click', () => {
   renderMiniCalendar();
 });
 
+
+
 /* TRINN-KALENDER */
-// Variable for å holde styr på hvilket trinn som vises
-let currentSelectedTrinn = '1. trinn';
+let activeSelectedTrinn = "";
 
-// Åpne Trinnkalender-modalen
+// 1. Åpne og generer trinnkalenderen
 function openTrinnCalendar(trinn) {
-  currentSelectedTrinn = trinn || '1. trinn';
-  
-  // Oppdater overskrift og knappetekst
+  activeSelectedTrinn = trinn || "1. trinn";
+
   const titleEl = document.getElementById('trinnCalendarTitle');
-  const btnLabelEl = document.getElementById('trinnCalBtnLabel');
-  if (titleEl) titleEl.textContent = `📅 Kalender for ${currentSelectedTrinn}`;
-  if (btnLabelEl) btnLabelEl.textContent = currentSelectedTrinn;
+  const labelEl = document.getElementById('trinnCalBtnLabel');
+  
+  if (titleEl) titleEl.textContent = `📅 Kalender for ${activeSelectedTrinn}`;
+  if (labelEl) labelEl.textContent = activeSelectedTrinn;
 
-  // Generer ukeoversikten
-  renderTrinnTimeline(currentSelectedTrinn);
+  renderTrinnTimeline(activeSelectedTrinn);
 
-  // Vis modalen
   const modal = document.getElementById('trinnCalendarModal');
   if (modal) modal.style.display = 'flex';
 }
 
-// Generer uke-for-uke oversikten for trinnet
+// 2. Filtrer alle hendelser for trinnet
 function renderTrinnTimeline(trinn, filterSearch = '') {
   const container = document.getElementById('trinnCalendarTimeline');
   if (!container) return;
   container.innerHTML = '';
 
-  // 1. Hent alle avtaler fra kalenderen
-  const allEvents = typeof getCombinedEvents === 'function' ? getCombinedEvents() : [];
+  let allEvents = [];
+  if (typeof getCombinedEvents === 'function') {
+    allEvents = getCombinedEvents();
+  } else if (typeof window.calendar !== 'undefined' && window.calendar) {
+    allEvents = window.calendar.getEvents();
+  }
 
-  // 2. Filtrer på det valgte trinnet (eller fellesavtaler)
+  const trinnNum = trinn.replace(/\D/g, ''); 
+
   const trinnEvents = allEvents.filter(evt => {
-    const ext = evt.extendedProps || {};
-    const trinnArray = Array.isArray(ext.trinn) ? ext.trinn : (ext.trinn ? [ext.trinn] : []);
+    const ext = evt.extendedProps || evt;
+    const title = evt.title || ext.title || '';
+    const desc = ext.description || '';
     
-    // Matcher dersom avtalen ikke har valgt trinn (felles) ELLER har det spesifikke trinnet
-    const matchesTrinn = trinnArray.length === 0 || trinnArray.some(t => String(t).trim().toLowerCase() === String(trinn).trim().toLowerCase());
-    const matchesSearch = !filterSearch || evt.title.toLowerCase().includes(filterSearch.toLowerCase());
+    const rawTrinn = ext.trinn || evt.trinn || [];
+    const trinnArray = Array.isArray(rawTrinn) ? rawTrinn : [rawTrinn];
+
+    // Sjekk om hendelsen tillhører trinnet, er for alle trinn, eller er nevnt i tittelen
+    const hasTrinnMatch = trinnArray.some(t => {
+      const str = String(t).toLowerCase();
+      return str.includes(trinn.toLowerCase()) || (trinnNum && str === trinnNum);
+    });
+
+    const isForEveryone = trinnArray.length === 0 || trinnArray.some(t => String(t).toLowerCase().includes('alle'));
+    const textMatch = title.toLowerCase().includes(trinn.toLowerCase()) || (trinnNum && title.toLowerCase().includes(`${trinnNum}. trinn`));
+
+    const matchesTrinn = hasTrinnMatch || isForEveryone || textMatch;
+    const matchesSearch = !filterSearch || title.toLowerCase().includes(filterSearch.toLowerCase()) || desc.toLowerCase().includes(filterSearch.toLowerCase());
 
     return matchesTrinn && matchesSearch;
   });
@@ -998,103 +1014,112 @@ function renderTrinnTimeline(trinn, filterSearch = '') {
     return;
   }
 
-  // 3. Sorter kronologisk etter startdato
-  trinnEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
+  trinnEvents.sort((a, b) => new Date(a.start || a.startDate) - new Date(b.start || b.startDate));
 
-  // 4. Grupper avtalene basert på ukenummer
+  // Grupper per uke
   const weeksMap = new Map();
   trinnEvents.forEach(evt => {
-    const d = new Date(evt.start);
-    const weekNum = typeof getISOWeekNumber === 'function' ? getISOWeekNumber(d) : '–';
+    const startVal = evt.start || evt.startDate;
+    const d = new Date(startVal);
+    const weekNum = typeof getISOWeekNumber === 'function' ? getISOWeekNumber(d) : '?';
     const year = d.getFullYear();
     const key = `Uke ${weekNum} (${year})`;
 
-    if (!weeksMap.has(key)) {
-      weeksMap.set(key, []);
-    }
+    if (!weeksMap.has(key)) weeksMap.set(key, []);
     weeksMap.get(key).push(evt);
   });
 
-  // 5. Bygg opp visningen for hver uke
+  // Generer visning
   weeksMap.forEach((eventsInWeek, weekTitle) => {
     const weekBlock = document.createElement('div');
     weekBlock.className = 'trinn-week-block';
 
     let eventsHtml = '';
     eventsInWeek.forEach(evt => {
-      const ext = evt.extendedProps || {};
-      const color = evt.backgroundColor || '#0284c7';
-      const startD = new Date(evt.start);
+      const ext = evt.extendedProps || evt;
+      const color = evt.backgroundColor || ext.color || '#0284c7';
+      const startD = new Date(evt.start || evt.startDate);
       
       const dateFmt = startD.toLocaleDateString('no-NO', { weekday: 'short', day: 'numeric', month: 'short' });
       const timeFmt = evt.allDay ? 'Hele dagen' : startD.toTimeString().substring(0, 5);
 
       eventsHtml += `
-        <div class="trinn-event-card" style="border-left-color: ${color};">
-          <div class="trinn-event-title">${evt.title}</div>
-          <div class="trinn-event-meta">
-            <span>📅 ${dateFmt}</span>
-            <span>⏰ ${timeFmt}</span>
-            ${ext.group ? `<span class="trinn-event-tag">${ext.group}</span>` : ''}
+        <div class="trinn-event-card" style="border-left: 5px solid ${color}; background: #ffffff; padding: 10px 14px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #e2e8f0; border-left-width: 5px;">
+          <div style="font-weight: 600; color: #1e293b; font-size: 0.95rem;">${evt.title || ext.title}</div>
+          <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">
+            📅 ${dateFmt} &nbsp;•&nbsp; ⏰ ${timeFmt} ${ext.group ? `&nbsp;•&nbsp; 🏷️ ${ext.group}` : ''}
           </div>
-          ${ext.description ? `<div style="font-size: 0.85rem; color: #475569; margin-top: 4px;">${ext.description}</div>` : ''}
+          ${ext.description ? `<div style="font-size: 0.85rem; color: #475569; margin-top: 6px;">${ext.description}</div>` : ''}
         </div>
       `;
     });
 
     weekBlock.innerHTML = `
-      <div class="trinn-week-header">
+      <div class="trinn-week-header" style="font-weight: 700; margin: 16px 0 8px 0; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; display: flex; justify-content: space-between;">
         <span>📌 ${weekTitle}</span>
-        <span style="font-size: 0.85rem; font-weight: normal; color: #64748b;">${eventsInWeek.length} avtale(r)</span>
+        <span style="font-weight: normal; font-size: 0.85rem; color: #64748b;">${eventsInWeek.length} avtale(r)</span>
       </div>
-      <div class="trinn-week-events">${eventsHtml}</div>
+      <div>${eventsHtml}</div>
     `;
 
     container.appendChild(weekBlock);
   });
 }
 
-// --- HENDELSESLYTTERE DOKUMENT ---
+// 3. Hendelseslyttere
 document.addEventListener('DOMContentLoaded', () => {
-  
-  // 1. Åpne fra Matrise-modalen (henter aktivt trinn hvis aktuelt)
+
+  // Les inn hvilket trinn som er valgt når kategorimodalen åpnes
+  const categoryModal = document.getElementById('categoryModal');
+  if (categoryModal) {
+    const observer = new MutationObserver(() => {
+      if (categoryModal.style.display !== 'none') {
+        const titleText = document.getElementById('categoryModalTitle')?.textContent || '';
+        const match = titleText.match(/\d\.\s*trinn/i);
+        const labelEl = document.getElementById('trinnCalBtnLabel');
+        if (match) {
+          activeSelectedTrinn = match[0];
+          if (labelEl) labelEl.textContent = activeSelectedTrinn;
+        }
+      }
+    });
+    observer.observe(categoryModal, { attributes: true, attributeFilter: ['style'] });
+  }
+
+  // Klikk på knappen
   document.getElementById('btnTrinnCalendar')?.addEventListener('click', () => {
-    const activeTrinn = window.currentActiveTrinn || '1. trinn';
-    openTrinnCalendar(activeTrinn);
+    const titleText = document.getElementById('categoryModalTitle')?.textContent || '';
+    const match = titleText.match(/\d\.\s*trinn/i);
+    const trinnToOpen = match ? match[0] : (activeSelectedTrinn || '1. trinn');
+
+    openTrinnCalendar(trinnToOpen);
   });
 
-  // 2. Lukk via X-knapp i topp
+  // Lukking
   document.getElementById('closeTrinnCalModalBtn')?.addEventListener('click', () => {
     document.getElementById('trinnCalendarModal').style.display = 'none';
   });
 
-  // 3. Lukk via 'Lukk'-knapp i bunn
   document.getElementById('btnTrinnCalClose')?.addEventListener('click', () => {
     document.getElementById('trinnCalendarModal').style.display = 'none';
   });
 
-  // 4. Lukk ved å klikke i bakgrunnen (utenfor selve kortet)
   document.getElementById('trinnCalendarModal')?.addEventListener('click', (e) => {
     if (e.target.id === 'trinnCalendarModal') {
       document.getElementById('trinnCalendarModal').style.display = 'none';
     }
   });
 
-  // 5. Søkefelt for avtaler i trinnkalenderen
+// Søkefelt i Trinnkalenderen
   document.getElementById('trinnCalSearch')?.addEventListener('input', (e) => {
-    renderTrinnTimeline(currentSelectedTrinn, e.target.value);
-  });
+    // Hent ut trinnet fra modalens tittel for å være 100% sikker
+    const currentTitle = document.getElementById('trinnCalendarTitle')?.textContent || '';
+    const match = currentTitle.match(/\d\.\s*trinn/i);
+    const currentTrinn = match ? match[0] : activeSelectedTrinn;
 
-  // 6. Utskriftsknapp
-  document.getElementById('btnPrintTrinnCal')?.addEventListener('click', () => {
-    document.body.classList.add('printing-trinn-cal');
-    window.print();
-    setTimeout(() => {
-      document.body.classList.remove('printing-trinn-cal');
-    }, 500);
+    renderTrinnTimeline(currentTrinn, e.target.value);
   });
 });
-
 
 
 
