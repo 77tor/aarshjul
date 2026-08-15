@@ -1069,13 +1069,14 @@ function renderTrinnTimeline(trinn, filterSearch = '') {
 // 3. Hendelseslyttere
 document.addEventListener('DOMContentLoaded', () => {
 
-  // Global klikk-lytter (Event Delegation) - fanger opp klikket UANSETT når knappen lages
+  // Global klikk-lytter (Event Delegation)
   document.addEventListener('click', (e) => {
     
     // Sjekk om det ble klikket på #btnTrinnCalendar eller noe inni den
     const trinnBtn = e.target.closest('#btnTrinnCalendar');
     if (trinnBtn) {
       e.preventDefault();
+      e.stopPropagation();
       
       // Hent tittel fra enten kategorimodal eller matrisemodal
       const catTitle = document.getElementById('categoryModalTitle')?.textContent || '';
@@ -1084,9 +1085,24 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Finn trinn (f.eks. "4. trinn")
       const match = fullText.match(/\d\.\s*trinn/i);
-      const trinnToOpen = match ? match[0] : (activeSelectedTrinn || '1. trinn');
+      const trinnToOpen = match ? match[0] : (activeSelectedTrinn || '4. trinn');
 
+      // 🔑 1. Skjul kategorimodalen så den ikke blokkerer visningen
+      const catModal = document.getElementById('categoryModal');
+      if (catModal) {
+        catModal.style.display = 'none';
+        catModal.classList.remove('show', 'active');
+      }
+
+      // 🔑 2. Generer og åpne trinnkalenderen
       openTrinnCalendar(trinnToOpen);
+
+      // 🔑 3. Tving modalen til å legge seg helt øverst på skjermen
+      const trinnModal = document.getElementById('trinnCalendarModal');
+      if (trinnModal) {
+        trinnModal.style.setProperty('display', 'flex', 'important');
+        trinnModal.style.setProperty('z-index', '999999', 'important');
+      }
       return;
     }
 
@@ -1129,7 +1145,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('trinnCalSearch')?.addEventListener('input', (e) => {
     const currentTitle = document.getElementById('trinnCalendarTitle')?.textContent || '';
     const match = currentTitle.match(/\d\.\s*trinn/i);
-    const currentTrinn = match ? match[0] : (activeSelectedTrinn || '1. trinn');
+    const currentTrinn = match ? match[0] : (activeSelectedTrinn || '4. trinn');
 
     renderTrinnTimeline(currentTrinn, e.target.value);
   });
