@@ -953,9 +953,6 @@ document.getElementById('miniNextBtn').addEventListener('click', () => {
 
 
 /* TRINN-KALENDER */
-let activeSelectedTrinn = "";
-
-// 1. Åpne og generer trinnkalenderen
 function openTrinnCalendar(trinn) {
   activeSelectedTrinn = trinn || "1. trinn";
 
@@ -968,7 +965,12 @@ function openTrinnCalendar(trinn) {
   renderTrinnTimeline(activeSelectedTrinn);
 
   const modal = document.getElementById('trinnCalendarModal');
-  if (modal) modal.style.display = 'flex';
+  if (modal) {
+    // 🔑 Aktiver modalen med både klasse og direkte style-overstyring
+    modal.classList.add('active', 'show');
+    modal.style.setProperty('display', 'flex', 'important');
+    modal.style.setProperty('z-index', '999999', 'important');
+  }
 }
 
 // 2. Filtrer alle hendelser for trinnet
