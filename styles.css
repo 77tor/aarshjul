@@ -118,8 +118,27 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .trinn-event-title { font-weight: 600; font-size: 0.95rem; color: #1e293b; }
 .trinn-event-meta { font-size: 0.85rem; color: #64748b; margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 .trinn-event-tag { background: #e0f2fe; color: #0369a1; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
-#trinnCalendarModal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0,0,0,0.5); z-index: 999999 !important; align-items: center; justify-content: center; }
-#trinnCalendarModal.active, #trinnCalendarModal.show { display: flex !important; }
+
+/* Trinnkalender Modal overlay */
+#trinnCalendarModal { 
+  display: none; 
+  position: fixed !important; 
+  top: 0 !important; 
+  left: 0 !important; 
+  width: 100vw !important; 
+  height: 100vh !important; 
+  background-color: rgba(0, 0, 0, 0.6) !important; 
+  z-index: 999999 !important; 
+  align-items: center; 
+  justify-content: center; 
+}
+
+/* Vises kun når active/show eller inline display:flex er satt */
+#trinnCalendarModal.active, 
+#trinnCalendarModal.show,
+#trinnCalendarModal[style*="display: flex"] { 
+  display: flex !important; 
+}
 
 
 /* Utskriftstilpasning for trinnkalenderen */

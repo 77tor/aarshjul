@@ -950,208 +950,109 @@ document.getElementById('miniNextBtn').addEventListener('click', () => {
   renderMiniCalendar();
 });
 
-
-
 /* TRINN-KALENDER */
+let activeSelectedTrinn = "";
+
+// Funksjon for å oppdatere synligheten på trinnknappen i kategorimodalen
+function updateTrinnCalButtonVisibility() {
+  const catTitle = document.getElementById('categoryModalTitle')?.textContent || '';
+  const match = catTitle.match(/\d\.\s*trinn/i);
+  const btn = document.getElementById('btnTrinnCalendar');
+
+  if (btn) {
+    if (match) {
+      // Vis knappen kun dersom tittelen gjelder et trinn (1.-7. trinn)
+      btn.style.display = 'inline-flex';
+      activeSelectedTrinn = match[0];
+      const labelEl = document.getElementById('trinnCalBtnLabel');
+      if (labelEl) labelEl.textContent = activeSelectedTrinn;
+    } else {
+      // Skjul knappen for DKS, Svømming, SFO osv.
+      btn.style.display = 'none';
+    }
+  }
+}
+
+// 1. Åpne og generer trinnkalenderen
 function openTrinnCalendar(trinn) {
   activeSelectedTrinn = trinn || "1. trinn";
 
   const titleEl = document.getElementById('trinnCalendarTitle');
-  const labelEl = document.getElementById('trinnCalBtnLabel');
-  
   if (titleEl) titleEl.textContent = `📅 Kalender for ${activeSelectedTrinn}`;
-  if (labelEl) labelEl.textContent = activeSelectedTrinn;
 
   renderTrinnTimeline(activeSelectedTrinn);
 
   const modal = document.getElementById('trinnCalendarModal');
   if (modal) {
-    // 🔑 Aktiver modalen med både klasse og direkte style-overstyring
+    // Tving visning med direkte inline-styles
     modal.classList.add('active', 'show');
     modal.style.setProperty('display', 'flex', 'important');
     modal.style.setProperty('z-index', '999999', 'important');
+    modal.style.setProperty('visibility', 'visible', 'important');
+    modal.style.setProperty('opacity', '1', 'important');
   }
-}
-
-// 2. Filtrer alle hendelser for trinnet
-function renderTrinnTimeline(trinn, filterSearch = '') {
-  const container = document.getElementById('trinnCalendarTimeline');
-  if (!container) return;
-  container.innerHTML = '';
-
-  let allEvents = [];
-  if (typeof getCombinedEvents === 'function') {
-    allEvents = getCombinedEvents();
-  } else if (typeof window.calendar !== 'undefined' && window.calendar) {
-    allEvents = window.calendar.getEvents();
-  }
-
-  const trinnNum = trinn.replace(/\D/g, ''); 
-
-  const trinnEvents = allEvents.filter(evt => {
-    const ext = evt.extendedProps || evt;
-    const title = evt.title || ext.title || '';
-    const desc = ext.description || '';
-    
-    const rawTrinn = ext.trinn || evt.trinn || [];
-    const trinnArray = Array.isArray(rawTrinn) ? rawTrinn : [rawTrinn];
-
-    // Sjekk om hendelsen tillhører trinnet, er for alle trinn, eller er nevnt i tittelen
-    const hasTrinnMatch = trinnArray.some(t => {
-      const str = String(t).toLowerCase();
-      return str.includes(trinn.toLowerCase()) || (trinnNum && str === trinnNum);
-    });
-
-    const isForEveryone = trinnArray.length === 0 || trinnArray.some(t => String(t).toLowerCase().includes('alle'));
-    const textMatch = title.toLowerCase().includes(trinn.toLowerCase()) || (trinnNum && title.toLowerCase().includes(`${trinnNum}. trinn`));
-
-    const matchesTrinn = hasTrinnMatch || isForEveryone || textMatch;
-    const matchesSearch = !filterSearch || title.toLowerCase().includes(filterSearch.toLowerCase()) || desc.toLowerCase().includes(filterSearch.toLowerCase());
-
-    return matchesTrinn && matchesSearch;
-  });
-
-  if (trinnEvents.length === 0) {
-    container.innerHTML = `<p style="padding: 20px; color: #64748b; text-align: center;">Ingen avtaler funnet for ${trinn}.</p>`;
-    return;
-  }
-
-  trinnEvents.sort((a, b) => new Date(a.start || a.startDate) - new Date(b.start || b.startDate));
-
-  // Grupper per uke
-  const weeksMap = new Map();
-  trinnEvents.forEach(evt => {
-    const startVal = evt.start || evt.startDate;
-    const d = new Date(startVal);
-    const weekNum = typeof getISOWeekNumber === 'function' ? getISOWeekNumber(d) : '?';
-    const year = d.getFullYear();
-    const key = `Uke ${weekNum} (${year})`;
-
-    if (!weeksMap.has(key)) weeksMap.set(key, []);
-    weeksMap.get(key).push(evt);
-  });
-
-  // Generer visning
-  weeksMap.forEach((eventsInWeek, weekTitle) => {
-    const weekBlock = document.createElement('div');
-    weekBlock.className = 'trinn-week-block';
-
-    let eventsHtml = '';
-    eventsInWeek.forEach(evt => {
-      const ext = evt.extendedProps || evt;
-      const color = evt.backgroundColor || ext.color || '#0284c7';
-      const startD = new Date(evt.start || evt.startDate);
-      
-      const dateFmt = startD.toLocaleDateString('no-NO', { weekday: 'short', day: 'numeric', month: 'short' });
-      const timeFmt = evt.allDay ? 'Hele dagen' : startD.toTimeString().substring(0, 5);
-
-      eventsHtml += `
-        <div class="trinn-event-card" style="border-left: 5px solid ${color}; background: #ffffff; padding: 10px 14px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #e2e8f0; border-left-width: 5px;">
-          <div style="font-weight: 600; color: #1e293b; font-size: 0.95rem;">${evt.title || ext.title}</div>
-          <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">
-            📅 ${dateFmt} &nbsp;•&nbsp; ⏰ ${timeFmt} ${ext.group ? `&nbsp;•&nbsp; 🏷️ ${ext.group}` : ''}
-          </div>
-          ${ext.description ? `<div style="font-size: 0.85rem; color: #475569; margin-top: 6px;">${ext.description}</div>` : ''}
-        </div>
-      `;
-    });
-
-    weekBlock.innerHTML = `
-      <div class="trinn-week-header" style="font-weight: 700; margin: 16px 0 8px 0; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; display: flex; justify-content: space-between;">
-        <span>📌 ${weekTitle}</span>
-        <span style="font-weight: normal; font-size: 0.85rem; color: #64748b;">${eventsInWeek.length} avtale(r)</span>
-      </div>
-      <div>${eventsHtml}</div>
-    `;
-
-    container.appendChild(weekBlock);
-  });
 }
 
 // 3. Hendelseslyttere
 document.addEventListener('DOMContentLoaded', () => {
 
-  // Global klikk-lytter (Event Delegation)
+  // Observer som følger med på når kategorimodalen åpnes/endres
+  const categoryModal = document.getElementById('categoryModal');
+  if (categoryModal) {
+    const observer = new MutationObserver(() => {
+      updateTrinnCalButtonVisibility();
+    });
+    observer.observe(categoryModal, { attributes: true, attributeFilter: ['style', 'class'] });
+  }
+
+  // Global klikk-lytter
   document.addEventListener('click', (e) => {
     
-    // Sjekk om det ble klikket på #btnTrinnCalendar eller noe inni den
+    // Klikk på "Kalender for [trinn]"
     const trinnBtn = e.target.closest('#btnTrinnCalendar');
     if (trinnBtn) {
       e.preventDefault();
       e.stopPropagation();
-      
-      // Hent tittel fra enten kategorimodal eller matrisemodal
+
       const catTitle = document.getElementById('categoryModalTitle')?.textContent || '';
-      const gridTitle = document.getElementById('gridOverviewTitle')?.textContent || '';
-      const fullText = catTitle + ' ' + gridTitle;
+      const match = catTitle.match(/\d\.\s*trinn/i);
       
-      // Finn trinn (f.eks. "4. trinn")
-      const match = fullText.match(/\d\.\s*trinn/i);
-      const trinnToOpen = match ? match[0] : (activeSelectedTrinn || '4. trinn');
-
-      // 🔑 1. Skjul kategorimodalen så den ikke blokkerer visningen
-      const catModal = document.getElementById('categoryModal');
-      if (catModal) {
-        catModal.style.display = 'none';
-        catModal.classList.remove('show', 'active');
-      }
-
-      // 🔑 2. Generer og åpne trinnkalenderen
-      openTrinnCalendar(trinnToOpen);
-
-      // 🔑 3. Tving modalen til å legge seg helt øverst på skjermen
-      const trinnModal = document.getElementById('trinnCalendarModal');
-      if (trinnModal) {
-        trinnModal.style.setProperty('display', 'flex', 'important');
-        trinnModal.style.setProperty('z-index', '999999', 'important');
-      }
-      return;
-    }
-
-    // Lukk-knapp oppe (X)
-    if (e.target.closest('#closeTrinnCalModalBtn')) {
-      const modal = document.getElementById('trinnCalendarModal');
-      if (modal) modal.style.display = 'none';
-      return;
-    }
-
-    // Lukk-knapp nede
-    if (e.target.closest('#btnTrinnCalClose')) {
-      const modal = document.getElementById('trinnCalendarModal');
-      if (modal) modal.style.display = 'none';
-      return;
-    }
-
-    // Klikk på mørk bakgrunn
-    if (e.target.id === 'trinnCalendarModal') {
-      e.target.style.display = 'none';
-      return;
-    }
-  });
-
-  // Oppdater knappe-tekst dynamisk når brukeren klikker på et trinn i sidebaren
-  document.addEventListener('click', (e) => {
-    const trinnEl = e.target.closest('[data-trinn], .trinn-btn, .category-item');
-    if (trinnEl) {
-      const txt = trinnEl.textContent || '';
-      const match = txt.match(/\d\.\s*trinn/i);
+      // Sikkerhet: Kun åpne hvis det faktisk er et trinn
       if (match) {
-        activeSelectedTrinn = match[0];
-        const labelEl = document.getElementById('trinnCalBtnLabel');
-        if (labelEl) labelEl.textContent = activeSelectedTrinn;
+        const catModal = document.getElementById('categoryModal');
+        if (catModal) {
+          catModal.style.display = 'none';
+          catModal.classList.remove('show', 'active');
+        }
+
+        // Åpne trinnkalenderen med litt forsinkelse så ikke lukk-events kolliderer
+        setTimeout(() => {
+          openTrinnCalendar(match[0]);
+        }, 50);
+      }
+      return;
+    }
+
+    // Lukking av Trinnkalenderen
+    if (e.target.closest('#closeTrinnCalModalBtn') || e.target.closest('#btnTrinnCalClose') || e.target.id === 'trinnCalendarModal') {
+      const modal = document.getElementById('trinnCalendarModal');
+      if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('show', 'active');
       }
     }
   });
 
-  // Søkefelt i Trinnkalenderen
+  // Søkefelt
   document.getElementById('trinnCalSearch')?.addEventListener('input', (e) => {
     const currentTitle = document.getElementById('trinnCalendarTitle')?.textContent || '';
     const match = currentTitle.match(/\d\.\s*trinn/i);
-    const currentTrinn = match ? match[0] : (activeSelectedTrinn || '4. trinn');
+    const currentTrinn = match ? match[0] : (activeSelectedTrinn || '1. trinn');
 
     renderTrinnTimeline(currentTrinn, e.target.value);
   });
 });
+
 
 
 
