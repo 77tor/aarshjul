@@ -331,6 +331,7 @@ function renderCategoryFilters() {
 }
 
 // Åpne kategorimodal og vis UKESKALENDER (TABELL) i stedet for kort-liste
+// Åpne kategorimodal og vis tilpasset visning basert på type kategori
 function openCategoryModal(categoryInput) {
   const modal = document.getElementById('categoryModal');
   const title = document.getElementById('categoryModalTitle');
@@ -339,13 +340,14 @@ function openCategoryModal(categoryInput) {
 
   const catName = typeof categoryInput === 'object' ? categoryInput.name : categoryInput;
 
-  // 1. Sett ny tittel
-  if (title) title.textContent = `📅 Kalender for ${catName}`;
-
-  // 2. Vis "Matrise"-knappen KUN hvis det er et trinn (1.-7. trinn)
+  // 1. Sjekk om dette er et trinn (1.-7. trinn)
   const isTrinn = /^([1-7]\.\s*trinn)$/i.test(catName.trim());
-  const gridBtn = document.getElementById('btnCategoryModalGrid');
 
+  // 2. Sett tittel
+  if (title) title.textContent = isTrinn ? `📅 Kalender for ${catName}` : `📋 Oversikt: ${catName}`;
+
+  // 3. Vis/skjul "Matrise"-knappen KUN for trinn
+  const gridBtn = document.getElementById('btnCategoryModalGrid');
   if (gridBtn) {
     if (isTrinn) {
       gridBtn.style.display = 'inline-block';
@@ -359,14 +361,25 @@ function openCategoryModal(categoryInput) {
     }
   }
 
-  // 3. 🔑 RENDERE TABELLEN/UKESKALENDEREN I STEDET FOR KORT-LISTA
-  if (typeof renderCategoryTimeline === 'function') {
-    renderCategoryTimeline(catName);
-  } else if (typeof renderTrinnTimeline === 'function') {
-    renderTrinnTimeline(catName);
+  // 4. Velg visningstype:
+  if (isTrinn) {
+    // Trinn beholder ukeskalenderen / tabellen sin
+    if (typeof renderCategoryTimeline === 'function') {
+      renderCategoryTimeline(catName);
+    } else if (typeof renderTrinnTimeline === 'function') {
+      renderTrinnTimeline(catName);
+    }
+  } else {
+    // Andre kategorier (DKS, Svømming osv.) får ny kronologisk liste fra uke 33
+    const events = (typeof allRawEvents !== 'undefined') ? allRawEvents : 
+                   (typeof rawEvents !== 'undefined' ? rawEvents : []);
+                   
+    if (typeof renderCategoryModalContent === 'function') {
+      renderCategoryModalContent(catName, events);
+    }
   }
 
-  // 4. Åpne modalen
+  // 5. Åpne modalen
   modal.style.display = 'flex';
   modal.classList.add('show', 'active');
 }
