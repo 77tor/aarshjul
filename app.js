@@ -385,7 +385,7 @@ const TRINN_SUB_CATEGORIES = [
   "Sosialt"
 ];
 
-// Åpne Rutenett / Matrise-modalen KUN for det valgte trinnet
+
 // Åpne Rutenett / Matrise-modalen KUN for det valgte trinnet
 function openCategoryGridModal(targetTrinn) {
   const gridModal = document.getElementById('gridOverviewModal');
@@ -396,10 +396,9 @@ function openCategoryGridModal(targetTrinn) {
   gridContainer.innerHTML = '';
   if (gridTitle) gridTitle.textContent = `Matriseoversikt: ${targetTrinn}`;
 
-  // 1. Definer kolonnene: Først trinnet selv, deretter fag/kategoriene
   const columnsToDisplay = [targetTrinn, ...TRINN_SUB_CATEGORIES];
 
-  // 2. Hent alle hendelser
+  // 1. Hent alle hendelser fra alle kilder
   const moterEvents = typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : [];
   const uiaEvents = typeof getUiAAktiviteterSomEvents === 'function' ? getUiAAktiviteterSomEvents() : [];
   const fellesEvents = typeof getFellesaktiviteterSomEvents === 'function' ? getFellesaktiviteterSomEvents('2026-2027') : [];
@@ -423,55 +422,53 @@ function openCategoryGridModal(targetTrinn) {
   const trinnLower = targetTrinn.trim().toLowerCase();
   const trinnNum = targetTrinn.replace(/\D/g, '');
 
-  // 3. Filtrer ut hendelser som gjelder DETTE trinnet (sjekker både gruppe, avkryssede trinn og fritekst)
+  // 2. Filtrer hendelser som tillhører dette trinnet
   const trinnEvents = allRawEvents.filter(evt => {
     if (deletedStaticEventIds && deletedStaticEventIds.has(evt.id)) return false;
 
-    const grp = (evt.extendedProps?.group || evt.group || '').trim().toLowerCase();
-    
-    // Hent trinn som array eller fra tekst
-    let trinnArray = evt.extendedProps?.trinn || evt.trinn || [];
-    if (typeof trinnArray === 'string') {
-      trinnArray = trinnArray.split(',').map(s => s.trim().toLowerCase());
-    } else if (Array.isArray(trinnArray)) {
-      trinnArray = trinnArray.map(s => String(s).trim().toLowerCase());
+    const ext = evt.extendedProps || {};
+    const grp = (ext.group || evt.group || '').trim().toLowerCase();
+
+    // Samle alle trinn-verdier trygt fra array, strenger eller skjema-oppføringer
+    let trinnList = ext.trinn || evt.trinn || ext.trinnOptions || [];
+    if (typeof trinnList === 'string') {
+      trinnList = trinnList.split(',').map(s => s.trim().toLowerCase());
+    } else if (Array.isArray(trinnList)) {
+      trinnList = trinnList.map(s => String(s).trim().toLowerCase());
     }
 
-    const title = (evt.title || evt.extendedProps?.rawTitle || '').toLowerCase();
-    const desc = (evt.extendedProps?.description || '').toLowerCase();
-    const deltakere = (evt.extendedProps?.deltakere || '').toLowerCase();
+    const title = (evt.title || ext.rawTitle || '').toLowerCase();
+    const desc = (ext.description || '').toLowerCase();
+    const deltakere = (ext.deltakere || ext.participants || '').toLowerCase();
 
-    const isDirectTrinn = grp === trinnLower;
-    const isIncludedInTrinnArray = trinnArray.some(t => t.includes(trinnLower) || (trinnNum && t.includes(`${trinnNum}.`)));
+    const isDirectGroup = grp === trinnLower;
+    const isIncludedInTrinnList = trinnList.some(t => t.includes(trinnLower) || (trinnNum && t.includes(`${trinnNum}.`)));
     const isMentionedInText = deltakere.includes(trinnLower) || desc.includes(trinnLower) || title.includes(trinnLower) ||
                               (trinnNum && (deltakere.includes(`${trinnNum}. trinn`) || desc.includes(`${trinnNum}. trinn`)));
     const isAllTrinn = deltakere.includes('alle trinn') || desc.includes('alle trinn') || desc.includes('1.-7. trinn');
 
-    return isDirectTrinn || isIncludedInTrinnArray || isMentionedInText || isAllTrinn;
+    return isDirectGroup || isIncludedInTrinnList || isMentionedInText || isAllTrinn;
   });
 
-  // 4. Bygg kolonner bortover (vis KUN kolonner som har hendelser)
+  // 3. Bygg kolonner bortover
   columnsToDisplay.forEach(colName => {
     const colColor = (typeof categoryColors !== 'undefined' && categoryColors[colName]) ? categoryColors[colName] : '#2563eb';
     const colNameLower = colName.trim().toLowerCase();
-    
-    // Filtrer hendelsene som passer i DENNE kolonnen
-    const matchedEvents = trinnEvents.filter(evt => {
-      const grp = (evt.extendedProps?.group || evt.group || '').trim().toLowerCase();
-      const title = (evt.title || evt.extendedProps?.rawTitle || '').toLowerCase();
-      const desc = (evt.extendedProps?.description || '').toLowerCase();
 
-      // Første kolonne (f.eks. "2. trinn"): vis avtaler der trinnet er satt som hovedkategori/gruppe
+    const matchedEvents = trinnEvents.filter(evt => {
+      const ext = evt.extendedProps || {};
+      const grp = (ext.group || evt.group || '').trim().toLowerCase();
+
+      // Første kolonne (f.eks. "2. trinn"): vis KUN hendelser som har trinnet som sin valgte hovedkategori/gruppe
       if (colNameLower === trinnLower) {
         return grp === trinnLower;
       }
-      
-      // Fag-kolonnene (f.eks. "DKS", "Svømming", "Møter", "Fellesaktiviteter"):
-      // Sjekk om hendelsens gruppe matcher kolonnen ELLER om fagnavnet nevnes i tittelen/beskrivelsen
-      return grp === colNameLower || title.includes(colNameLower) || desc.includes(colNameLower);
+
+      // Fag/kategori-kolonnene (DKS, SFO, Møter osv.):
+      // Vi sjekker KUN den eksplisitte kategorien (grp), IKKE fritekst i beskrivelsen!
+      return grp === colNameLower;
     });
 
-    // Hvis det IKKE finnes hendelser for denne kategorien på dette trinnet, hoppes kolonnen over
     if (matchedEvents.length === 0) return;
 
     // Sorter hendelsene kronologisk
@@ -485,35 +482,33 @@ function openCategoryGridModal(targetTrinn) {
     const col = document.createElement('div');
     col.className = 'category-grid-column';
 
-    // Kolonne-overskrift
     const header = document.createElement('div');
     header.className = 'category-grid-header';
     header.style.backgroundColor = colColor;
     header.textContent = colName;
     col.appendChild(header);
 
-    // Vertikal stabling for kortene
     const content = document.createElement('div');
     content.className = 'category-grid-content';
     content.style.cssText = 'display: flex; flex-direction: column; gap: 8px; padding: 8px; overflow-y: auto; width: 100%; box-sizing: border-box;';
 
-    // Legg til kortene
     matchedEvents.forEach(evt => {
+      const ext = evt.extendedProps || {};
       const card = document.createElement('div');
       card.className = 'grid-event-card';
       card.style.cssText = `border-left: 4px solid ${colColor}; width: 100%; box-sizing: border-box;`;
 
-      const titleText = evt.title || evt.extendedProps?.rawTitle || 'Uten tittel';
-      const descText = evt.extendedProps?.description || '';
-      const startDateStr = evt.extendedProps?.startDate || (evt.start ? String(evt.start).split('T')[0] : '');
-      
+      const titleText = evt.title || ext.rawTitle || 'Uten tittel';
+      const descText = ext.description || '';
+      const startDateStr = ext.startDate || (evt.start ? String(evt.start).split('T')[0] : '');
+
       let dateFormatted = '';
       if (startDateStr) {
         const startObj = new Date(startDateStr + 'T00:00:00');
         dateFormatted = !isNaN(startObj.getTime()) ? startObj.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' }) : startDateStr;
       }
 
-      const startTime = evt.extendedProps?.startTime || (evt.start && String(evt.start).includes('T') ? String(evt.start).split('T')[1].substring(0, 5) : '');
+      const startTime = ext.startTime || (evt.start && String(evt.start).includes('T') ? String(evt.start).split('T')[1].substring(0, 5) : '');
 
       card.innerHTML = `
         <div class="grid-event-title">${titleText}</div>
@@ -527,13 +522,13 @@ function openCategoryGridModal(targetTrinn) {
     gridContainer.appendChild(col);
   });
 
-  // Hvis INGEN av kategoriene har noen avtaler for trinnet
   if (gridContainer.children.length === 0) {
     gridContainer.innerHTML = '<p style="color: #64748b; font-style: italic; padding: 20px;">Ingen avtaler registrert for dette trinnet.</p>';
   }
 
   gridModal.style.display = 'flex';
 }
+
 
 
 function closeCategoryGridModal() {
