@@ -236,3 +236,48 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
   .fc-list-event-title { font-weight: 600 !important; color: #0f172a !important; line-height: 1.2 !important; }
   tr { page-break-inside: avoid !important; break-inside: avoid !important; }
 }
+
+/* --- 12. TILPASNING AV MODALER FOR LAPTOP (BRED VISNING) --- */
+
+/* Utvid modal-kortene til nesten full skjermbredde på større skjermer */
+#categoryModal .modal-card,
+#gridOverviewModal .modal-card,
+#categoryModal .modal-large,
+#gridOverviewModal .modal-large {
+  width: 95vw !important;
+  max-width: 1400px !important;
+  margin: 10px auto;
+}
+
+/* Sørg for at tabellen i trinnkalenderen utnytter hele bredden og ikke tvinger fram rulling */
+#categoryEventsList table {
+  width: 100% !important;
+  table-layout: fixed !important; /* Fordeler plassen likt på kolonnene */
+}
+
+/* Uke-kolonnen trenger liten plass */
+#categoryEventsList th:first-child,
+#categoryEventsList td:first-child {
+  width: 60px !important;
+}
+
+/* Fjern min-width sperrer på kategori-kolonnene slik at de tilpasses sømløst */
+#categoryEventsList th:not(:first-child),
+#categoryEventsList td:not(:first-child) {
+  min-width: 0 !important;
+}
+
+/* Tilpass rutenett-containeren i matrise-modalen til å fylle hele bredden */
+#categoryGridContainer {
+  display: grid !important;
+  grid-template-columns: repeat(6, 1fr) !important; /* Eksakt 6 like brede kolonner */
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* La hver kolonne i matrisen krympe etter behov */
+.category-grid-column {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+}
