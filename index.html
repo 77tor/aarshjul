@@ -193,37 +193,35 @@
     </div>
   </div>
 
-  <!-- Modal for Visning og Utskrift av Kategori (Kategorioversikten) -->
+  <!-- Hovedmodal for Kategori- og Trinnkalender (Ukeoversikt) -->
   <div id="categoryModal" class="modal-overlay">
-    <div class="modal-card modal-large">
+    <div class="modal-card modal-large" style="max-width: 900px; width: 90vw;">
+      
       <div class="modal-header">
-        <h3 id="categoryModalTitle">Kategorioversikt</h3>
+        <h3 id="categoryModalTitle">📅 Kalender</h3>
         <button id="categoryModalCloseX" type="button" class="close-btn">&times;</button>
       </div>
+
       <div class="modal-body">
-        <div id="categoryEventsList" class="category-events-list">
-          <!-- Innholdet genereres dynamisk av JS -->
+        <!-- Tidslinje-/Uke-beholder som brukes for alle kategorier -->
+        <div id="categoryEventsList" class="trinn-timeline-container">
+          <!-- Genereres dynamisk av JS -->
         </div>
       </div>
-      
-      <!-- 🔑 OPPPDATERT FOOTER MED NÆRT & RYDDIG KNAPPEOPPSETT -->
-      <div class="modal-footer" style="display: flex; gap: 8px; align-items: center; justify-content: flex-end; flex-wrap: wrap;">
-        <button id="btnCategoryModalGrid" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px;">
-          📊 Matrise for trinnet
-        </button>
-        
-        <button id="btnTrinnCalendar" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px;">
-          📅 Kalender for <span id="trinnCalBtnLabel">trinnet</span>
-        </button>
 
-        <button id="btnCategoryModalClose" type="button" class="btn btn-secondary" style="font-size: 0.85rem; padding: 6px 12px;">
-          Lukk
-        </button>
-        
-        <button id="btnCategoryModalPrint" type="button" class="btn btn-primary" style="font-size: 0.85rem; padding: 6px 12px;">
-          🖨️ Skriv ut
-        </button>
+      <div class="modal-footer">
+        <div class="actions-left">
+          <!-- Vises kun hvis gjeldende valgte kategori er et trinn (1.-7. trinn) -->
+          <button id="btnCategoryModalGrid" type="button" class="btn btn-outline" style="display: none;">
+            📊 Vis matrise
+          </button>
+          <button id="btnCategoryModalPrint" type="button" class="btn btn-outline">
+            🖨️ Skriv ut
+          </button>
+        </div>
+        <button id="btnCategoryModalClose" type="button" class="btn btn-secondary">Lukk</button>
       </div>
+
     </div>
   </div>
 
@@ -245,31 +243,6 @@
       </div>
     </div>
   </div>
-
-<!-- Modal for Trinnkalender (Ukeoversikt) -->
-<div id="trinnCalendarModal" class="modal-overlay">
-  <div class="modal-card modal-large" style="max-width: 900px; width: 90vw;">
-    
-    <div class="modal-header">
-      <h3 id="trinnCalendarTitle">📅 Kalender for trinn</h3>
-      <button id="closeTrinnCalModalBtn" type="button" class="close-btn">&times;</button>
-    </div>
-
-    <div class="modal-body">
-      <!-- Tidslinje-/Uke-beholder -->
-      <div id="trinnCalendarTimeline" class="trinn-timeline-container">
-        <!-- Genereres dynamisk av JS -->
-      </div>
-    </div>
-
-    <div class="modal-footer">
-      <div class="actions-left">
-        <button id="btnPrintTrinnCal" type="button" class="btn btn-outline">🖨️ Skriv ut</button>
-      </div>
-      <button id="btnTrinnCalClose" type="button" class="btn btn-secondary">Lukk</button>
-    </div>
-  </div>
-</div>
 
   <!-- Hovedskript -->
   <script type="module" src="app.js"></script>
