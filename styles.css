@@ -66,20 +66,8 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
 .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; }
 .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
-
-/* OPPDATERT FOOTER: Håndterer mange knapper ryddig */
-.modal-footer {
-  padding: 14px 20px;
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
+.modal-footer { padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-wrap: wrap; }
 .modal-footer .actions-left { margin-right: auto; display: flex; gap: 8px; }
-
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-group label { font-size: 0.85rem; font-weight: 600; color: #475569; }
 .form-group input, .form-group select, .form-group textarea { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; }
@@ -94,31 +82,15 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .category-event-card .event-desc { font-size: 0.85rem; color: #334155; margin-top: 4px; white-space: pre-line; }
 
 /* --- 9. KNAPPER --- */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: 1px solid transparent; cursor: pointer; transition: all 0.15s ease; white-space: nowrap; }
 .btn-sm { padding: 5px 10px; font-size: 0.8rem; }
 .btn-text { background: none; border: none; color: #2563eb; font-size: 0.8rem; cursor: pointer; }
 .btn-primary { background: #2563eb; color: #ffffff; }
 .btn-primary:hover { background: #1d4ed8; }
 .btn-secondary { background: #e2e8f0; color: #334155; border-color: #cbd5e1; }
 .btn-secondary:hover { background: #cbd5e1; color: #0f172a; }
-
-/* LAGT TIL: Missing btn-outline definition */
 .btn-outline { background: #ffffff; color: #334155; border-color: #cbd5e1; }
 .btn-outline:hover { background: #f1f5f9; border-color: #94a3b8; color: #0f172a; }
-
 .btn-danger { background: #ef4444; color: #ffffff; }
 .btn-danger:hover { background: #dc2626; }
 .btn-ghost { background-color: transparent; color: #475569; border: 1px solid #cbd5e1; }
@@ -128,79 +100,33 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .delete-options { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 
 /* --- 10. RUTENETT / KATEGORI-MATRISE & TRINNKALENDER --- */
-.category-grid-container { display: flex; gap: 12px; min-width: min-content; align-items: flex-start; padding-bottom: 10px; }
-.category-grid-column { flex: 0 0 220px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; flex-direction: column; max-height: 70vh; }
-.category-grid-header { padding: 10px; color: white; font-weight: 600; font-size: 0.9rem; border-top-left-radius: 7px; border-top-right-radius: 7px; text-align: center; position: sticky; top: 0; z-index: 2; }
-.category-grid-content { padding: 8px; overflow-y: auto; display: flex; flex-direction: column !important; gap: 8px; width: 100%; box-sizing: border-box; }
-.grid-event-card { background: white; border-left: 3px solid #cbd5e1; border-radius: 6px; padding: 8px 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-size: 0.82rem; width: 100%; box-sizing: border-box; }
-.grid-event-title { font-weight: 600; color: #0f172a; margin-bottom: 4px; }
-.grid-event-time { color: #64748b; font-size: 0.75rem; }
-.grid-event-desc { color: #475569; font-size: 0.75rem; margin-top: 4px; white-space: pre-line; }
+#gridOverviewModal .modal-card, #gridOverviewModal .modal-large, #categoryModal .modal-card, #categoryModal .modal-large { width: 96vw !important; max-width: 1550px !important; margin: 10px auto; }
+.category-grid-container, #categoryGridContainer { display: grid !important; grid-template-columns: repeat(6, 1fr) !important; gap: 8px !important; width: 100% !important; min-width: 0 !important; align-items: flex-start; padding-bottom: 10px; box-sizing: border-box; }
+.category-grid-column { width: 100% !important; flex: 1 1 0 !important; min-width: 0 !important; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; flex-direction: column; max-height: 68vh; box-sizing: border-box; }
+.category-grid-header { padding: 8px 4px !important; color: white; font-weight: 600; font-size: 0.82rem !important; border-top-left-radius: 7px; border-top-right-radius: 7px; text-align: center; position: sticky; top: 0; z-index: 2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.category-grid-content { padding: 6px !important; overflow-y: auto; display: flex; flex-direction: column !important; gap: 6px !important; width: 100%; box-sizing: border-box; }
+.grid-event-card { background: white; border-left: 3px solid #cbd5e1; border-radius: 6px; padding: 6px 8px !important; box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-size: 0.78rem !important; width: 100%; box-sizing: border-box; word-break: break-word; }
+.grid-event-title { font-weight: 600; color: #0f172a; margin-bottom: 2px; line-height: 1.25; }
+.grid-event-time { color: #64748b; font-size: 0.72rem; }
+.grid-event-desc { color: #475569; font-size: 0.72rem; margin-top: 3px; white-space: pre-line; line-height: 1.2; }
 
-/* Stylingskorrigering for Trinnkalender Modal */
-#trinnCalendarModal {
-  display: none;
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  background-color: rgba(0, 0, 0, 0.6) !important;
-  z-index: 999999 !important;
-  align-items: center;
-  justify-content: center;
-  padding: 20px !important;
-}
-
-#trinnCalendarModal.active,
-#trinnCalendarModal.show,
-#trinnCalendarModal[style*="display: flex"] {
-  display: flex !important;
-}
-
-#trinnCalendarModal .modal-card {
-  max-height: calc(100vh - 40px) !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-}
-
-#trinnCalendarModal .modal-body {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  max-height: none !important;
-}
+/* Trinnkalender-modal og tabell-tilpasninger */
+#categoryEventsList table { width: 100% !important; table-layout: fixed !important; }
+#categoryEventsList th:first-child, #categoryEventsList td:first-child { width: 60px !important; }
+#categoryEventsList th:not(:first-child), #categoryEventsList td:not(:first-child) { min-width: 0 !important; }
+#trinnCalendarModal { display: none; position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background-color: rgba(0, 0, 0, 0.6) !important; z-index: 999999 !important; align-items: center; justify-content: center; padding: 20px !important; }
+#trinnCalendarModal.active, #trinnCalendarModal.show, #trinnCalendarModal[style*="display: flex"] { display: flex !important; }
+#trinnCalendarModal .modal-card { max-height: calc(100vh - 40px) !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; }
+#trinnCalendarModal .modal-body { flex: 1 !important; overflow-y: auto !important; max-height: none !important; }
 
 /* Utskriftstilpasning for trinnkalenderen */
 @media print {
-  body.printing-trinn-cal * {
-    visibility: hidden;
-  }
-  body.printing-trinn-cal #trinnCalendarModal,
-  body.printing-trinn-cal #trinnCalendarModal * {
-    visibility: visible;
-  }
-  body.printing-trinn-cal #trinnCalendarModal {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    background: #fff;
-  }
-  body.printing-trinn-cal .trinn-cal-controls,
-  body.printing-trinn-cal .close-btn,
-  body.printing-trinn-cal .modal-footer {
-    display: none !important;
-  }
-  body.printing-trinn-cal table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-  }
-  body.printing-trinn-cal th,
-  body.printing-trinn-cal td {
-    border: 1px solid #000 !important;
-    padding: 4px !important;
-  }
+  body.printing-trinn-cal * { visibility: hidden; }
+  body.printing-trinn-cal #trinnCalendarModal, body.printing-trinn-cal #trinnCalendarModal * { visibility: visible; }
+  body.printing-trinn-cal #trinnCalendarModal { position: absolute; left: 0; top: 0; width: 100%; background: #fff; }
+  body.printing-trinn-cal .trinn-cal-controls, body.printing-trinn-cal .close-btn, body.printing-trinn-cal .modal-footer { display: none !important; }
+  body.printing-trinn-cal table { width: 100% !important; border-collapse: collapse !important; }
+  body.printing-trinn-cal th, body.printing-trinn-cal td { border: 1px solid #000 !important; padding: 4px !important; }
 }
 
 /* --- 11. UTSKRIFT (PRINT) --- */
@@ -235,49 +161,4 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
   .fc-list-event-dot { border-width: 4px !important; }
   .fc-list-event-title { font-weight: 600 !important; color: #0f172a !important; line-height: 1.2 !important; }
   tr { page-break-inside: avoid !important; break-inside: avoid !important; }
-}
-
-/* --- 12. TILPASNING AV MODALER FOR LAPTOP (BRED VISNING) --- */
-
-/* Utvid modal-kortene til nesten full skjermbredde på større skjermer */
-#categoryModal .modal-card,
-#gridOverviewModal .modal-card,
-#categoryModal .modal-large,
-#gridOverviewModal .modal-large {
-  width: 95vw !important;
-  max-width: 1400px !important;
-  margin: 10px auto;
-}
-
-/* Sørg for at tabellen i trinnkalenderen utnytter hele bredden og ikke tvinger fram rulling */
-#categoryEventsList table {
-  width: 100% !important;
-  table-layout: fixed !important; /* Fordeler plassen likt på kolonnene */
-}
-
-/* Uke-kolonnen trenger liten plass */
-#categoryEventsList th:first-child,
-#categoryEventsList td:first-child {
-  width: 60px !important;
-}
-
-/* Fjern min-width sperrer på kategori-kolonnene slik at de tilpasses sømløst */
-#categoryEventsList th:not(:first-child),
-#categoryEventsList td:not(:first-child) {
-  min-width: 0 !important;
-}
-
-/* Tilpass rutenett-containeren i matrise-modalen til å fylle hele bredden */
-#categoryGridContainer {
-  display: grid !important;
-  grid-template-columns: repeat(6, 1fr) !important; /* Eksakt 6 like brede kolonner */
-  gap: 8px !important;
-  width: 100% !important;
-  min-width: 0 !important;
-}
-
-/* La hver kolonne i matrisen krympe etter behov */
-.category-grid-column {
-  flex: 1 1 0 !important;
-  min-width: 0 !important;
 }
