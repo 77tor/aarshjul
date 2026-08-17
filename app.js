@@ -965,25 +965,25 @@ function updateCategoryModalButtons(categoryName) {
   }
 }
 
-// 2. Åpne Kategori-/Trinnmodalen
-window.openCategoryCalendar = function(categoryName) {
+// 2. Åpne Kategori-/Trinnmodalen (Overstyrer alle gamle kall)
+window.openCategoryModal = window.openCategoryCalendar = function(categoryName) {
   activeSelectedCategory = categoryName || "1. trinn";
 
   // Oppdater tittel i modalen
   const titleEl = document.getElementById('categoryModalTitle');
   if (titleEl) titleEl.textContent = `📅 Kalender for ${activeSelectedCategory}`;
 
-  // Tilpass knapper i footer basert på om det er et trinn
+  // Tilpass knapper i footer basert på om det er et trinn (1.-7. trinn)
   updateCategoryModalButtons(activeSelectedCategory);
 
-  // Render tidslinjen direkte i #categoryEventsList
+  // Tving rendering av tabellen/matrisen direkte inn i beholdere
   try {
     renderCategoryTimeline(activeSelectedCategory);
   } catch (err) {
     console.error("Feil ved generering av tidslinje:", err);
   }
 
-  // Vis modalen
+  // Vis modalen trygt
   const modal = document.getElementById('categoryModal');
   if (modal) {
     modal.classList.add('active', 'show');
@@ -2136,6 +2136,7 @@ document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
 });
 
 // --- RENDER MENSY / FILTRE ---
+// --- RENDER MENY / FILTRE ---
 function renderFilters() {
   const filterContainer = document.getElementById('filterList');
   if (!filterContainer) return;
@@ -2176,11 +2177,12 @@ function renderFilters() {
     clickArea.appendChild(colorDot);
     clickArea.appendChild(labelText);
 
+    // 🔑 HER ER ENDRINGEN: Åpner den nye tabellvisningen
     clickArea.addEventListener('click', () => {
-      if (typeof openCategoryModal === 'function') {
+      if (typeof window.openCategoryCalendar === 'function') {
+        window.openCategoryCalendar(cat);
+      } else if (typeof openCategoryModal === 'function') {
         openCategoryModal(cat);
-      } else if (typeof showCategoryModal === 'function') {
-        showCategoryModal(cat);
       } else {
         console.warn('Fant ingen modal-funksjon for kategorien:', cat);
       }
