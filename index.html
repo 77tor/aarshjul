@@ -246,29 +246,30 @@
     </div>
   </div>
 
-  <!-- Modal for Trinnkalender (Ukeoversikt) -->
-  <div id="trinnCalendarModal" class="modal-overlay">
-    <div class="modal-card modal-large" style="max-width: 900px; width: 90vw;">
-      <div class="modal-header">
-        <h3 id="trinnCalendarTitle">📅 Kalender for trinn</h3>
-        <button id="closeTrinnCalModalBtn" type="button" class="close-btn">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="trinn-cal-controls" style="display: flex; gap: 10px; margin-bottom: 15px;">
-          <input type="text" id="trinnCalSearch" placeholder="🔍 Søk i trinnets avtaler..." class="form-control" style="flex: 1;">
-          <button id="btnPrintTrinnCal" type="button" class="btn btn-outline">🖨️ Skriv ut</button>
-        </div>
+<!-- Modal for Trinnkalender (Ukeoversikt) -->
+<div id="trinnCalendarModal" class="modal-overlay">
+  <div class="modal-card modal-large" style="max-width: 900px; width: 90vw;">
+    
+    <div class="modal-header">
+      <h3 id="trinnCalendarTitle">📅 Kalender for trinn</h3>
+      <button id="closeTrinnCalModalBtn" type="button" class="close-btn">&times;</button>
+    </div>
 
-        <!-- Tidslinje-/Uke-beholder -->
-        <div id="trinnCalendarTimeline" class="trinn-timeline-container">
-          <!-- Genereres dynamisk av JS -->
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button id="btnTrinnCalClose" type="button" class="btn btn-secondary">Lukk</button>
+    <div class="modal-body">
+      <!-- Tidslinje-/Uke-beholder -->
+      <div id="trinnCalendarTimeline" class="trinn-timeline-container">
+        <!-- Genereres dynamisk av JS -->
       </div>
     </div>
+
+    <div class="modal-footer">
+      <div class="actions-left">
+        <button id="btnPrintTrinnCal" type="button" class="btn btn-outline">🖨️ Skriv ut</button>
+      </div>
+      <button id="btnTrinnCalClose" type="button" class="btn btn-secondary">Lukk</button>
+    </div>
   </div>
+</div>
 
   <!-- Hovedskript -->
   <script type="module" src="app.js"></script>
