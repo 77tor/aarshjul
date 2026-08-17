@@ -926,13 +926,15 @@ window.addEventListener('click', (e) => {
   }
 });
 
+
 // 3. Render-funksjon som bygger tidslinjen i #categoryEventsList
 function renderCategoryTimeline(selectedCat, filterSearch = '') {
   const container = document.getElementById('categoryEventsList');
   if (!container) return;
   container.innerHTML = '';
 
-  const categories = ['Fellesakt.', 'DKS', 'Kartlegging', 'Svømming', 'Møter', 'Annet'];
+  // EKSAGT DE 6 ØNSKEDE KATEGORIENE I VALGT REKKEFØLGE:
+  const categories = ['Trinn/Annet', 'Fellesaktiviteter', 'DKS', 'Kartlegging', 'Svømming', 'Møter'];
 
   // Generer uker for skoleåret (Uke 32–52 -> Uke 1–25)
   const schoolWeeks = [];
@@ -972,17 +974,20 @@ function renderCategoryTimeline(selectedCat, filterSearch = '') {
     return { week: null, dateStr: '' };
   }
 
+  // RUTINGS-LOGIKK FOR DE 6 KATEGORIENE
   function mapCategory(evt) {
     const ext = evt.extendedProps || evt;
     const grp = (ext.group || evt.group || '').toLowerCase();
     const text = `${evt.title || ''} ${ext.description || ''} ${grp}`.toLowerCase();
 
-    if (grp.includes('møte') || text.includes('møte') || text.includes('foreldre') || text.includes('samtale')) return 'Møter';
+    if (grp.includes('felles') || text.includes('felles') || text.includes('samling') || text.includes('beintøft') || text.includes('fadder')) return 'Fellesaktiviteter';
     if (grp.includes('dks') || text.includes('dks') || text.includes('kultur')) return 'DKS';
     if (grp.includes('kartlegging') || text.includes('kartlegg') || text.includes('prøv') || text.includes('nasjonal')) return 'Kartlegging';
     if (grp.includes('svømming') || text.includes('svømm')) return 'Svømming';
-    if (grp.includes('felles') || text.includes('felles') || text.includes('samling') || text.includes('beintøft') || text.includes('fadder')) return 'Fellesakt.';
-    return 'Annet';
+    if (grp.includes('møte') || text.includes('møte') || text.includes('foreldre') || text.includes('samtale')) return 'Møter';
+    
+    // Alt annet (inkludert UiA, faste trinnaktiviteter osv.) rutes hit:
+    return 'Trinn/Annet';
   }
 
   // 1. SAMLE ALLE EVENT-KILDER DYNAMISK
@@ -1004,7 +1009,7 @@ function renderCategoryTimeline(selectedCat, filterSearch = '') {
 
   let eventsList = [];
 
-// 2. FILTRER MED DUBLETT-SJEKK
+  // 2. FILTRER MED DUBLETT-SJEKK
   const seenIds = new Set();
 
   rawList.forEach(evt => {
