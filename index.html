@@ -193,39 +193,47 @@
     </div>
   </div>
 
-  <!-- Modal for Visning og Utskrift av Kategori (Kategorioversikten) -->
-  <div id="categoryModal" class="modal-overlay">
-    <div class="modal-card modal-large">
-      <div class="modal-header">
-        <h3 id="categoryModalTitle">Kategorioversikt</h3>
-        <button id="categoryModalCloseX" type="button" class="close-btn">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div id="categoryEventsList" class="category-events-list">
-          <!-- Innholdet genereres dynamisk av JS -->
-        </div>
-      </div>
-      
-      <!-- 🔑 OPPPDATERT FOOTER MED NÆRT & RYDDIG KNAPPEOPPSETT -->
-      <div class="modal-footer" style="display: flex; gap: 8px; align-items: center; justify-content: flex-end; flex-wrap: wrap;">
-        <button id="btnCategoryModalGrid" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px;">
-          📊 Matrise for trinnet
-        </button>
-        
-        <button id="btnTrinnCalendar" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px;">
-          📅 Kalender for <span id="trinnCalBtnLabel">trinnet</span>
-        </button>
 
-        <button id="btnCategoryModalClose" type="button" class="btn btn-secondary" style="font-size: 0.85rem; padding: 6px 12px;">
-          Lukk
-        </button>
-        
-        <button id="btnCategoryModalPrint" type="button" class="btn btn-primary" style="font-size: 0.85rem; padding: 6px 12px;">
-          🖨️ Skriv ut
-        </button>
+<!-- Modal for Kategori- og Trinnkalender (Ukeoversikt / Matrise) -->
+<div id="categoryModal" class="modal-overlay">
+  <div class="modal-card modal-large">
+    
+    <!-- HEADER -->
+    <div class="modal-header">
+      <h3 id="categoryModalTitle">📅 Kalender for 4. trinn</h3>
+      <button id="categoryModalCloseX" type="button" class="close-btn">&times;</button>
+    </div>
+
+    <!-- BODY -->
+    <div class="modal-body">
+      <div id="categoryEventsList" class="category-events-list">
+        <!-- Innholdet (Uke-tabellen) genereres dynamisk av JS -->
       </div>
     </div>
+    
+    <!-- FOOTER (Justert med Utskrift/Matrise til venstre og Lukk til høyre) -->
+    <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+      
+      <!-- Knapper til venstre -->
+      <div style="display: flex; gap: 8px;">
+        <button id="btnCategoryModalPrint" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px;">
+          🖨️ Skriv ut
+        </button>
+
+        <!-- Vises automatisk kun når et 1.-7. trinn er valgt -->
+        <button id="btnCategoryModalGrid" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px; display: none;">
+          📊 Vis matrise
+        </button>
+      </div>
+
+      <!-- Lukk-knapp til høyre -->
+      <button id="btnCategoryModalClose" type="button" class="btn btn-secondary" style="font-size: 0.85rem; padding: 6px 12px;">
+        Lukk
+      </button>
+
+    </div>
   </div>
+</div>
 
   <!-- Modal for Rutenett / Matrisevisning av alle kategorier -->
   <div id="gridOverviewModal" class="modal-overlay">
