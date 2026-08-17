@@ -284,6 +284,7 @@ let miniCalCurrentDate = new Date();
 
 
 // GENERER KATEGORI-LISTE I SIDEPANELET (Med synlige farger og 🔍)
+// GENERER KATEGORI-LISTE I SIDEPANELET (Med synlige farger og 🔍)
 function renderCategoryFilters() {
   const filterList = document.getElementById('filterList');
   if (!filterList) return;
@@ -293,31 +294,23 @@ function renderCategoryFilters() {
   Object.entries(categoryColors).forEach(([categoryName, color]) => {
     const catItem = document.createElement('div');
     catItem.className = 'category-row';
-    
-    // Tvinger en ren layout med spredning
     catItem.style.cssText = 'display: flex !important; align-items: center !important; justify-content: space-between !important; width: 100% !important; padding: 4px 6px; margin-bottom: 3px; border-radius: 4px; cursor: pointer;';
 
     const safeId = categoryName.replace(/[^a-zA-Z0-9]/g, '_');
 
-    // Farge-sirkelen er tvingt med background-color: ${color} !important
     catItem.innerHTML = `
       <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
         <input type="checkbox" id="cat_${safeId}" value="${categoryName}" checked style="cursor: pointer; margin: 0;" />
         <span style="background-color: ${color} !important; width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0;"></span>
         <label for="cat_${safeId}" style="cursor: pointer; font-size: 0.85rem; color: #334155; margin: 0; user-select: none;">${categoryName}</label>
       </div>
-      <span class="preview-btn" title="Se alle avtaler for ${categoryName}" style="cursor: pointer; font-size: 14px; padding: 2px 4px; user-select: none; line-height: 1;">
+      <span class="preview-btn" title="Se ukeoversikt for ${categoryName}" style="cursor: pointer; font-size: 14px; padding: 2px 4px; user-select: none; line-height: 1;">
         🔍
       </span>
     `;
 
-    // Visuell hover-effekt på bakgrunnen
-    catItem.addEventListener('mouseenter', () => {
-      catItem.style.backgroundColor = '#f1f5f9';
-    });
-    catItem.addEventListener('mouseleave', () => {
-      catItem.style.backgroundColor = 'transparent';
-    });
+    catItem.addEventListener('mouseenter', () => { catItem.style.backgroundColor = '#f1f5f9'; });
+    catItem.addEventListener('mouseleave', () => { catItem.style.backgroundColor = 'transparent'; });
 
     // Sjekkboks-filtrering
     catItem.querySelector('input').addEventListener('change', (e) => {
@@ -326,37 +319,33 @@ function renderCategoryFilters() {
       } else {
         selectedCategories = selectedCategories.filter(c => c !== categoryName);
       }
-      if (calendar) calendar.refetchEvents();
+      if (typeof calendar !== 'undefined' && calendar) calendar.refetchEvents();
     });
 
-    // Åpne modalen ved klikk på 🔍
+    // Åpne MODALEN ved klikk på forstørrelsesglasset 🔍 eller selve raden
     catItem.querySelector('.preview-btn').addEventListener('click', (e) => {
       e.stopPropagation();
       e.preventDefault();
-      openCategoryModal({ name: categoryName, color: color });
+      openCategoryModal(categoryName);
     });
 
     filterList.appendChild(catItem);
   });
 }
 
-
-
-// Åpne kategorimodal og vis ALLE avtaler for valgt kategori/trinn
-function openCategoryModal(categoryName) {
+// Åpne kategorimodal og vis UKESKALENDER (TABELL) i stedet for kort-liste
+function openCategoryModal(categoryInput) {
   const modal = document.getElementById('categoryModal');
   const title = document.getElementById('categoryModalTitle');
-  const listContainer = document.getElementById('categoryEventsList');
-
+  
   if (!modal) return;
 
-  const catName = typeof categoryName === 'object' ? categoryName.name : categoryName;
-  const catColor = typeof categoryName === 'object' ? categoryName.color : (typeof categoryColors !== 'undefined' ? categoryColors[catName] : '#2563eb');
+  const catName = typeof categoryInput === 'object' ? categoryInput.name : categoryInput;
 
-  if (title) title.textContent = `Kategorioversikt: ${catName}`;
-  if (listContainer) listContainer.innerHTML = '';
+  // 1. Sett ny tittel
+  if (title) title.textContent = `📅 Kalender for ${catName}`;
 
-  // 🔑 NYTT: Vis matriseknappen KUN hvis kategorien er et trinn (1. - 7. trinn)
+  // 2. Vis "Matrise"-knappen KUN hvis det er et trinn (1.-7. trinn)
   const isTrinn = /^([1-7]\.\s*trinn)$/i.test(catName.trim());
   const gridBtn = document.getElementById('btnCategoryModalGrid');
 
@@ -364,113 +353,25 @@ function openCategoryModal(categoryName) {
     if (isTrinn) {
       gridBtn.style.display = 'inline-block';
       gridBtn.textContent = `📊 Matrise for ${catName}`;
-      gridBtn.onclick = () => openCategoryGridModal(catName);
+      gridBtn.onclick = () => {
+        if (typeof openCategoryGridModal === 'function') openCategoryGridModal(catName);
+        else if (typeof openGridOverview === 'function') openGridOverview(catName);
+      };
     } else {
       gridBtn.style.display = 'none';
     }
   }
 
-  // Hent alle statiske og brukerdefinerte hendelser trygt
-  const moterEvents = typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : [];
-  const uiaEvents = typeof getUiAAktiviteterSomEvents === 'function' ? getUiAAktiviteterSomEvents() : [];
-  const fellesEvents = typeof getFellesaktiviteterSomEvents === 'function' ? getFellesaktiviteterSomEvents('2026-2027') : [];
-  const dksEvents = typeof getDKSAktiviteterSomEvents === 'function' ? getDKSAktiviteterSomEvents() : [];
-  const svommeEvents = typeof getSvommeAktiviteterSomEvents === 'function' ? getSvommeAktiviteterSomEvents('2026-2027') : [];
-  const bursdagEvents = typeof getBirthdayEvents === 'function' ? getBirthdayEvents(2026) : [];
-  const kartleggingEvents = typeof getKartleggingerSomEvents === 'function' ? getKartleggingerSomEvents() : [];
-
-  const allRawEvents = [
-    ...fellesEvents,
-    ...dksEvents,
-    ...svommeEvents,
-    ...bursdagEvents,
-    ...kartleggingEvents,
-    ...moterEvents,
-    ...uiaEvents,
-    ...(typeof schoolEventsFromJs !== 'undefined' ? schoolEventsFromJs : []),
-    ...rawEvents
-  ];
-
-  // Presis filtrering for det valgte trinnet eller kategorien
-  const matchedEvents = allRawEvents.filter(evt => {
-    // 1. Sjekk om det er slettet av admin
-    if (deletedStaticEventIds && deletedStaticEventIds.has(evt.id)) return false;
-
-    // 2. Hent ut gruppe/kategori og trinn-array
-    const grp = (evt.extendedProps?.group || evt.group || '').trim().toLowerCase();
-    const trinnArray = evt.extendedProps?.trinn || evt.trinn || [];
-    const target = catName.trim().toLowerCase();
-
-    // Sjekk om kategorien matcher (f.eks. "DKS", "Møter", osv.)
-    const matchesGroup = grp === target;
-
-    // Sjekk om trinnet matcher (f.eks. at "1. trinn" finnes i ["1. trinn", "2. trinn"])
-    const matchesTrinn = Array.isArray(trinnArray) && trinnArray.some(t => t.trim().toLowerCase() === target);
-
-    return matchesGroup || matchesTrinn;
-  });
-
-  // Sorter hendelsene kronologisk på startdato
-  matchedEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
-
-  if (matchedEvents.length === 0) {
-    listContainer.innerHTML = '<p style="color: #64748b; font-style: italic; padding: 10px;">Ingen avtaler funnet i denne kategorien.</p>';
-  } else {
-    matchedEvents.forEach(evt => {
-      const card = document.createElement('div');
-      card.className = 'category-event-card';
-      card.style.cssText = `border-left: 4px solid ${catColor}; padding: 10px 14px; margin-bottom: 8px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; border-left-width: 4px;`;
-
-      const titleText = evt.title || evt.extendedProps?.rawTitle || 'Uten tittel';
-      const descText = evt.extendedProps?.description || '';
-
-      // --- DATO-FORMATERING ---
-      const startDateStr = evt.extendedProps?.startDate || (evt.start ? evt.start.split('T')[0] : '');
-      const endDateStr = evt.extendedProps?.endDate || (evt.end ? evt.end.split('T')[0] : '');
-
-      let dateFormatted = '';
-      if (startDateStr) {
-        const startObj = new Date(startDateStr + 'T00:00:00');
-        const startNor = !isNaN(startObj) ? startObj.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' }) : startDateStr;
-
-        if (endDateStr && endDateStr !== startDateStr) {
-          const endObj = new Date(endDateStr + 'T00:00:00');
-          const endNor = !isNaN(endObj) ? endObj.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' }) : endDateStr;
-          dateFormatted = `${startNor}. – ${endNor}.`;
-        } else {
-          dateFormatted = `${startNor}.`;
-        }
-      }
-
-      // --- KLOKKESLETT-FORMATERING ---
-      const startTime = evt.extendedProps?.startTime || (evt.start && evt.start.includes('T') ? evt.start.split('T')[1].substring(0, 5) : '');
-      const endTime = evt.extendedProps?.endTime || (evt.end && evt.end.includes('T') ? evt.end.split('T')[1].substring(0, 5) : '');
-
-      let timeFormatted = '';
-      if (startTime) {
-        timeFormatted = endTime ? `kl. ${startTime} - ${endTime}` : `kl. ${startTime}`;
-      }
-
-      let datetimeLabel = '';
-      if (dateFormatted && timeFormatted) {
-        datetimeLabel = `📅 ${dateFormatted} &nbsp;•&nbsp; ⏰ ${timeFormatted}`;
-      } else if (dateFormatted) {
-        datetimeLabel = `📅 ${dateFormatted}`;
-      } else if (timeFormatted) {
-        datetimeLabel = `⏰ ${timeFormatted}`;
-      }
-
-      card.innerHTML = `
-        <div class="event-title" style="font-weight: 600; color: #0f172a; font-size: 0.95rem;">${titleText}</div>
-        ${datetimeLabel ? `<div class="event-time" style="font-size: 0.82rem; color: #64748b; margin-top: 3px; display: flex; align-items: center; gap: 4px;">${datetimeLabel}</div>` : ''}
-        ${descText ? `<div class="event-desc" style="font-size: 0.88rem; color: #334155; margin-top: 6px; white-space: pre-line;">${descText}</div>` : ''}
-      `;
-
-      listContainer.appendChild(card);
-    });
+  // 3. 🔑 RENDERE TABELLEN/UKESKALENDEREN I STEDET FOR KORT-LISTA
+  if (typeof renderCategoryTimeline === 'function') {
+    renderCategoryTimeline(catName);
+  } else if (typeof renderTrinnTimeline === 'function') {
+    renderTrinnTimeline(catName);
   }
 
+  // 4. Åpne modalen
   modal.style.display = 'flex';
+  modal.classList.add('show', 'active');
 }
 
 
@@ -954,8 +855,8 @@ document.getElementById('miniNextBtn')?.addEventListener('click', () => {
 /* TRINN- OG KATEGORIKALENDER (TABELLVISNING) */
 let activeSelectedCategory = "";
 
-// 1. Åpner modalen direkte og viser uke-tabellen
-window.openCategoryModal = window.openCategoryCalendar = function(categoryName) {
+// Endre del 1 fra din kode til dette:
+window.openCategoryModal = window.openCategoryCalendar = window.showCategoryModal = function(categoryName) {
   activeSelectedCategory = categoryName || "1. trinn";
 
   // Sett tittelen
@@ -981,6 +882,7 @@ window.openCategoryModal = window.openCategoryCalendar = function(categoryName) 
     modal.style.display = 'flex';
   }
 };
+
 
 // 2. Global listener for knappene i modalen
 window.addEventListener('click', (e) => {
