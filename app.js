@@ -1602,10 +1602,11 @@ onSnapshot(eventsRef, (snapshot) => {
   updateCalendarEvents();
 });
 
+
 // --- ALIASES & FARGE-HJELPERE ---
-// Alias-mapping for å koble ulike gruppenavn til menykategoriene
 const categoryAliases = {
   'felles': 'Fellesaktiviteter',
+  'fellesaktiviteter': 'Fellesaktiviteter',
   'fellesaktivitet': 'Fellesaktiviteter',
   'svømming': 'Svømming',
   'svomme': 'Svømming',
@@ -1627,104 +1628,103 @@ const categoryAliases = {
   'studenter': 'UiA'
 };
 
-// Hjelpefunksjon for å finne riktig farge basert på gruppenavn og alias
 function getCategoryColor(groupName) {
   if (!groupName) return '#3788d8';
-  
   const rawGroup = groupName.toLowerCase().trim();
   const targetCategory = categoryAliases[rawGroup] || groupName;
   
   const matchedKey = Object.keys(categoryColors).find(
     k => k.toLowerCase() === targetCategory.toLowerCase()
   );
-  
   return categoryColors[matchedKey] || categoryColors[groupName] || '#3788d8';
 }
 
-// --- KATEGORI- OG TRINN-VALIDERINGS-LOGIKK ---
+// --- PRESIS TRINN- OG KATEGORIVALIDERINGS-LOGIKK ---
 function isEventInSelectedCategories(event) {
   if (!selectedCategories || selectedCategories.length === 0) return false;
 
-  const rawGroup = (event.extendedProps?.group || event.group || '').trim();
-  
-  // Sørger for at "kartlegging" og "kartlegginger" blir behandlet likt i categoryAliases
+  const ext = event.extendedProps || event;
+  const rawGroup = (ext.group || event.group || '').trim();
   const mappedGroup = (categoryAliases[rawGroup.toLowerCase()] || rawGroup).toLowerCase();
   
-  const trinnArray = event.extendedProps?.trinn || event.trinn || [];
-  const title = (event.title || event.extendedProps?.rawTitle || '').toLowerCase();
-  const description = (event.extendedProps?.description || '').toLowerCase();
-  const altInnhold = `${rawGroup} ${title} ${description}`.toLowerCase();
+  // Håndter trinn enten det er matrise eller tekststreng
+  let trinnArray = ext.trinn || event.trinn || [];
+  if (typeof trinnArray === 'string') {
+    trinnArray = trinnArray.split(',').map(s => s.trim());
+  }
+  
+  const title = (event.title || ext.rawTitle || '').toLowerCase();
+  const description = (ext.description || '').toLowerCase();
 
   for (const cat of selectedCategories) {
     const catLower = cat.toLowerCase().trim();
     const isTrinnCategory = catLower.endsWith('. trinn');
 
     // 1. Direkte match på Kategori/Gruppe
-    if (mappedGroup === catLower) {
-      return true;
-    }
+    if (mappedGroup === catLower) return true;
 
-    // SPESIALHÅNDTERING: Entall vs. flertall for Kartlegging(er)
+    // Spesialhåndtering: Kartlegging
     if ((mappedGroup === 'kartlegging' || mappedGroup === 'kartlegginger') && 
         (catLower === 'kartlegging' || catLower === 'kartlegginger')) {
       return true;
     }
 
-    // 2. Sjekk om hendelsen matcher et spesifikt TRINN (f.eks. "3. trinn")
+    // 2. Sjekk om hendelsen gjelder et spesifikt trinn
     if (isTrinnCategory) {
-      // A) Eksplisitt trinn satt i datastrukturen
-      if (Array.isArray(trinnArray) && trinnArray.some(t => t.toLowerCase() === catLower)) {
+      // A) Eksplisitt trinn valgt i skjemaboksene
+      if (Array.isArray(trinnArray) && trinnArray.some(t => t.toLowerCase().trim() === catLower)) {
         return true;
       }
 
-      // B) Felles for absolutt alle trinn
-      if (altInnhold.includes("alle trinn") || altInnhold.includes("1.-7. trinn") || altInnhold.includes("1-7. trinn") || mappedGroup === "fellesaktiviteter") {
+      // B) Felles for alle trinn
+      const altInnhold = `${title} ${description}`.toLowerCase();
+      if (altInnhold.includes("alle trinn") || altInnhold.includes("1.-7. trinn") || mappedGroup === "fellesaktiviteter") {
         return true;
       }
 
       const trinnNummer = parseInt(cat.split('.')[0].trim(), 10);
 
       if (!isNaN(trinnNummer)) {
-        // C) Sjekk om teksten inneholder et SPESIFIKT trinn eller klasse
-        const spesifiktTrinnRegex = new RegExp(`\\b${trinnNummer}(\\.|a|b|c|d|\\s*-\\s*|\\s*\\.\\s*trinn|\\s*trinn)`, 'i');
-        const harSpesifiktTrinnITekst = spesifiktTrinnRegex.test(altInnhold);
+        // C) Presis søk etter trinn (unngår treff på klokkeslett/datoer)
+        const trinnRegex = new RegExp(`\\b${trinnNummer}\\.\\s*trinn\\b|\\b${trinnNummer}[a-d]\\b`, 'i');
+        if (trinnRegex.test(title) || trinnRegex.test(description)) {
+          return true;
+        }
 
-        // Sjekk om teksten matcher et tallområde (f.eks "1.-3. trinn")
-        let matcherOmrade = false;
+        // D) Sjekk områder (f.eks. "1.-3. trinn")
         const rangeMatch = altInnhold.match(/(\d+)\s*[\.\-]\s*(\d+)\.?\s*trinn/i);
         if (rangeMatch) {
           const startTrinn = parseInt(rangeMatch[1], 10);
           const sluttTrinn = parseInt(rangeMatch[2], 10);
           if (trinnNummer >= startTrinn && trinnNummer <= sluttTrinn) {
-            matcherOmrade = true;
+            return true;
           }
         }
 
-        if (harSpesifiktTrinnITekst || matcherOmrade) {
-          return true;
-        }
-
-        // D) FALLBACK: Heståsen / Brattbakken
-        const harAndreTrinnTekst = /\b[1-7](\.|a|b|c|d|\s*trinn)/i.test(altInnhold);
-
-        if (!harAndreTrinnTekst) {
+        // E) Sjekk stedsbaserte tilhørigheter
+        const harEksplisittTrinn = /\b[1-7]\.\s*trinn\b/i.test(altInnhold);
+        if (!harEksplisittTrinn) {
           if (altInnhold.includes("heståsen") && trinnNummer >= 1 && trinnNummer <= 3) return true;
           if (altInnhold.includes("brattbakken") && trinnNummer >= 4 && trinnNummer <= 7) return true;
         }
       }
     }
 
-    // 3. Samlekategorier
-    if (cat === "Alle på Heståsen" && (altInnhold.includes("heståsen") || trinnArray.some(t => ["1. trinn", "2. trinn", "3. trinn"].includes(t)))) {
+    // 3. Samlekategorier (Skolesteder)
+    if (cat === "Alle på Heståsen" && 
+       (title.includes("heståsen") || trinnArray.some(t => ["1. trinn", "2. trinn", "3. trinn"].includes(t)))) {
       return true;
     }
-    if (cat === "Alle på Brattbakken" && (altInnhold.includes("brattbakken") || trinnArray.some(t => ["4. trinn", "5. trinn", "6. trinn", "7. trinn"].includes(t)))) {
+    if (cat === "Alle på Brattbakken" && 
+       (title.includes("brattbakken") || trinnArray.some(t => ["4. trinn", "5. trinn", "6. trinn", "7. trinn"].includes(t)))) {
       return true;
     }
   }
 
   return false;
 }
+
+
 
 // --- KALENDER OPPDATERING ---
 function updateCalendarEvents() {
