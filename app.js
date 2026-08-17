@@ -372,19 +372,14 @@ function openCategoryModal(categoryInput) {
 }
 
 
-// Åpne Rutenett / Matrise-modalen med alle kategorier bortover
-// Liste over fag/kategorier som skal vises som kolonner etter det valgte trinnet
+// 1. Ny liste med eksakt de 5 faste под-kategoriene (i riktig rekkefølge):
 const TRINN_SUB_CATEGORIES = [
+  "Fellesaktiviteter",
   "DKS", 
-  "Svømming", 
-  "Fellesaktiviteter", 
-  "SFO", 
   "Kartlegging", 
-  "Møter", 
-  "UiA", 
-  "Sosialt"
+  "Svømming", 
+  "Møter"
 ];
-
 
 // Åpne Rutenett / Matrise-modalen KUN for det valgte trinnet
 function openCategoryGridModal(targetTrinn) {
@@ -396,7 +391,8 @@ function openCategoryGridModal(targetTrinn) {
   gridContainer.innerHTML = '';
   if (gridTitle) gridTitle.textContent = `Matriseoversikt: ${targetTrinn}`;
 
-  const columnsToDisplay = [targetTrinn, ...TRINN_SUB_CATEGORIES];
+  // Kolonne 1 kaller vi "Trinn/Annet", etterfulgt av de 5 faste kategoriene:
+  const columnsToDisplay = ["Trinn/Annet", ...TRINN_SUB_CATEGORIES];
 
   // 1. Hent alle hendelser fra alle kilder
   const moterEvents = typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : [];
@@ -416,20 +412,19 @@ function openCategoryGridModal(targetTrinn) {
     ...moterEvents,
     ...uiaEvents,
     ...(typeof schoolEventsFromJs !== 'undefined' ? schoolEventsFromJs : []),
-    ...rawEvents
+    ...(typeof rawEvents !== 'undefined' ? rawEvents : [])
   ];
 
   const trinnLower = targetTrinn.trim().toLowerCase();
   const trinnNum = targetTrinn.replace(/\D/g, '');
 
-  // 2. Filtrer hendelser som tillhører dette trinnet
+  // 2. Filtrer hendelser som tilhører det valgte trinnet
   const trinnEvents = allRawEvents.filter(evt => {
-    if (deletedStaticEventIds && deletedStaticEventIds.has(evt.id)) return false;
+    if (typeof deletedStaticEventIds !== 'undefined' && deletedStaticEventIds && deletedStaticEventIds.has(evt.id)) return false;
 
     const ext = evt.extendedProps || {};
     const grp = (ext.group || evt.group || '').trim().toLowerCase();
 
-    // Samle alle trinn-verdier trygt fra array, strenger eller skjema-oppføringer
     let trinnList = ext.trinn || evt.trinn || ext.trinnOptions || [];
     if (typeof trinnList === 'string') {
       trinnList = trinnList.split(',').map(s => s.trim().toLowerCase());
@@ -450,73 +445,81 @@ function openCategoryGridModal(targetTrinn) {
     return isDirectGroup || isIncludedInTrinnList || isMentionedInText || isAllTrinn;
   });
 
-  // 3. Bygg kolonner bortover
+  // Hjelpefunksjon for å koble hendelse til kolonne
+  function mapCategory(evt) {
+    const ext = evt.extendedProps || {};
+    const grp = (ext.group || evt.group || '').trim().toLowerCase();
+    const text = `${evt.title || ''} ${ext.description || ''} ${grp}`.toLowerCase();
+
+    if (grp.includes('felles') || text.includes('felles') || text.includes('samling') || text.includes('beintøft') || text.includes('fadder')) return 'Fellesaktiviteter';
+    if (grp.includes('dks') || text.includes('dks') || text.includes('kultur')) return 'DKS';
+    if (grp.includes('kartlegging') || text.includes('kartlegg') || text.includes('prøv') || text.includes('nasjonal')) return 'Kartlegging';
+    if (grp.includes('svømming') || text.includes('svømm')) return 'Svømming';
+    if (grp.includes('møte') || text.includes('møte') || text.includes('foreldre') || text.includes('samtale')) return 'Møter';
+    
+    // Alt annet som tilhører trinnet rutes til første kolonne:
+    return 'Trinn/Annet';
+  }
+
+
+// 3. Bygg de 6 kolonnene bortover
   columnsToDisplay.forEach(colName => {
-    const colColor = (typeof categoryColors !== 'undefined' && categoryColors[colName]) ? categoryColors[colName] : '#2563eb';
-    const colNameLower = colName.trim().toLowerCase();
+    const colColor = (typeof categoryColors !== 'undefined' && categoryColors[colName]) ? categoryColors[colName] : '#0284c7';
 
-    const matchedEvents = trinnEvents.filter(evt => {
-      const ext = evt.extendedProps || {};
-      const grp = (ext.group || evt.group || '').trim().toLowerCase();
+    // Filtrer ut hendelser for denne kolonnen
+    const matchedEvents = trinnEvents.filter(evt => mapCategory(evt) === colName);
 
-      // Første kolonne (f.eks. "2. trinn"): vis KUN hendelser som har trinnet som sin valgte hovedkategori/gruppe
-      if (colNameLower === trinnLower) {
-        return grp === trinnLower;
-      }
-
-      // Fag/kategori-kolonnene (DKS, SFO, Møter osv.):
-      // Vi sjekker KUN den eksplisitte kategorien (grp), IKKE fritekst i beskrivelsen!
-      return grp === colNameLower;
-    });
-
-    if (matchedEvents.length === 0) return;
-
-    // Sorter hendelsene kronologisk
+    // Sorter kronologisk
     matchedEvents.sort((a, b) => {
       const dateA = new Date(a.extendedProps?.startDate || a.start || 0);
       const dateB = new Date(b.extendedProps?.startDate || b.start || 0);
       return dateA - dateB;
     });
 
-    // Opprett kolonnen
+    // Lag kolonne-element
     const col = document.createElement('div');
     col.className = 'category-grid-column';
 
     const header = document.createElement('div');
     header.className = 'category-grid-header';
     header.style.backgroundColor = colColor;
-    header.textContent = colName;
+    header.textContent = `${colName} (${matchedEvents.length})`;
     col.appendChild(header);
 
     const content = document.createElement('div');
     content.className = 'category-grid-content';
-    content.style.cssText = 'display: flex; flex-direction: column; gap: 8px; padding: 8px; overflow-y: auto; width: 100%; box-sizing: border-box;';
+    content.style.cssText = 'display: flex; flex-direction: column; gap: 8px; padding: 8px; overflow-y: auto; width: 100%; box-sizing: border-box; min-height: 150px;';
 
-    matchedEvents.forEach(evt => {
-      const ext = evt.extendedProps || {};
-      const card = document.createElement('div');
-      card.className = 'grid-event-card';
-      card.style.cssText = `border-left: 4px solid ${colColor}; width: 100%; box-sizing: border-box;`;
+    // Vis hendelser ELLER melding om at kolonnen er tom
+    if (matchedEvents.length === 0) {
+      content.innerHTML = `<div style="font-size: 0.75rem; color: #94a3b8; text-align: center; font-style: italic; padding: 10px;">Ingen aktiviteter</div>`;
+    } else {
+      matchedEvents.forEach(evt => {
+        const ext = evt.extendedProps || {};
+        const card = document.createElement('div');
+        card.className = 'grid-event-card';
+        card.style.cssText = `border-left: 4px solid ${colColor}; width: 100%; box-sizing: border-box;`;
 
-      const titleText = evt.title || ext.rawTitle || 'Uten tittel';
-      const descText = ext.description || '';
-      const startDateStr = ext.startDate || (evt.start ? String(evt.start).split('T')[0] : '');
+        const titleText = evt.title || ext.rawTitle || 'Uten tittel';
+        const descText = ext.description || '';
+        const startDateStr = ext.startDate || (evt.start ? String(evt.start).split('T')[0] : '');
 
-      let dateFormatted = '';
-      if (startDateStr) {
-        const startObj = new Date(startDateStr + 'T00:00:00');
-        dateFormatted = !isNaN(startObj.getTime()) ? startObj.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' }) : startDateStr;
-      }
+        let dateFormatted = '';
+        if (startDateStr) {
+          const startObj = new Date(startDateStr + 'T00:00:00');
+          dateFormatted = !isNaN(startObj.getTime()) ? startObj.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' }) : startDateStr;
+        }
 
-      const startTime = ext.startTime || (evt.start && String(evt.start).includes('T') ? String(evt.start).split('T')[1].substring(0, 5) : '');
+        const startTime = ext.startTime || (evt.start && String(evt.start).includes('T') ? String(evt.start).split('T')[1].substring(0, 5) : '');
 
-      card.innerHTML = `
-        <div class="grid-event-title">${titleText}</div>
-        <div class="grid-event-time">📅 ${dateFormatted} ${startTime ? '⏰ kl. ' + startTime : ''}</div>
-        ${descText ? `<div class="grid-event-desc">${descText}</div>` : ''}
-      `;
-      content.appendChild(card);
-    });
+        card.innerHTML = `
+          <div class="grid-event-title">${titleText}</div>
+          <div class="grid-event-time">📅 ${dateFormatted} ${startTime ? '⏰ kl. ' + startTime : ''}</div>
+          ${descText ? `<div class="grid-event-desc">${descText}</div>` : ''}
+        `;
+        content.appendChild(card);
+      });
+    }
 
     col.appendChild(content);
     gridContainer.appendChild(col);
