@@ -934,94 +934,104 @@ function renderCategoryTimeline(selectedCat, filterSearch = '') {
 
   const monthsNO = ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"];
 
-  function extractDateAndWeek(strText, evtObj) {
-    if (evtObj) {
-      const ext = evtObj.extendedProps || {};
-      const raw = evtObj.start || evtObj.startDate || evtObj.startStr || ext.start || ext.startDate;
-      if (raw) {
-        const d = new Date(raw);
-        if (!isNaN(d.getTime())) {
-          return { week: getISOWeek(d), dateStr: d.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' }) };
-        }
-      }
-    }
+  function extractDateAndWeek(evt) {
+    const ext = evt.extendedProps || evt;
+    const raw = evt.start || evt.startDate || evt.startStr || ext.start || ext.startDate;
 
-    const cleanText = strText.replace(/[^\w\s\.\-]/gi, ' ').toLowerCase();
-    const ukeMatch = cleanText.match(/uke\s*(\d+)/);
-    if (ukeMatch) return { week: parseInt(ukeMatch[1], 10), dateStr: '' };
-
-    const words = cleanText.split(/\s+/);
-    for (let i = 0; i < words.length - 1; i++) {
-      const dayNum = parseInt(words[i].replace(/\D/g, ''), 10);
-      const mStr = words[i+1].substring(0, 3);
-      const mIdx = monthsNO.indexOf(mStr);
-
-      if (!isNaN(dayNum) && dayNum >= 1 && dayNum <= 31 && mIdx !== -1) {
-        const year = mIdx >= 7 ? 2026 : 2027;
-        const d = new Date(year, mIdx, dayNum);
-        return {
-          week: getISOWeek(d),
-          dateStr: `${dayNum}. ${monthsNO[mIdx]}.`
+    if (raw) {
+      const d = new Date(raw);
+      if (!isNaN(d.getTime())) {
+        return { 
+          week: getISOWeek(d), 
+          dateStr: d.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' }) 
         };
       }
     }
 
+    // Tekst-fallback
+    const strText = `${evt.title || ''} ${ext.description || ''}`.toLowerCase();
+    const ukeMatch = strText.match(/uke\s*(\d+)/);
+    if (ukeMatch) return { week: parseInt(ukeMatch[1], 10), dateStr: '' };
+
     return { week: null, dateStr: '' };
   }
 
-  function mapCategory(text) {
-    const t = text.toLowerCase();
-    if (t.includes('møte') || t.includes('foreldre') || t.includes('samtale') || t.includes('fau') || t.includes('dialogmodell')) return 'Møter';
-    if (t.includes('dks') || t.includes('kultur') || t.includes('konsert')) return 'DKS';
-    if (t.includes('kartlegg') || t.includes('prøv') || t.includes('trivsel') || t.includes('nasjonal')) return 'Kartlegging';
-    if (t.includes('svømm')) return 'Svømming';
-    if (t.includes('felles') || t.includes('samling') || t.includes('aktivitet') || t.includes('beintøft') || t.includes('blime') || t.includes('fadder')) return 'Fellesakt.';
+  function mapCategory(evt) {
+    const ext = evt.extendedProps || evt;
+    const grp = (ext.group || evt.group || '').toLowerCase();
+    const text = `${evt.title || ''} ${ext.description || ''} ${grp}`.toLowerCase();
+
+    if (grp.includes('møte') || text.includes('møte') || text.includes('foreldre') || text.includes('samtale')) return 'Møter';
+    if (grp.includes('dks') || text.includes('dks') || text.includes('kultur')) return 'DKS';
+    if (grp.includes('kartlegging') || text.includes('kartlegg') || text.includes('prøv') || text.includes('nasjonal')) return 'Kartlegging';
+    if (grp.includes('svømming') || text.includes('svømm')) return 'Svømming';
+    if (grp.includes('felles') || text.includes('felles') || text.includes('samling') || text.includes('beintøft') || text.includes('fadder')) return 'Fellesakt.';
     return 'Annet';
   }
 
-  let eventsList = [];
-  let sourceEvents = [];
+  // 1. SAMLE ALLE EVENT-KILDER DYNAMISK
+  const moter = typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : [];
+  const uia = typeof getUiAAktiviteterSomEvents === 'function' ? getUiAAktiviteterSomEvents() : [];
+  const felles = typeof getFellesaktiviteterSomEvents === 'function' ? getFellesaktiviteterSomEvents('2026-2027') : [];
+  const dks = typeof getDKSAktiviteterSomEvents === 'function' ? getDKSAktiviteterSomEvents() : [];
+  const svomme = typeof getSvommeAktiviteterSomEvents === 'function' ? getSvommeAktiviteterSomEvents('2026-2027') : [];
+  const kartlegging = typeof getKartleggingerSomEvents === 'function' ? getKartleggingerSomEvents() : [];
+  const calEvents = (window.calendar && typeof window.calendar.getEvents === 'function') ? window.calendar.getEvents() : [];
 
-  if (window.calendar && typeof window.calendar.getEvents === 'function') {
-    sourceEvents = window.calendar.getEvents();
-  } else if (typeof getCombinedEvents === 'function') {
-    sourceEvents = getCombinedEvents();
-  } else if (Array.isArray(window.events)) {
-    sourceEvents = window.events;
-  }
+  const rawList = [
+    ...felles, ...dks, ...svomme, ...kartlegging, ...moter, ...uia, ...calEvents,
+    ...(typeof rawEvents !== 'undefined' ? rawEvents : [])
+  ];
 
+  const targetName = selectedCat.trim().toLowerCase();
   const trinnNum = selectedCat.replace(/\D/g, '');
 
-  if (sourceEvents.length > 0) {
-    sourceEvents.forEach(evt => {
-      const ext = evt.extendedProps || evt;
-      const title = evt.title || ext.title || '';
-      const desc = ext.description || '';
-      const fullText = `${title} ${desc} ${JSON.stringify(ext)}`;
+  let eventsList = [];
 
-      const match = fullText.toLowerCase().includes(selectedCat.toLowerCase()) || 
-                    (trinnNum && fullText.includes(`${trinnNum}. trinn`)) ||
-                    fullText.includes('1.-7. trinn') ||
-                    fullText.includes('alle trinn');
+  // 2. FILTRER MED DUBLETT-SJEKK
+  const seenIds = new Set();
 
-      if (match) {
-        const parsed = extractDateAndWeek(fullText, evt);
-        eventsList.push({
-          title: title,
-          week: parsed.week,
-          category: mapCategory(fullText),
-          dateStr: parsed.dateStr,
-          fullText: fullText
-        });
-      }
-    });
-  }
+  rawList.forEach(evt => {
+    const ext = evt.extendedProps || evt;
+    const title = evt.title || ext.title || ext.rawTitle || '';
+    const desc = ext.description || '';
+    const group = (ext.group || evt.group || '').toLowerCase();
+    const trinnArray = Array.isArray(ext.trinn || evt.trinn) ? (ext.trinn || evt.trinn) : [];
+
+    // Unngå dubletter
+    const uniqueKey = `${title}_${ext.startDate || evt.start}`;
+    if (seenIds.has(uniqueKey)) return;
+
+    // Sjekk om hendelsen gjelder det valgte trinnet eller kategorien
+    const fullText = `${title} ${desc} ${group} ${trinnArray.join(' ')}`.toLowerCase();
+
+    const matchesTrinn = trinnArray.some(t => t.toLowerCase().includes(targetName)) ||
+                          fullText.includes(targetName) ||
+                          (trinnNum && fullText.includes(`${trinnNum}. trinn`)) ||
+                          fullText.includes('alle trinn') ||
+                          fullText.includes('1.-7. trinn');
+
+    const matchesGroup = group === targetName;
+
+    if (matchesTrinn || matchesGroup) {
+      seenIds.add(uniqueKey);
+      const parsed = extractDateAndWeek(evt);
+
+      eventsList.push({
+        title: title,
+        week: parsed.week,
+        category: mapCategory(evt),
+        dateStr: parsed.dateStr,
+        fullText: fullText
+      });
+    }
+  });
 
   if (filterSearch) {
-    eventsList = eventsList.filter(e => e.fullText.toLowerCase().includes(filterSearch.toLowerCase()));
+    eventsList = eventsList.filter(e => e.fullText.includes(filterSearch.toLowerCase()));
   }
 
-  // Generer Tabell-HTML
+  // 3. GENERER TABELL-HTML
   let tableHtml = `
     <div style="overflow-x: auto; max-height: 520px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 8px;">
       <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: left; background: #fff;">
@@ -1088,7 +1098,6 @@ function renderCategoryTimeline(selectedCat, filterSearch = '') {
 
   container.innerHTML = tableHtml;
 }
-
 
 /* OPPSTART & FULLCALENDAR */
 document.addEventListener('DOMContentLoaded', () => {
