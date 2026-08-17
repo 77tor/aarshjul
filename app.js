@@ -988,7 +988,7 @@ function renderCategoryTimeline(selectedCat, filterSearch = '') {
 
   let eventsList = [];
 
-  // 2. FILTRER MED DUBLETT-SJEKK
+// 2. FILTRER MED DUBLETT-SJEKK
   const seenIds = new Set();
 
   rawList.forEach(evt => {
@@ -996,24 +996,30 @@ function renderCategoryTimeline(selectedCat, filterSearch = '') {
     const title = evt.title || ext.title || ext.rawTitle || '';
     const desc = ext.description || '';
     const group = (ext.group || evt.group || '').toLowerCase();
-    const trinnArray = Array.isArray(ext.trinn || evt.trinn) ? (ext.trinn || evt.trinn) : [];
+    
+    // Håndter om trinn er lagret som matrise/array eller tekststreng
+    let trinnValues = ext.trinn || evt.trinn || [];
+    if (typeof trinnValues === 'string') {
+      trinnValues = trinnValues.split(',').map(s => s.trim());
+    }
 
     // Unngå dubletter
     const uniqueKey = `${title}_${ext.startDate || evt.start}`;
     if (seenIds.has(uniqueKey)) return;
 
-    // Sjekk om hendelsen gjelder det valgte trinnet eller kategorien
-    const fullText = `${title} ${desc} ${group} ${trinnArray.join(' ')}`.toLowerCase();
+    const fullText = `${title} ${desc} ${group} ${trinnValues.join(' ')}`.toLowerCase();
 
-    const matchesTrinn = trinnArray.some(t => t.toLowerCase().includes(targetName)) ||
-                          fullText.includes(targetName) ||
-                          (trinnNum && fullText.includes(`${trinnNum}. trinn`)) ||
-                          fullText.includes('alle trinn') ||
-                          fullText.includes('1.-7. trinn');
+    // Sjekk om det valgte trinnet (f.eks. "4. trinn") er med i avkrysningene
+    const matchesSelectedTrinn = trinnValues.some(t => {
+      const cleanT = String(t).toLowerCase();
+      return cleanT.includes(targetName) || (trinnNum && cleanT.includes(`${trinnNum}. trinn`));
+    });
 
+    // Sjekk om det er en generell avtale ("alle trinn") eller treffer på kategori/gruppe
+    const matchesGeneral = fullText.includes('alle trinn') || fullText.includes('1.-7. trinn');
     const matchesGroup = group === targetName;
 
-    if (matchesTrinn || matchesGroup) {
+    if (matchesSelectedTrinn || matchesGeneral || matchesGroup) {
       seenIds.add(uniqueKey);
       const parsed = extractDateAndWeek(evt);
 
