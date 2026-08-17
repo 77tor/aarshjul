@@ -1056,12 +1056,12 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
 
   const categories = ['Fellesakt.', 'DKS', 'Kartlegging', 'Svømming', 'Møter', 'Annet'];
 
-  // Generer skoleåret (Uke 32 til 52, og Uke 1 til 25)
+  // Generer skoleåret: Høst (uke 32-52) -> Vår (uke 1-25)
   const schoolWeeks = [];
   for (let w = 32; w <= 52; w++) schoolWeeks.push(w);
   for (let w = 1; w <= 25; w++) schoolWeeks.push(w);
 
-  // ISO-ukeberegner
+  // Regn ut ISO-uke fra Date-objekt
   function getISOWeek(d) {
     if (!d || isNaN(d.getTime())) return null;
     const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -1071,11 +1071,10 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
     return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
   }
 
-  // Omfattende datoparser
+  // Robust parsing av uke og dato fra BÅDE dato-objekter og Fritekst/HTML
   function extractWeekAndDate(evtObj, text) {
     let rawDate = null;
 
-    // 1. Sjekk alle muligheter for ekte Date-objekter fra FullCalendar eller datamodellen
     if (evtObj) {
       const ext = evtObj.extendedProps || {};
       rawDate = evtObj.start || evtObj.startDate || evtObj.startStr || 
@@ -1092,25 +1091,28 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
       }
     }
 
-    // 2. Sjekk eksplisitt "Uke 34" i teksten
+    // Direct match på "Uke 34"
     const matchUke = text.match(/uke\s*(\d+)/i);
     if (matchUke) {
       return { week: parseInt(matchUke[1], 10), dateStr: '' };
     }
 
-    // 3. Sjekk datomønstre som "11. juni" eller "9. sep" i teksten
+    // Matcher tekstmønstre som "31. aug", "17. feb.", "13. mai.", "18. jun."
     const monthMap = {
       jan: 0, feb: 1, mar: 2, apr: 3, mai: 4, jun: 5,
       jul: 6, aug: 7, sep: 8, okt: 9, nov: 10, des: 11
     };
+
+    // Fanger opp tall + punktum + måned (f.eks "31. aug..", "17. feb.", "13. mai.")
     const dateMatch = text.match(/(\d{1,2})\.\s*([a-zæøå]{3,4})/i);
     if (dateMatch) {
       const day = parseInt(dateMatch[1], 10);
       const mStr = dateMatch[2].toLowerCase().substring(0, 3);
+      
       if (monthMap.hasOwnProperty(mStr)) {
         const mIdx = monthMap[mStr];
-        const currentYear = new Date().getFullYear();
-        const year = mIdx >= 7 ? currentYear : currentYear + 1;
+        // Skoleåret 2026/2027: Aug-Des = 2026, Jan-Jul = 2027
+        const year = mIdx >= 7 ? 2026 : 2027;
         const d = new Date(year, mIdx, day);
         return {
           week: getISOWeek(d),
@@ -1122,10 +1124,10 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
     return { week: null, dateStr: '' };
   }
 
-  // Kategori-mmapping
+  // Kategori-mmapping med prioritering
   function mapCategory(text) {
     const t = text.toLowerCase();
-    if (t.includes('møte') || t.includes('foreldre') || t.includes('samtale') || t.includes('fau')) return 'Møter';
+    if (t.includes('møte') || t.includes('foreldre') || t.includes('samtale') || t.includes('fau') || t.includes('dialogmodell')) return 'Møter';
     if (t.includes('dks') || t.includes('kultur') || t.includes('konsert')) return 'DKS';
     if (t.includes('kartlegg') || t.includes('prøv') || t.includes('trivsel') || t.includes('nasjonal')) return 'Kartlegging';
     if (t.includes('svømm')) return 'Svømming';
@@ -1135,7 +1137,7 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
 
   let eventsList = [];
 
-  // Hent hendelser direkte fra FullCalendar sin API om mulig
+  // Hent hendelser fra FullCalendar eller globlalt events-array
   let allEvents = [];
   if (window.calendar && typeof window.calendar.getEvents === 'function') {
     allEvents = window.calendar.getEvents();
@@ -1148,7 +1150,6 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
   const trinnNum = trinn.replace(/\D/g, '');
 
   allEvents.forEach(evt => {
-    // Støtte for enten FullCalendar EventApi eller råobjekter
     const ext = typeof evt.extendedProps !== 'undefined' ? evt.extendedProps : evt;
     const title = evt.title || ext.title || '';
     const desc = ext.description || '';
@@ -1171,7 +1172,7 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
     }
   });
 
-  // Fallback dersom alle hendelser kom inn via preloadedCards fra modalen
+  // Fallback til DOM-kortene dersom global liste ikke returnerte hendelsene
   if (eventsList.length === 0 && preloadedCards.length > 0) {
     preloadedCards.forEach(card => {
       const text = card.fullText || '';
@@ -1194,7 +1195,7 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
     eventsList = eventsList.filter(e => e.fullText.toLowerCase().includes(filterSearch.toLowerCase()));
   }
 
-  // Bygg tabell
+  // Bygg tabellen
   let tableHtml = `
     <div style="overflow-x: auto; max-height: 520px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 8px;">
       <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: left; background: #fff;">
@@ -1207,7 +1208,7 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
         <tbody>
   `;
 
-  // Iterer gjennom alle uker i skoleåret
+  // Iterer gjennom uker
   schoolWeeks.forEach(w => {
     const weekEvents = eventsList.filter(e => e.week === w);
     if (weekEvents.length === 0) return;
@@ -1232,7 +1233,7 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
     tableHtml += `</tr>`;
   });
 
-  // Kun hendelser som overhodet ikke har noen startdato havner her
+  // Kun hendelser som mangler dato havner i denne raden
   const noWeekEvents = eventsList.filter(e => e.week === null);
   if (noWeekEvents.length > 0) {
     tableHtml += `<tr style="border-bottom: 1px solid #e2e8f0; background: #fffbebfb;">`;
