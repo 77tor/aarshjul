@@ -1056,12 +1056,12 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
 
   const categories = ['Fellesakt.', 'DKS', 'Kartlegging', 'Svømming', 'Møter', 'Annet'];
 
-  // Generer skoleåret: Høst (uke 32-52) -> Vår (uke 1-25)
+  // Generer uker for skoleåret (Uke 32–52 -> Uke 1–25)
   const schoolWeeks = [];
   for (let w = 32; w <= 52; w++) schoolWeeks.push(w);
   for (let w = 1; w <= 25; w++) schoolWeeks.push(w);
 
-  // Regn ut ISO-uke fra Date-objekt
+  // ISO Uke-beregner
   function getISOWeek(d) {
     if (!d || isNaN(d.getTime())) return null;
     const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -1071,52 +1071,43 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
     return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
   }
 
-  // Robust parsing av uke og dato fra BÅDE dato-objekter og Fritekst/HTML
-  function extractWeekAndDate(evtObj, text) {
-    let rawDate = null;
+  // Norske måneder mønster
+  const monthsNO = ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"];
 
+  function extractDateAndWeek(strText, evtObj) {
+    // 1. Prioriter alltid reelle datoobjekter hvis de finnes
     if (evtObj) {
       const ext = evtObj.extendedProps || {};
-      rawDate = evtObj.start || evtObj.startDate || evtObj.startStr || 
-                ext.start || ext.startDate || ext.start_date || ext.dato;
-    }
-
-    if (rawDate) {
-      const d = new Date(rawDate);
-      if (!isNaN(d.getTime())) {
-        return {
-          week: getISOWeek(d),
-          dateStr: d.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' })
-        };
+      const raw = evtObj.start || evtObj.startDate || evtObj.startStr || ext.start || ext.startDate;
+      if (raw) {
+        const d = new Date(raw);
+        if (!isNaN(d.getTime())) {
+          return { week: getISOWeek(d), dateStr: d.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' }) };
+        }
       }
     }
 
-    // Direct match på "Uke 34"
-    const matchUke = text.match(/uke\s*(\d+)/i);
-    if (matchUke) {
-      return { week: parseInt(matchUke[1], 10), dateStr: '' };
-    }
+    // 2. Rens teksten for ikoner og spesialtegn
+    const cleanText = strText.replace(/[^\w\s\.\-]/gi, ' ').toLowerCase();
 
-    // Matcher tekstmønstre som "31. aug", "17. feb.", "13. mai.", "18. jun."
-    const monthMap = {
-      jan: 0, feb: 1, mar: 2, apr: 3, mai: 4, jun: 5,
-      jul: 6, aug: 7, sep: 8, okt: 9, nov: 10, des: 11
-    };
+    // Sjekk "Uke XX"
+    const ukeMatch = cleanText.match(/uke\s*(\d+)/);
+    if (ukeMatch) return { week: parseInt(ukeMatch[1], 10), dateStr: '' };
 
-    // Fanger opp tall + punktum + måned (f.eks "31. aug..", "17. feb.", "13. mai.")
-    const dateMatch = text.match(/(\d{1,2})\.\s*([a-zæøå]{3,4})/i);
-    if (dateMatch) {
-      const day = parseInt(dateMatch[1], 10);
-      const mStr = dateMatch[2].toLowerCase().substring(0, 3);
-      
-      if (monthMap.hasOwnProperty(mStr)) {
-        const mIdx = monthMap[mStr];
-        // Skoleåret 2026/2027: Aug-Des = 2026, Jan-Jul = 2027
+    // Sjekk norsk datomønster (f.eks "31 aug", "17 feb", "13 mai")
+    const words = cleanText.split(/\s+/);
+    for (let i = 0; i < words.length - 1; i++) {
+      const dayNum = parseInt(words[i].replace(/\D/g, ''), 10);
+      const mStr = words[i+1].substring(0, 3);
+      const mIdx = monthsNO.indexOf(mStr);
+
+      if (!isNaN(dayNum) && dayNum >= 1 && dayNum <= 31 && mIdx !== -1) {
+        // Skoleår 2026/2027: Aug–Des = 2026, Jan–Jul = 2027
         const year = mIdx >= 7 ? 2026 : 2027;
-        const d = new Date(year, mIdx, day);
+        const d = new Date(year, mIdx, dayNum);
         return {
           week: getISOWeek(d),
-          dateStr: `${day}. ${mStr}.`
+          dateStr: `${dayNum}. ${monthsNO[mIdx]}.`
         };
       }
     }
@@ -1124,7 +1115,6 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
     return { week: null, dateStr: '' };
   }
 
-  // Kategori-mmapping med prioritering
   function mapCategory(text) {
     const t = text.toLowerCase();
     if (t.includes('møte') || t.includes('foreldre') || t.includes('samtale') || t.includes('fau') || t.includes('dialogmodell')) return 'Møter';
@@ -1137,65 +1127,65 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
 
   let eventsList = [];
 
-  // Hent hendelser fra FullCalendar eller globlalt events-array
-  let allEvents = [];
+  // Hent alle hendelser fra kalenderen
+  let sourceEvents = [];
   if (window.calendar && typeof window.calendar.getEvents === 'function') {
-    allEvents = window.calendar.getEvents();
+    sourceEvents = window.calendar.getEvents();
   } else if (typeof getCombinedEvents === 'function') {
-    allEvents = getCombinedEvents();
+    sourceEvents = getCombinedEvents();
   } else if (Array.isArray(window.events)) {
-    allEvents = window.events;
+    sourceEvents = window.events;
   }
 
   const trinnNum = trinn.replace(/\D/g, '');
 
-  allEvents.forEach(evt => {
-    const ext = typeof evt.extendedProps !== 'undefined' ? evt.extendedProps : evt;
-    const title = evt.title || ext.title || '';
-    const desc = ext.description || '';
-    const fullText = `${title} ${desc} ${JSON.stringify(ext)}`;
+  if (sourceEvents.length > 0) {
+    sourceEvents.forEach(evt => {
+      const ext = evt.extendedProps || evt;
+      const title = evt.title || ext.title || '';
+      const desc = ext.description || '';
+      const fullText = `${title} ${desc} ${JSON.stringify(ext)}`;
 
-    const match = fullText.toLowerCase().includes(trinn.toLowerCase()) || 
-                  (trinnNum && fullText.includes(`${trinnNum}. trinn`)) ||
-                  fullText.includes('1.-7. trinn') ||
-                  fullText.includes('alle trinn');
+      const match = fullText.toLowerCase().includes(trinn.toLowerCase()) || 
+                    (trinnNum && fullText.includes(`${trinnNum}. trinn`)) ||
+                    fullText.includes('1.-7. trinn') ||
+                    fullText.includes('alle trinn');
 
-    if (match) {
-      const parsed = extractWeekAndDate(evt, fullText);
-      eventsList.push({
-        title: title,
-        week: parsed.week,
-        category: mapCategory(fullText),
-        dateStr: parsed.dateStr,
-        fullText: fullText
-      });
-    }
-  });
+      if (match) {
+        const parsed = extractDateAndWeek(fullText, evt);
+        eventsList.push({
+          title: title,
+          week: parsed.week,
+          category: mapCategory(fullText),
+          dateStr: parsed.dateStr,
+          fullText: fullText
+        });
+      }
+    });
+  }
 
-  // Fallback til DOM-kortene dersom global liste ikke returnerte hendelsene
+  // Backup-mottak fra HTML-kort
   if (eventsList.length === 0 && preloadedCards.length > 0) {
     preloadedCards.forEach(card => {
-      const text = card.fullText || '';
+      const text = card.fullText || card.innerText || '';
+      const parsed = extractDateAndWeek(text, card);
       const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-      const title = lines[0] || 'Avtale';
-      const parsed = extractWeekAndDate(card, text);
 
       eventsList.push({
-        title: title,
+        title: lines[0] || 'Avtale',
         week: parsed.week,
         category: mapCategory(text),
-        dateStr: parsed.dateStr || (lines[1] && lines[1].match(/\d/) ? lines[1] : ''),
+        dateStr: parsed.dateStr,
         fullText: text
       });
     });
   }
 
-  // Filtrering på søkefelt
   if (filterSearch) {
     eventsList = eventsList.filter(e => e.fullText.toLowerCase().includes(filterSearch.toLowerCase()));
   }
 
-  // Bygg tabellen
+  // Generer HTML
   let tableHtml = `
     <div style="overflow-x: auto; max-height: 520px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 8px;">
       <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: left; background: #fff;">
@@ -1208,7 +1198,6 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
         <tbody>
   `;
 
-  // Iterer gjennom uker
   schoolWeeks.forEach(w => {
     const weekEvents = eventsList.filter(e => e.week === w);
     if (weekEvents.length === 0) return;
@@ -1233,7 +1222,6 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
     tableHtml += `</tr>`;
   });
 
-  // Kun hendelser som mangler dato havner i denne raden
   const noWeekEvents = eventsList.filter(e => e.week === null);
   if (noWeekEvents.length > 0) {
     tableHtml += `<tr style="border-bottom: 1px solid #e2e8f0; background: #fffbebfb;">`;
