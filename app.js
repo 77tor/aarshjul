@@ -950,107 +950,67 @@ document.getElementById('miniNextBtn')?.addEventListener('click', () => {
 });
 
 
-/* TRINN-KALENDER */
-let activeSelectedTrinn = "";
 
-// 1. Oppdaterer knappens synlighet og tekstavstand i kategorimodalen
-function updateTrinnCalButtonVisibility() {
-  const catTitle = document.getElementById('categoryModalTitle')?.textContent || '';
-  const match = catTitle.match(/\d\.\s*trinn/i);
-  const btn = document.getElementById('btnTrinnCalendar');
-  const labelEl = document.getElementById('trinnCalBtnLabel');
+/* TRINN- OG KATEGORIKALENDER (TABELLVISNING) */
+let activeSelectedCategory = "";
 
-  if (btn) {
-    if (match) {
-      btn.style.setProperty('display', 'inline-flex', 'important');
-      activeSelectedTrinn = match[0];
-      if (labelEl) labelEl.textContent = ' ' + activeSelectedTrinn;
-    } else {
-      btn.style.setProperty('display', 'none', 'important');
-    }
-  }
-}
+// 1. Åpner modalen direkte og viser uke-tabellen
+window.openCategoryModal = window.openCategoryCalendar = function(categoryName) {
+  activeSelectedCategory = categoryName || "1. trinn";
 
-// 2. Åpner trinnmodalen trygt
-window.openTrinnCalendar = function(trinn, savedHtmlCards = []) {
-  activeSelectedTrinn = trinn || "1. trinn";
-
-  const titleEl = document.getElementById('trinnCalendarTitle');
-  if (titleEl) titleEl.textContent = `📅 Kalender for ${activeSelectedTrinn}`;
-
-  try {
-    if (typeof renderTrinnTimeline === 'function') {
-      renderTrinnTimeline(activeSelectedTrinn, '', savedHtmlCards);
-    }
-  } catch (err) {
-    console.error("Feil ved generering av trinn-tidslinje:", err);
+  // Sett tittelen
+  const titleEl = document.getElementById('categoryModalTitle');
+  if (titleEl) {
+    titleEl.textContent = `📅 Kalender for ${activeSelectedCategory}`;
   }
 
-  const modal = document.getElementById('trinnCalendarModal');
+  // Styrer om "Vis matrise"-knappen skal vises (kun for 1.-7. trinn)
+  const isTrinn = /([1-7]\.\s*trinn)/i.test(activeSelectedCategory);
+  const gridBtn = document.getElementById('btnCategoryModalGrid');
+  if (gridBtn) {
+    gridBtn.style.display = isTrinn ? 'inline-flex' : 'none';
+  }
+
+  // Generer tabellinnholdet direkte i kategorilisten
+  renderCategoryTimeline(activeSelectedCategory);
+
+  // Vis modalen
+  const modal = document.getElementById('categoryModal');
   if (modal) {
     modal.classList.add('active', 'show');
-    modal.setAttribute('style', 'display: flex !important; z-index: 9999999 !important; opacity: 1 !important; visibility: visible !important;');
-  } else {
-    alert("Fant ikke #trinnCalendarModal i HTML-koden!");
+    modal.style.display = 'flex';
   }
 };
 
-// 3. Følg med på når kategorimodalen endrer seg
-const categoryModalEl = document.getElementById('categoryModal');
-if (categoryModalEl) {
-  const observer = new MutationObserver(updateTrinnCalButtonVisibility);
-  observer.observe(categoryModalEl, { attributes: true, attributeFilter: ['style', 'class'] });
-}
-
-// 4. Global klikk-lytter
+// 2. Global listener for knappene i modalen
 window.addEventListener('click', (e) => {
-  const trinnBtn = e.target.closest('#btnTrinnCalendar');
-  
-  if (trinnBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const catTitle = document.getElementById('categoryModalTitle')?.textContent || '';
-    const match = catTitle.match(/\d\.\s*trinn/i);
-    const targetTrinn = match ? match[0] : (activeSelectedTrinn || '1. trinn');
-
-    // Kopier kortene fra kategorimodalen FØR den lukkes
-    const catListCards = document.querySelectorAll('#categoryEventsList > div, #categoryEventsList .event-card, #categoryEventsList .category-event-card');
-    const savedHtmlCards = [];
-    catListCards.forEach(card => {
-      const text = card.innerText || card.textContent || '';
-      if (text.trim()) {
-        savedHtmlCards.push({
-          htmlContent: card.innerHTML,
-          fullText: text
-        });
-      }
-    });
-
-    // Lukker kategorimodalen
-    if (categoryModalEl) {
-      categoryModalEl.style.display = 'none';
-      categoryModalEl.classList.remove('show', 'active');
-    }
-
-    // Åpner trinnkalenderen med de lagrede kortene
-    window.openTrinnCalendar(targetTrinn, savedHtmlCards);
-    return;
-  }
-
-  // Lukking av Trinnkalender-modalen
-  if (e.target.closest('#closeTrinnCalModalBtn') || e.target.closest('#btnTrinnCalClose') || e.target.id === 'trinnCalendarModal') {
-    const modal = document.getElementById('trinnCalendarModal');
+  // Lukk modal
+  if (e.target.closest('#categoryModalCloseX') || e.target.closest('#btnCategoryModalClose')) {
+    const modal = document.getElementById('categoryModal');
     if (modal) {
       modal.style.display = 'none';
       modal.classList.remove('show', 'active');
     }
   }
-}, true);
 
-// 5. Render-funksjon som bygger tidslinjen
-function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
-  const container = document.getElementById('trinnCalendarTimeline');
+  // Skriv ut
+  if (e.target.closest('#btnCategoryModalPrint')) {
+    window.print();
+  }
+
+  // Matrise-knapp
+  if (e.target.closest('#btnCategoryModalGrid')) {
+    if (typeof openGridOverview === 'function') {
+      openGridOverview(activeSelectedCategory);
+    } else {
+      console.warn("Funksjonen openGridOverview er ikke definert.");
+    }
+  }
+});
+
+// 3. Render-funksjon som bygger tidslinjen i #categoryEventsList
+function renderCategoryTimeline(selectedCat, filterSearch = '') {
+  const container = document.getElementById('categoryEventsList');
   if (!container) return;
   container.innerHTML = '';
 
@@ -1061,7 +1021,6 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
   for (let w = 32; w <= 52; w++) schoolWeeks.push(w);
   for (let w = 1; w <= 25; w++) schoolWeeks.push(w);
 
-  // ISO Uke-beregner
   function getISOWeek(d) {
     if (!d || isNaN(d.getTime())) return null;
     const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -1071,11 +1030,9 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
     return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
   }
 
-  // Norske måneder mønster
   const monthsNO = ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"];
 
   function extractDateAndWeek(strText, evtObj) {
-    // 1. Prioriter alltid reelle datoobjekter hvis de finnes
     if (evtObj) {
       const ext = evtObj.extendedProps || {};
       const raw = evtObj.start || evtObj.startDate || evtObj.startStr || ext.start || ext.startDate;
@@ -1087,14 +1044,10 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
       }
     }
 
-    // 2. Rens teksten for ikoner og spesialtegn
     const cleanText = strText.replace(/[^\w\s\.\-]/gi, ' ').toLowerCase();
-
-    // Sjekk "Uke XX"
     const ukeMatch = cleanText.match(/uke\s*(\d+)/);
     if (ukeMatch) return { week: parseInt(ukeMatch[1], 10), dateStr: '' };
 
-    // Sjekk norsk datomønster (f.eks "31 aug", "17 feb", "13 mai")
     const words = cleanText.split(/\s+/);
     for (let i = 0; i < words.length - 1; i++) {
       const dayNum = parseInt(words[i].replace(/\D/g, ''), 10);
@@ -1102,7 +1055,6 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
       const mIdx = monthsNO.indexOf(mStr);
 
       if (!isNaN(dayNum) && dayNum >= 1 && dayNum <= 31 && mIdx !== -1) {
-        // Skoleår 2026/2027: Aug–Des = 2026, Jan–Jul = 2027
         const year = mIdx >= 7 ? 2026 : 2027;
         const d = new Date(year, mIdx, dayNum);
         return {
@@ -1126,9 +1078,8 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
   }
 
   let eventsList = [];
-
-  // Hent alle hendelser fra kalenderen
   let sourceEvents = [];
+
   if (window.calendar && typeof window.calendar.getEvents === 'function') {
     sourceEvents = window.calendar.getEvents();
   } else if (typeof getCombinedEvents === 'function') {
@@ -1137,7 +1088,7 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
     sourceEvents = window.events;
   }
 
-  const trinnNum = trinn.replace(/\D/g, '');
+  const trinnNum = selectedCat.replace(/\D/g, '');
 
   if (sourceEvents.length > 0) {
     sourceEvents.forEach(evt => {
@@ -1146,7 +1097,7 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
       const desc = ext.description || '';
       const fullText = `${title} ${desc} ${JSON.stringify(ext)}`;
 
-      const match = fullText.toLowerCase().includes(trinn.toLowerCase()) || 
+      const match = fullText.toLowerCase().includes(selectedCat.toLowerCase()) || 
                     (trinnNum && fullText.includes(`${trinnNum}. trinn`)) ||
                     fullText.includes('1.-7. trinn') ||
                     fullText.includes('alle trinn');
@@ -1164,28 +1115,11 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
     });
   }
 
-  // Backup-mottak fra HTML-kort
-  if (eventsList.length === 0 && preloadedCards.length > 0) {
-    preloadedCards.forEach(card => {
-      const text = card.fullText || card.innerText || '';
-      const parsed = extractDateAndWeek(text, card);
-      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-
-      eventsList.push({
-        title: lines[0] || 'Avtale',
-        week: parsed.week,
-        category: mapCategory(text),
-        dateStr: parsed.dateStr,
-        fullText: text
-      });
-    });
-  }
-
   if (filterSearch) {
     eventsList = eventsList.filter(e => e.fullText.toLowerCase().includes(filterSearch.toLowerCase()));
   }
 
-  // Generer HTML
+  // Generer Tabell-HTML
   let tableHtml = `
     <div style="overflow-x: auto; max-height: 520px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 8px;">
       <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: left; background: #fff;">
@@ -1252,7 +1186,6 @@ function renderTrinnTimeline(trinn, filterSearch = '', preloadedCards = []) {
 
   container.innerHTML = tableHtml;
 }
-
 
 
 /* OPPSTART & FULLCALENDAR */
