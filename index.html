@@ -93,7 +93,6 @@
       <div id="viewMode" class="modal-body" style="display: none;">
         <h2 id="viewTitle" class="view-title"></h2>
         <div class="view-badge"><span id="viewGroup"></span></div>
-        <!-- NYTT FELT: Viser hvilke trinn avtalen gjelder for -->
         <p class="view-detail"><strong>Gjelder for trinn:</strong> <span id="viewTrinn"></span></p>
         <p class="view-detail"><strong>Tid:</strong> <span id="viewTime"></span></p>
         <p id="viewRecurringRow" class="view-detail" style="display: none;">
@@ -118,7 +117,6 @@
           <select id="group" required></select>
         </div>
 
-        <!-- 🔑 NYTT FELT: Velg et eller flere trinn -->
         <div class="form-group">
           <label style="font-weight: 600; display: block; margin-bottom: 6px;">Gjelder for trinn:</label>
           <div id="eventTrinnCheckboxes" class="trinn-checkbox-group">
@@ -182,7 +180,6 @@
 
       <!-- FOOTER KNAPPER -->
       <div id="normalFooter" class="modal-footer">
-        <!-- Vises kun i visningsmodus for egne hendelser -->
         <div class="actions-left">
           <button id="viewEditBtn" type="button" class="btn btn-ghost btn-sm" style="display: none;">✏️ Rediger</button>
           <button id="viewDeleteBtn" type="button" class="btn btn-ghost-danger btn-sm" style="display: none;">🗑️ Slett</button>
@@ -196,7 +193,7 @@
     </div>
   </div>
 
-<!-- Modal for Visning og Utskrift av Kategori (Kategorioversikten) -->
+  <!-- Modal for Visning og Utskrift av Kategori (Kategorioversikten) -->
   <div id="categoryModal" class="modal-overlay">
     <div class="modal-card modal-large">
       <div class="modal-header">
@@ -208,18 +205,24 @@
           <!-- Innholdet genereres dynamisk av JS -->
         </div>
       </div>
-      <div class="modal-footer" style="display: flex; gap: 8px; align-items: center;">
-        <button id="btnCategoryModalGrid" type="button" class="btn btn-secondary">📊 Filtrer kategorier (Rutenett)</button>
+      
+      <!-- 🔑 OPPPDATERT FOOTER MED NÆRT & RYDDIG KNAPPEOPPSETT -->
+      <div class="modal-footer" style="display: flex; gap: 8px; align-items: center; justify-content: flex-end; flex-wrap: wrap;">
+        <button id="btnCategoryModalGrid" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px;">
+          📊 Matrise for trinnet
+        </button>
         
-        <!-- 🔑 NY KNAPP PLASSERT RIKTIG I KATEGORIOVERSIKTEN -->
-        <button id="btnTrinnCalendar" type="button" class="btn btn-secondary">
-         📅 Kalender for <span id="trinnCalBtnLabel">trinnet</span>
+        <button id="btnTrinnCalendar" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px;">
+          📅 Kalender for <span id="trinnCalBtnLabel">trinnet</span>
         </button>
 
-
-
-        <button id="btnCategoryModalClose" type="button" class="btn btn-secondary">Lukk</button>
-        <button id="btnCategoryModalPrint" type="button" class="btn btn-primary">🖨️ Skriv ut</button>
+        <button id="btnCategoryModalClose" type="button" class="btn btn-secondary" style="font-size: 0.85rem; padding: 6px 12px;">
+          Lukk
+        </button>
+        
+        <button id="btnCategoryModalPrint" type="button" class="btn btn-primary" style="font-size: 0.85rem; padding: 6px 12px;">
+          🖨️ Skriv ut
+        </button>
       </div>
     </div>
   </div>
@@ -266,7 +269,6 @@
       </div>
     </div>
   </div>
-
 
   <!-- Hovedskript -->
   <script type="module" src="app.js"></script>

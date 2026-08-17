@@ -62,12 +62,24 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 /* --- 8. MODALER & SKJEMAER --- */
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; z-index: 2000; }
 .modal-card { background: #ffffff; border-radius: 12px; width: 100%; max-width: 480px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; }
-.modal-large { max-width: 650px; }
+.modal-large { max-width: 850px; }
 .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
 .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; }
 .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
-.modal-footer { padding: 16px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+
+/* OPPDATERT FOOTER: Håndterer mange knapper ryddig */
+.modal-footer { 
+  padding: 14px 20px; 
+  background: #f8fafc; 
+  border-top: 1px solid #e2e8f0; 
+  display: flex; 
+  justify-content: flex-end; 
+  align-items: center; 
+  gap: 10px; 
+  flex-wrap: wrap; 
+}
 .modal-footer .actions-left { margin-right: auto; display: flex; gap: 8px; }
+
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-group label { font-size: 0.85rem; font-weight: 600; color: #475569; }
 .form-group input, .form-group select, .form-group textarea { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; }
@@ -82,13 +94,31 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .category-event-card .event-desc { font-size: 0.85rem; color: #334155; margin-top: 4px; white-space: pre-line; }
 
 /* --- 9. KNAPPER --- */
-.btn { padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: none; cursor: pointer; transition: background-color 0.15s ease; }
+.btn { 
+  display: inline-flex; 
+  align-items: center; 
+  justify-content: center; 
+  gap: 6px; 
+  padding: 8px 14px; 
+  border-radius: 6px; 
+  font-size: 0.85rem; 
+  font-weight: 600; 
+  border: 1px solid transparent; 
+  cursor: pointer; 
+  transition: all 0.15s ease; 
+  white-space: nowrap; 
+}
 .btn-sm { padding: 5px 10px; font-size: 0.8rem; }
 .btn-text { background: none; border: none; color: #2563eb; font-size: 0.8rem; cursor: pointer; }
 .btn-primary { background: #2563eb; color: #ffffff; }
 .btn-primary:hover { background: #1d4ed8; }
-.btn-secondary { background: #e2e8f0; color: #334155; }
-.btn-secondary:hover { background: #cbd5e1; }
+.btn-secondary { background: #e2e8f0; color: #334155; border-color: #cbd5e1; }
+.btn-secondary:hover { background: #cbd5e1; color: #0f172a; }
+
+/* LAGT TIL: Missing btn-outline definition */
+.btn-outline { background: #ffffff; color: #334155; border-color: #cbd5e1; }
+.btn-outline:hover { background: #f1f5f9; border-color: #94a3b8; color: #0f172a; }
+
 .btn-danger { background: #ef4444; color: #ffffff; }
 .btn-danger:hover { background: #dc2626; }
 .btn-ghost { background-color: transparent; color: #475569; border: 1px solid #cbd5e1; }
@@ -97,7 +127,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .btn-ghost-danger:hover { background-color: #fee2e2; color: #b91c1c; }
 .delete-options { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 
-/* --- 10. RUTENETT / KATEGORI-MATRISE --- */
+/* --- 10. RUTENETT / KATEGORI-MATRISE & TRINNKALENDER --- */
 .category-grid-container { display: flex; gap: 12px; min-width: min-content; align-items: flex-start; padding-bottom: 10px; }
 .category-grid-column { flex: 0 0 220px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; flex-direction: column; max-height: 70vh; }
 .category-grid-header { padding: 10px; color: white; font-weight: 600; font-size: 0.9rem; border-top-left-radius: 7px; border-top-right-radius: 7px; text-align: center; position: sticky; top: 0; z-index: 2; }
@@ -107,19 +137,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .grid-event-time { color: #64748b; font-size: 0.75rem; }
 .grid-event-desc { color: #475569; font-size: 0.75rem; margin-top: 4px; white-space: pre-line; }
 
-/* Styling for Trinnkalender Timeline */
-.trinn-timeline-container { display: flex; flex-direction: column; gap: 20px; max-height: 65vh; overflow-y: auto; padding-right: 8px; }
-.trinn-timeline-container::-webkit-scrollbar { width: 6px; }
-.trinn-timeline-container::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
-.trinn-week-block { border-left: 4px solid #0284c7; background: #f8fafc; border-radius: 0 8px 8px 0; padding: 12px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-.trinn-week-header { font-weight: 700; font-size: 1.1rem; color: #0f172a; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; }
-.trinn-event-card { background: #ffffff; border: 1px solid #e2e8f0; border-left-width: 5px; border-left-style: solid; border-radius: 6px; padding: 10px 14px; margin-bottom: 8px; transition: transform 0.15s ease, box-shadow 0.15s ease; }
-.trinn-event-card:hover { transform: translateX(3px); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-.trinn-event-title { font-weight: 600; font-size: 0.95rem; color: #1e293b; }
-.trinn-event-meta { font-size: 0.85rem; color: #64748b; margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-.trinn-event-tag { background: #e0f2fe; color: #0369a1; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
-
-/* Trinnkalender Modal overlay */
+/* Styling for Trinnkalender Modal */
 #trinnCalendarModal { 
   display: none; 
   position: fixed !important; 
@@ -133,13 +151,11 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
   justify-content: center; 
 }
 
-/* Vises kun når active/show eller inline display:flex er satt */
 #trinnCalendarModal.active, 
 #trinnCalendarModal.show,
 #trinnCalendarModal[style*="display: flex"] { 
   display: flex !important; 
 }
-
 
 /* Utskriftstilpasning for trinnkalenderen */
 @media print {
@@ -158,8 +174,18 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     background: #fff;
   }
   body.printing-trinn-cal .trinn-cal-controls,
-  body.printing-trinn-cal .close-btn {
+  body.printing-trinn-cal .close-btn,
+  body.printing-trinn-cal .modal-footer {
     display: none !important;
+  }
+  body.printing-trinn-cal table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  body.printing-trinn-cal th, 
+  body.printing-trinn-cal td {
+    border: 1px solid #000 !important;
+    padding: 4px !important;
   }
 }
 
