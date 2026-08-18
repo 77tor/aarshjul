@@ -148,220 +148,43 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 
 /* --- 7. UTSKRIFT (PRINT REGLER) --- */
 @media print {
-  /* Standard for ukesutskrift */
-  @page { 
-    size: A4 landscape !important; 
-    margin: 6mm !important; 
-  }
+  @page { size: A4 landscape !important; margin: 6mm !important; }
+  @page category-page { size: A4 portrait !important; margin: 10mm !important; }
 
-  /* Stående A4 kun for kategoriutskrift */
-  @page category-page {
-    size: A4 portrait !important;
-    margin: 10mm !important;
-  }
-
-  html, body { 
-    background: #ffffff !important; 
-    color: #0f172a !important; 
-    margin: 0 !important; 
-    padding: 0 !important; 
-    width: 100% !important; 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; 
-  }
+  html, body { background: #ffffff !important; color: #0f172a !important; margin: 0 !important; padding: 0 !important; width: 100% !important; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; }
 
   /* --- 7A. SKJUL ALT UVIKTIG --- */
-  .sidebar, .fc-header-toolbar, .popover, .context-menu, 
-  #selectionPopover, #contextMenu, .close-btn, .modal-footer, 
-  .btn, .modal-backdrop, .week-filter-bar, .app-layout, 
-  .main-content, #calendar, .fc, #printHeader, 
-  #gridOverviewModal, #trinnCalendarModal, #eventModal { 
-    display: none !important; 
-  }
-
-  /* Skjul kategorimodalens egne elementer når vi IKKE skriver ut kategori */
-  body:not(.printing-category) #categoryModal {
-    display: none !important;
-  }
+  .sidebar, .fc-header-toolbar, .popover, .context-menu, #selectionPopover, #contextMenu, .close-btn, .modal-footer, .btn, .modal-backdrop, .week-filter-bar, .app-layout, .main-content, #calendar, .fc, #printHeader, #gridOverviewModal, #trinnCalendarModal, #eventModal { display: none !important; }
+  body:not(.printing-category) #categoryModal { display: none !important; }
 
   /* --- 7B. UKESUTSKRIFT (LIGGENDE) --- */
-  body:not(.printing-category):not(.printing-trinn-cal) #weekPrintModal { 
-    display: block !important; 
-    position: absolute !important; 
-    left: 0 !important; 
-    top: 0 !important; 
-    width: 100% !important; 
-    height: 100% !important; 
-    background: #ffffff !important; 
-    padding: 0 !important; 
-    margin: 0 !important; 
-    z-index: 999999 !important; 
-  }
-  
-  body.printing-category #weekPrintModal, 
-  body.printing-trinn-cal #weekPrintModal { 
-    display: none !important; 
-  }
+  body:not(.printing-category):not(.printing-trinn-cal) #weekPrintModal { display: block !important; position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; height: 100% !important; background: #ffffff !important; padding: 0 !important; margin: 0 !important; z-index: 999999 !important; }
+  body.printing-category #weekPrintModal, body.printing-trinn-cal #weekPrintModal { display: none !important; }
+  #weekPrintModal .modal-card, #weekPrintModal .modal-dialog, #weekPrintModal .modal-body { width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; border: none !important; background: #ffffff !important; overflow: visible !important; }
+  #weekPrintSheet { border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; background: #ffffff !important; }
+  .print-days-grid { display: grid !important; grid-template-columns: repeat(5, 1fr) !important; gap: 6px !important; width: 100% !important; margin-top: 8px !important; }
+  .print-day-column { border: 1px solid #cbd5e1 !important; page-break-inside: avoid !important; break-inside: avoid !important; }
+  .print-day-header { background: #1e293b !important; color: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .print-event-item { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 
-  #weekPrintModal .modal-card, 
-  #weekPrintModal .modal-dialog, 
-  #weekPrintModal .modal-body { 
-    width: 100% !important; 
-    max-width: 100% !important; 
-    margin: 0 !important; 
-    padding: 0 !important; 
-    box-shadow: none !important; 
-    border: none !important; 
-    background: #ffffff !important; 
-    overflow: visible !important; 
-  }
-  
-  #weekPrintSheet { 
-    border: none !important; 
-    box-shadow: none !important; 
-    padding: 0 !important; 
-    width: 100% !important; 
-    background: #ffffff !important; 
-  }
-  
-  .print-days-grid { 
-    display: grid !important; 
-    grid-template-columns: repeat(5, 1fr) !important; 
-    gap: 6px !important; 
-    width: 100% !important; 
-    margin-top: 8px !important; 
-  }
-  
-  .print-day-column { 
-    border: 1px solid #cbd5e1 !important; 
-    page-break-inside: avoid !important; 
-    break-inside: avoid !important; 
-  }
-  
-  .print-day-header { 
-    background: #1e293b !important; 
-    color: #ffffff !important; 
-    -webkit-print-color-adjust: exact !important; 
-    print-color-adjust: exact !important; 
-  }
-  
-  .print-event-item { 
-    -webkit-print-color-adjust: exact !important; 
-    print-color-adjust: exact !important; 
-  }
+  /* --- 7C. KATEGORI UTSKRIFT (STÅENDE A4 & INGEN SIDESKIFT-BRUDD) --- */
+  body.printing-category { page: category-page; height: auto !important; overflow: visible !important; }
+  body.printing-category #categoryModal.modal-overlay { display: block !important; position: static !important; width: 100% !important; height: auto !important; background: #ffffff !important; padding: 0 !important; margin: 0 !important; opacity: 1 !important; visibility: visible !important; }
+  body.printing-category #categoryModal .modal-card, body.printing-category #categoryModal .modal-dialog, body.printing-category #categoryModal .modal-body { max-width: 100% !important; width: 100% !important; box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; background: transparent !important; overflow: visible !important; display: block !important; max-height: none !important; }
+  body.printing-category #categoryModal .modal-header { display: block !important; border-bottom: 2px solid #0f172a !important; padding: 0 0 6px 0 !important; margin-bottom: 12px !important; page-break-after: avoid !important; break-after: avoid !important; }
+  body.printing-category #categoryModalTitle { display: block !important; font-size: 16pt !important; font-weight: 800 !important; color: #0f172a !important; margin: 0 !important; padding: 0 !important; }
+  body.printing-category .category-events-list, body.printing-category #categoryEventsList { display: block !important; max-height: none !important; overflow: visible !important; }
 
-/* --- 7C. KATEGORI UTSKRIFT (STÅENDE A4 & INGEN SIDESKIFT-BRUDD) --- */
-  body.printing-category {
-    page: category-page;
-    height: auto !important;
-    overflow: visible !important;
-  }
+  /* Fjern ramme rundt ytterste container */
+  body.printing-category #categoryEventsList > div { border: none !important; background: transparent !important; padding: 0 !important; margin: 0 !important; box-shadow: none !important; }
 
-  /* Tving overstyring av .modal-overlay for kategoriutskrift */
-  body.printing-category #categoryModal.modal-overlay { 
-    display: block !important; 
-    position: static !important; 
-    width: 100% !important; 
-    height: auto !important;
-    background: #ffffff !important; 
-    padding: 0 !important; 
-    margin: 0 !important; 
-    opacity: 1 !important;
-    visibility: visible !important;
-  }
+  /* Kort og tabellrader: unngå sideskift og behold rammer kun på kortene */
+  body.printing-category .event-card, body.printing-category .category-event-card { display: block !important; page-break-inside: avoid !important; break-inside: avoid !important; break-inside: avoid-page !important; -webkit-column-break-inside: avoid !important; background: #ffffff !important; border: 1px solid #cbd5e1 !important; border-left-width: 5px !important; border-left-style: solid !important; padding: 8px 12px !important; margin-bottom: 8px !important; border-radius: 4px !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  body.printing-category #categoryEventsList tr { display: table-row !important; page-break-inside: avoid !important; break-inside: avoid !important; }
+  body.printing-category .category-event-card *, body.printing-category #categoryEventsList > div * { page-break-inside: avoid !important; break-inside: avoid !important; }
 
-  body.printing-category #categoryModal .modal-card,
-  body.printing-category #categoryModal .modal-dialog,
-  body.printing-category #categoryModal .modal-body { 
-    max-width: 100% !important; 
-    width: 100% !important; 
-    box-shadow: none !important; 
-    border: none !important; 
-    padding: 0 !important; 
-    margin: 0 !important;
-    background: transparent !important; 
-    overflow: visible !important;
-    display: block !important; 
-    max-height: none !important;
-  }
-
-  body.printing-category #categoryModal .modal-header { 
-    display: block !important; 
-    border-bottom: 2px solid #0f172a !important; 
-    padding: 0 0 6px 0 !important; 
-    margin-bottom: 12px !important; 
-    page-break-after: avoid !important; 
-    break-after: avoid !important; 
-  }
-
-  body.printing-category #categoryModalTitle { 
-    display: block !important;
-    font-size: 16pt !important; 
-    font-weight: 800 !important; 
-    color: #0f172a !important; 
-    margin: 0 !important; 
-    padding: 0 !important; 
-  }
-  
-  body.printing-category .category-events-list,
-  body.printing-category #categoryEventsList { 
-    display: block !important; 
-    max-height: none !important; 
-    overflow: visible !important; 
-  }
-
-  /* FORHINDRER SPLITTING AV KORT OG TABELLER PÅ TVERS AV SIDER */
-  body.printing-category #categoryEventsList > div,
-  body.printing-category .event-card,
-  body.printing-category .category-event-card { 
-    display: block !important;
-    page-break-inside: avoid !important; 
-    break-inside: avoid !important; 
-    break-inside: avoid-page !important;
-    -webkit-column-break-inside: avoid !important; 
-    background: #ffffff !important; 
-    border: 1px solid #cbd5e1 !important; 
-    border-left-width: 5px !important;
-    border-left-style: solid !important;
-    padding: 8px 12px !important; 
-    margin-bottom: 8px !important; 
-    border-radius: 4px !important; 
-    -webkit-print-color-adjust: exact !important; 
-    print-color-adjust: exact !important;
-  }
-
-  /* Dersom det skrives ut som uke-tabell */
-  body.printing-category #categoryEventsList tr {
-    display: table-row !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  body.printing-category .category-event-card *,
-  body.printing-category #categoryEventsList > div * { 
-    page-break-inside: avoid !important; 
-    break-inside: avoid !important; 
-  }
-
-  body.printing-category .event-title { 
-    font-size: 10.5pt !important; 
-    font-weight: 700 !important; 
-    color: #0f172a !important; 
-    margin-bottom: 2px !important; 
-    display: block !important;
-  }
-
-  body.printing-category .event-time { 
-    font-size: 9pt !important; 
-    font-weight: 600 !important; 
-    color: #2563eb !important; 
-    margin-bottom: 4px !important; 
-    display: block !important;
-  }
-
-  body.printing-category .event-desc { 
-    font-size: 8.5pt !important; 
-    color: #334155 !important; 
-    white-space: pre-wrap !important; 
-    word-break: break-word !important; 
-    display: block !important;
-  }
+  /* Tekstformatering i kortene */
+  body.printing-category .event-title { font-size: 10.5pt !important; font-weight: 700 !important; color: #0f172a !important; margin-bottom: 2px !important; display: block !important; }
+  body.printing-category .event-time { font-size: 9pt !important; font-weight: 600 !important; color: #2563eb !important; margin-bottom: 4px !important; display: block !important; }
+  body.printing-category .event-desc { font-size: 8.5pt !important; color: #334155 !important; white-space: pre-wrap !important; word-break: break-word !important; display: block !important; }
+}
