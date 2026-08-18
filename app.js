@@ -2493,15 +2493,10 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (selectedCategories.length !== 1) return;
 
   const selectedCategory = selectedCategories[0];
-  const originalView = calendar.view.type;
-  const originalDate = calendar.getDate();
+  const originalDate = calendar ? calendar.getDate() : new Date();
 
   const currentMonth = originalDate.getMonth();
   const startYear = currentMonth >= 7 ? originalDate.getFullYear() : originalDate.getFullYear() - 1;
-  const schoolYearStart = `${startYear}-08-01`;
-
-  calendar.changeView('schoolYearList');
-  calendar.gotoDate(schoolYearStart);
 
   const shouldIncludeEvent = (evt) => {
     const trinnArray = evt.extendedProps?.trinn || [];
@@ -2562,7 +2557,8 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
         minStart: evtStart,
         maxEnd: evtEnd,
         allDay: evt.allDay || false,
-        originalEvt: evt
+        desc: evt.extendedProps?.description || evt.description || '',
+        color: evt.color || evt.backgroundColor || '#2563eb'
       });
     } else {
       const existing = consolidatedMap.get(key);
@@ -2573,55 +2569,58 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
 
   const sortedItems = Array.from(consolidatedMap.values()).sort((a, b) => a.minStart - b.minStart);
 
-  const singleRowEvents = sortedItems.map((item, index) => {
-    const startStr = item.minStart.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
-    const endStr = item.maxEnd.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
-    
-    const isMultiDay = item.minStart.toDateString() !== item.maxEnd.toDateString();
-    const dateLabel = isMultiDay ? `${startStr}. – ${endStr}.` : `${startStr}.`;
+  // Bygg HTML direkte inn i categoryModal
+  const modalTitle = document.getElementById('categoryModalTitle');
+  const eventsContainer = document.getElementById('categoryEventsList');
 
-    let timeLabel = '';
-    const hours = item.minStart.getHours();
-    const isRealTime = !item.allDay && hours >= 7 && hours <= 20;
+  if (modalTitle) {
+    modalTitle.textContent = `Oversikt – ${selectedCategory} (${startYear}/${startYear + 1})`;
+  }
 
-    if (isRealTime) {
-      const startTimeStr = item.minStart.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
-      const endTimeStr = item.maxEnd.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
-      timeLabel = item.maxEnd && startTimeStr !== endTimeStr ? ` | kl. ${startTimeStr}–${endTimeStr}` : ` | kl. ${startTimeStr}`;
-    }
+  if (eventsContainer) {
+    eventsContainer.className = 'category-events-list';
+    eventsContainer.innerHTML = sortedItems.map(item => {
+      const startStr = item.minStart.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
+      const endStr = item.maxEnd.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
+      const isMultiDay = item.minStart.toDateString() !== item.maxEnd.toDateString();
+      const dateLabel = isMultiDay ? `${startStr}. – ${endStr}.` : `${startStr}.`;
 
-    return {
-      id: `print_evt_${index}`,
-      title: `[${dateLabel}${timeLabel}]  ${item.displayTitle}`,
-      start: item.minStart.toISOString().split('T')[0],
-      end: item.minStart.toISOString().split('T')[0],
-      allDay: true,
-      color: item.originalEvt.color || item.originalEvt.backgroundColor || '#3788d8'
-    };
-  });
+      let timeLabel = '';
+      const hours = item.minStart.getHours();
+      const isRealTime = !item.allDay && hours >= 7 && hours <= 20;
 
-  calendar.removeAllEvents();
-  calendar.addEventSource(singleRowEvents);
+      if (isRealTime) {
+        const startTimeStr = item.minStart.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+        const endTimeStr = item.maxEnd.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+        timeLabel = item.maxEnd && startTimeStr !== endTimeStr ? ` kl. ${startTimeStr}–${endTimeStr}` : ` kl. ${startTimeStr}`;
+      }
+
+      const descHtml = item.desc ? `<div class="event-desc">${item.desc}</div>` : '';
+
+      return `
+        <div class="category-event-card" style="border-left-color: ${item.color} !important;">
+          <div class="event-title">${item.displayTitle}</div>
+          <div class="event-time">📅 ${dateLabel}${timeLabel ? ' | ' + timeLabel : ''}</div>
+          ${descHtml}
+        </div>
+      `;
+    }).join('');
+  }
 
   if (typeof hideContextMenu === 'function') hideContextMenu();
   if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
 
-  // Marker at vi skal skrive ut kategori
+  // Aktiver utskriftsmodus
   document.body.classList.add('printing-category');
 
-  // Rydd helt opp etter at utskriften enten er gjennomført eller avbrutt
-  const handleCleanup = () => {
+  const cleanupAfterPrint = () => {
     document.body.classList.remove('printing-category');
-    calendar.changeView(originalView);
-    calendar.gotoDate(originalDate);
-    updateCalendarEvents();
-    window.removeEventListener('afterprint', handleCleanup);
+    window.removeEventListener('afterprint', cleanupAfterPrint);
   };
 
-  window.addEventListener('afterprint', handleCleanup);
+  window.addEventListener('afterprint', cleanupAfterPrint);
 
-  // Gi nettleseren et lite øyeblikk til å rendre tabellen før window.print kalles
   setTimeout(() => {
     window.print();
-  }, 300);
+  }, 150);
 });

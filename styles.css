@@ -157,9 +157,9 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
   body.printing-category { height: auto !important; overflow: visible !important; }
 
   /* Skjul alt uviktig under utskrift */
-  .sidebar, .fc-header-toolbar, .popover, .context-menu, #selectionPopover, #contextMenu, .close-btn, .modal-footer, .btn, .modal-backdrop, .week-filter-bar, .modal-header, .app-layout, #gridOverviewModal, #trinnCalendarModal, #categoryModal { display: none !important; }
+  .sidebar, .fc-header-toolbar, .popover, .context-menu, #selectionPopover, #contextMenu, .close-btn, .modal-footer, .btn, .modal-backdrop, .week-filter-bar, .modal-header, .app-layout, .main-content, #calendar, .fc, #printHeader, #gridOverviewModal, #trinnCalendarModal { display: none !important; }
 
-  /* Ukesutskrift - Kun synlig når vi IKKE skrives ut fra kategori */
+  /* Ukesutskrift */
   body:not(.printing-category):not(.printing-trinn-cal) #weekPrintModal { display: block !important; position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; height: 100% !important; background: #ffffff !important; padding: 0 !important; margin: 0 !important; z-index: 999999 !important; }
   body.printing-category #weekPrintModal, body.printing-trinn-cal #weekPrintModal { display: none !important; }
 
@@ -170,17 +170,16 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
   .print-day-header { background: #1e293b !important; color: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   .print-event-item { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 
-  /* --- KATEGORI UTSKRIFT (FullCalendar List-visning) --- */
-  body.printing-category .main-content { padding: 0 !important; margin: 0 !important; width: 100% !important; overflow: visible !important; }
-  body.printing-category #calendar, body.printing-category .fc { display: block !important; width: 100% !important; height: auto !important; overflow: visible !important; border: none !important; box-shadow: none !important; padding: 0 !important; background: transparent !important; }
-  body.printing-category .fc-view-harness, body.printing-category .fc-view-harness * { height: auto !important; overflow: visible !important; }
+  /* KATEGORI UTSKRIFT (Stående, stram struktur, ren sidebryting) */
+  body.printing-category #categoryModal { display: block !important; position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; background: #ffffff !important; padding: 0 !important; margin: 0 !important; z-index: 999999 !important; }
+  body.printing-category #categoryModal .modal-card { max-width: 100% !important; width: 100% !important; box-shadow: none !important; border: none !important; padding: 0 !important; background: transparent !important; }
+  body.printing-category #categoryModal .modal-header { border-bottom: 2px solid #0f172a !important; padding: 0 0 6px 0 !important; margin-bottom: 12px !important; display: block !important; page-break-after: avoid !important; break-after: avoid !important; }
+  body.printing-category #categoryModalTitle { font-size: 16pt !important; font-weight: 800 !important; color: #0f172a !important; margin: 0 !important; padding: 0 !important; }
   
-  /* Sørg for at ingen rader i listen kuttes på tvers av sider */
-  body.printing-category .fc-list-table { width: 100% !important; border-collapse: collapse !important; }
-  body.printing-category .fc-list-event { page-break-inside: avoid !important; break-inside: avoid !important; -webkit-column-break-inside: avoid !important; display: table-row !important; }
-  body.printing-category .fc-list-event td { padding: 8px 6px !important; border-bottom: 1px solid #cbd5e1 !important; font-size: 9pt !important; }
-  body.printing-category .fc-list-day-cstyle, body.printing-category .fc-list-day { page-break-after: avoid !important; break-after: avoid !important; }
-
-  #printTitle { margin: 0; font-size: 16pt; font-weight: 800; color: #0f172a; }
-  #printSubTitle { margin: 2px 0 0 0; font-size: 9pt; color: #64748b; }
+  body.printing-category .category-events-list { display: block !important; max-height: none !important; overflow: visible !important; }
+  body.printing-category .category-event-card { page-break-inside: avoid !important; break-inside: avoid !important; -webkit-column-break-inside: avoid !important; background: #ffffff !important; border: 1px solid #cbd5e1 !important; border-left: 4px solid #0f172a !important; padding: 8px 12px !important; margin-bottom: 8px !important; border-radius: 4px !important; display: block !important; }
+  body.printing-category .category-event-card * { page-break-inside: avoid !important; break-inside: avoid !important; }
+  body.printing-category .event-title { font-size: 10.5pt !important; font-weight: 700 !important; color: #0f172a !important; margin-bottom: 2px !important; }
+  body.printing-category .event-time { font-size: 9pt !important; font-weight: 600 !important; color: #2563eb !important; margin-bottom: 4px !important; }
+  body.printing-category .event-desc { font-size: 8.5pt !important; color: #334155 !important; white-space: pre-wrap !important; word-break: break-word !important; }
 }
