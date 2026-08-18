@@ -855,6 +855,7 @@ function populateFormFromSelection() {
   }
 }
 
+
 /* VIS UKE */
 let currentWeekPrintEvents = [];
 let currentWeekPrintTitle = "";
@@ -887,7 +888,11 @@ function openWeekPrintModal() {
   const dateEndStr = endOfWeek.toLocaleDateString('no-NO', { day: 'numeric', month: 'short', year: 'numeric' });
   
   currentWeekPrintTitle = `Uke ${weekNum} (${dateStartStr} - ${dateEndStr})`;
-  document.getElementById('weekPrintModalTitle').textContent = `🖨️ ${currentWeekPrintTitle}`;
+  
+  const titleEl = document.getElementById('weekPrintModalTitle');
+  if (titleEl) {
+    titleEl.textContent = `🖨️ ${currentWeekPrintTitle}`;
+  }
 
   // Hent alle hendelser fra alle kilder
   const moterEvents = typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : [];
@@ -913,8 +918,8 @@ function openWeekPrintModal() {
   });
 
   // Nullstill filterknappene til "Alle trinn"
-  document.querySelectorAll('.week-filter-bar .btn-filter-trinn').forEach(btn => btn.classList.remove('active'));
-  const allBtn = document.querySelector('.week-filter-bar .btn-filter-trinn');
+  document.querySelectorAll('#weekPrintModal .week-filter-bar button').forEach(btn => btn.classList.remove('active'));
+  const allBtn = document.querySelector('#weekPrintModal .week-filter-bar button');
   if (allBtn) allBtn.classList.add('active');
 
   // Generer A4-arket for alle trinn som standard
@@ -926,7 +931,7 @@ function openWeekPrintModal() {
 
 // Filtrer visningen når brukeren trykker på en trinn-knapp
 function filterWeekPrint(trinnTarget, btnEl) {
-  document.querySelectorAll('.week-filter-bar .btn-filter-trinn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#weekPrintModal .week-filter-bar button').forEach(b => b.classList.remove('active'));
   if (btnEl) btnEl.classList.add('active');
 
   const currentDate = calendar.getDate();
@@ -990,7 +995,7 @@ function renderWeekPrintSheet(trinnTarget, startOfWeek) {
 
     let eventsHtml = '';
     if (dayEvents.length === 0) {
-      eventsHtml = `<div class="print-empty-day">Ingen planer</div>`;
+      eventsHtml = `<div class="print-empty-day" style="color: #94a3b8; font-style: italic; font-size: 13px; padding: 8px 0;">Ingen planer</div>`;
     } else {
       dayEvents.forEach(evt => {
         const ext = evt.extendedProps || {};
@@ -999,12 +1004,12 @@ function renderWeekPrintSheet(trinnTarget, startOfWeek) {
         const sted = ext.location || ext.sted || '';
         
         eventsHtml += `
-          <div class="print-event-item">
-            <div class="print-event-header">
-              ${startTime ? `<span class="print-event-time">${startTime}</span>` : ''}
+          <div class="print-event-item" style="margin-bottom: 8px; padding: 6px; background: #f8fafc; border-left: 3px solid #0284c7; border-radius: 4px;">
+            <div class="print-event-header" style="font-size: 13px;">
+              ${startTime ? `<span class="print-event-time" style="font-weight: bold; color: #0284c7; margin-right: 4px;">${startTime}</span>` : ''}
               <strong class="print-event-title">${title}</strong>
             </div>
-            ${sted ? `<div class="print-event-sub">📍 ${sted}</div>` : ''}
+            ${sted ? `<div class="print-event-sub" style="font-size: 11px; color: #64748b; margin-top: 2px;">📍 ${sted}</div>` : ''}
           </div>
         `;
       });
@@ -1036,13 +1041,43 @@ function renderWeekPrintSheet(trinnTarget, startOfWeek) {
 
 function closeWeekPrintModal() {
   const modal = document.getElementById('weekPrintModal');
-  if (modal) modal.style.display = 'none';
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('show', 'active');
+  }
 }
 
 function triggerWeekPrint() {
   window.print();
 }
 
+// 🔑 KOBLE HENDELSER NÅR SIDEN LASTES
+document.addEventListener('DOMContentLoaded', () => {
+  const modal = document.getElementById('weekPrintModal');
+  if (!modal) return;
+
+  // 1. Koble til filterknappene i modalen (Alle trinn, 1. trinn, osv.)
+  const filterButtons = modal.querySelectorAll('.week-filter-bar button');
+  filterButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const btnText = e.target.textContent.trim();
+      const targetGrade = btnText === 'Alle trinn' ? 'alle' : btnText;
+      filterWeekPrint(targetGrade, e.target);
+    });
+  });
+
+  // 2. Koble til Lukk-knapper (både 'Lukk' og kryss-knappen '×')
+  const closeButtons = modal.querySelectorAll('.btn-close, .btn-secondary, [data-bs-dismiss="modal"]');
+  closeButtons.forEach(btn => {
+    btn.addEventListener('click', closeWeekPrintModal);
+  });
+
+  // 3. Koble til "Skriv ut (A4)"-knappen
+  const printBtn = modal.querySelector('.btn-primary, #btnPrintA4Modal');
+  if (printBtn) {
+    printBtn.addEventListener('click', triggerWeekPrint);
+  }
+});
 
 
 /* Mini-kalender */
