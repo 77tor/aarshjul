@@ -330,8 +330,90 @@ function renderCategoryFilters() {
   });
 }
 
-// Åpne kategorimodal og vis UKESKALENDER (TABELL) i stedet for kort-liste
-// Åpne kategorimodal og vis tilpasset visning basert på type kategori
+// Bygger en enkel, kompakt linjeliste for enkeltkategorier (DKS, Fellesaktiviteter osv.)
+function renderCategorySimpleList(categoryName, events) {
+  const container = document.getElementById('categoryEventsList');
+  if (!container) return;
+
+  // 1. Filtrer ut hendelser som tilhører denne kategorien
+  const catLower = categoryName.trim().toLowerCase();
+  
+  let matchedEvents = events.filter(evt => {
+    const ext = evt.extendedProps || {};
+    const grp = (ext.group || evt.group || '').trim().toLowerCase();
+    const cat = (ext.category || evt.category || '').trim().toLowerCase();
+    const title = (evt.title || ext.rawTitle || '').toLowerCase();
+    const desc = (ext.description || '').toLowerCase();
+
+    return grp === catLower || cat === catLower || title.includes(catLower) || desc.includes(catLower);
+  });
+
+  // 2. Sorter kronologisk fra skolestart (august / uke 33 og utover)
+  matchedEvents.sort((a, b) => {
+    const dateA = new Date(a.extendedProps?.startDate || a.start || 0);
+    const dateB = new Date(b.extendedProps?.startDate || b.start || 0);
+    return dateA - dateB;
+  });
+
+  if (matchedEvents.length === 0) {
+    container.innerHTML = `<div style="padding: 24px; text-align: center; color: #64748b; font-style: italic;">Ingen aktiviteter registrert for ${categoryName}.</div>`;
+    return;
+  }
+
+  // 3. Bygg en ryddig linjebasert oversikt
+  let html = `<div class="category-simple-list" style="display: flex; flex-direction: column; gap: 8px; padding: 4px;">`;
+
+  matchedEvents.forEach(evt => {
+    const ext = evt.extendedProps || {};
+    
+    // Hent dato
+    const startDateStr = ext.startDate || (evt.start ? String(evt.start).split('T')[0] : '');
+    let dateFormatted = '';
+    let weekNum = '';
+    
+    if (startDateStr) {
+      const startObj = new Date(startDateStr + 'T00:00:00');
+      if (!isNaN(startObj.getTime())) {
+        dateFormatted = startObj.toLocaleDateString('no-NO', { day: 'numeric', month: 'short', year: 'numeric' });
+        // Beregn ukenummer
+        const d = new Date(Date.UTC(startObj.getFullYear(), startObj.getMonth(), startObj.getDate()));
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        weekNum = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+      }
+    }
+
+    const startTime = ext.startTime || (evt.start && String(evt.start).includes('T') ? String(evt.start).split('T')[1].substring(0, 5) : '');
+    const titleText = evt.title || ext.rawTitle || 'Uten tittel';
+    const trinnInfo = ext.trinn ? (Array.isArray(ext.trinn) ? ext.trinn.join(', ') : ext.trinn) : (ext.deltakere || '');
+    const sted = ext.location || ext.sted || '';
+    const ansvar = ext.responsible || ext.ansvar || '';
+    const desc = ext.description || evt.description || '';
+
+    html += `
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-left: 4px solid #2563eb; border-radius: 6px; padding: 10px 14px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            ${weekNum ? `<span style="background: #eff6ff; color: #1d4ed8; font-weight: 700; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; border: 1px solid #bfdbfe;">Uke ${weekNum}</span>` : ''}
+            <strong style="font-size: 0.92rem; color: #0f172a;">${titleText}</strong>
+          </div>
+          <span style="font-size: 0.8rem; font-weight: 600; color: #475569;">📅 ${dateFormatted} ${startTime ? '⏰ kl. ' + startTime : ''}</span>
+        </div>
+        <div style="font-size: 0.8rem; color: #334155; display: flex; flex-wrap: wrap; gap: 12px; margin-top: 2px;">
+          ${trinnInfo ? `<span>👥 <strong>Målgruppe:</strong> ${trinnInfo}</span>` : ''}
+          ${sted ? `<span>📍 <strong>Sted:</strong> ${sted}</span>` : ''}
+          ${ansvar ? `<span>👤 <strong>Ansvar:</strong> ${ansvar}</span>` : ''}
+        </div>
+        ${desc ? `<div style="font-size: 0.8rem; color: #475569; background: #f8fafc; padding: 6px 8px; border-radius: 4px; border-left: 2px solid #cbd5e1; margin-top: 4px; white-space: pre-line;">${desc}</div>` : ''}
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+// Åpne kategorimodal og styr visning (Trinn = Uketabell, Aktiviteter = Enkel Linjeliste)
 function openCategoryModal(categoryInput) {
   const modal = document.getElementById('categoryModal');
   const title = document.getElementById('categoryModalTitle');
@@ -340,13 +422,13 @@ function openCategoryModal(categoryInput) {
 
   const catName = typeof categoryInput === 'object' ? categoryInput.name : categoryInput;
 
-  // 1. Sjekk om dette er et trinn (1.-7. trinn)
+  // Sjekk om det som trykkes på er et trinn (1. trinn, 2. trinn ... 7. trinn)
   const isTrinn = /^([1-7]\.\s*trinn)$/i.test(catName.trim());
 
-  // 2. Sett tittel
-  if (title) title.textContent = isTrinn ? `📅 Kalender for ${catName}` : `📋 Oversikt: ${catName}`;
+  // 1. Oppdater overskrift
+  if (title) title.textContent = isTrinn ? `📅 Kalender for ${catName}` : `📋 Oversikt over ${catName}`;
 
-  // 3. Vis/skjul "Matrise"-knappen KUN for trinn
+  // 2. Håndter "Matrise"-knappen (KUN for trinn)
   const gridBtn = document.getElementById('btnCategoryModalGrid');
   if (gridBtn) {
     if (isTrinn) {
@@ -357,29 +439,27 @@ function openCategoryModal(categoryInput) {
         else if (typeof openGridOverview === 'function') openGridOverview(catName);
       };
     } else {
-      gridBtn.style.display = 'none';
+      gridBtn.style.display = 'none'; // Skjul matriseknappen for DKS, Svømming, Fellesaktiviteter osv.
     }
   }
 
-  // 4. Velg visningstype:
+  // 3. VELG VISNING:
   if (isTrinn) {
-    // Trinn beholder ukeskalenderen / tabellen sin
+    // Hvis trinn: Vis uketabellen (den som er på bildet ditt)
     if (typeof renderCategoryTimeline === 'function') {
       renderCategoryTimeline(catName);
     } else if (typeof renderTrinnTimeline === 'function') {
       renderTrinnTimeline(catName);
     }
   } else {
-    // Andre kategorier (DKS, Svømming osv.) får ny kronologisk liste fra uke 33
-    const events = (typeof allRawEvents !== 'undefined') ? allRawEvents : 
-                   (typeof rawEvents !== 'undefined' ? rawEvents : []);
-                   
-    if (typeof renderCategoryModalContent === 'function') {
-      renderCategoryModalContent(catName, events);
-    }
+    // Hvis faste aktiviteter (DKS, Svømming, Fellesaktiviteter, Møter osv.): Vis en ren linjeliste
+    const allEvents = typeof allRawEvents !== 'undefined' ? allRawEvents : 
+                     (typeof rawEvents !== 'undefined' ? rawEvents : []);
+                     
+    renderCategorySimpleList(catName, allEvents);
   }
 
-  // 5. Åpne modalen
+  // 4. Åpne modalvinduet
   modal.style.display = 'flex';
   modal.classList.add('show', 'active');
 }
