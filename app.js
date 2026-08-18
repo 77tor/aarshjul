@@ -944,7 +944,7 @@ function filterWeekPrint(trinnTarget, btnEl) {
   renderWeekPrintSheet(trinnTarget, startOfWeek);
 }
 
-// Bygg opp A4-oppsettet fordelt på ukedager (Mandag-Fredag)
+
 // Bygg opp A4-oppsettet fordelt på ukedager (Mandag-Fredag)
 function renderWeekPrintSheet(trinnTarget, startOfWeek) {
   const sheet = document.getElementById('weekPrintSheet');
@@ -1015,7 +1015,11 @@ function renderWeekPrintSheet(trinnTarget, startOfWeek) {
     } else {
       dayEvents.forEach(evt => {
         const ext = evt.extendedProps || {};
-        const title = evt.title || ext.rawTitle || 'Uten tittel';
+// Hent råtittel
+let rawTitle = evt.title || ext.rawTitle || 'Uten tittel';
+
+// Fjern ALLE prefikser i hakeparenteser [trinn/kategori] fremst i tittelen
+let cleanTitle = rawTitle.replace(/^(?:\[.*?\]\s*)+/, '').trim();
         const startTime = ext.startTime || (evt.start && String(evt.start).includes('T') ? String(evt.start).split('T')[1].substring(0, 5) : '');
         const sted = ext.location || ext.sted || '';
         
@@ -1032,17 +1036,17 @@ function renderWeekPrintSheet(trinnTarget, startOfWeek) {
         const isAllDay = evt.allDay || ext.isAllDay || !startTime;
         const borderStyle = isAllDay ? 'border-left: 3px solid #ea580c; background: #fff7ed;' : 'border-left: 3px solid #0284c7; background: #f8fafc;';
         
-        eventsHtml += `
-          <div class="print-event-item" style="margin-bottom: 8px; padding: 6px 8px; ${borderStyle} border-radius: 4px;">
-            <div class="print-event-header" style="font-size: 13px; font-weight: 600; color: #1e293b;">
-              ${startTime ? `<span class="print-event-time" style="font-weight: 700; color: #0284c7; margin-right: 4px;">${startTime}</span>` : `<span style="font-size: 11px; font-weight: 700; color: #ea580c; margin-right: 4px;">[HELE DAGEN]</span>`}
-              <span class="print-event-title">${title}</span>
-            </div>
-            
-            ${trinnDisplay ? `<div class="print-event-trinn" style="font-size: 11px; color: #475569; margin-top: 3px; font-weight: 500;">🏷️ ${trinnDisplay}</div>` : ''}
-            ${sted ? `<div class="print-event-sub" style="font-size: 11px; color: #64748b; margin-top: 1px;">📍 ${sted}</div>` : ''}
-          </div>
-        `;
+eventsHtml += `
+  <div class="print-event-item" style="margin-bottom: 8px; padding: 6px 8px; ${borderStyle} border-radius: 4px;">
+    <div class="print-event-header" style="font-size: 13px; font-weight: 600; color: #1e293b;">
+      ${startTime ? `<span class="print-event-time" style="font-weight: 700; color: #0284c7; margin-right: 4px;">${startTime}</span>` : `<span style="font-size: 11px; font-weight: 700; color: #ea580c; margin-right: 4px;">[HELE DAGEN]</span>`}
+      <span class="print-event-title">${cleanTitle}</span>
+    </div>
+    
+    ${trinnDisplay ? `<div class="print-event-trinn" style="font-size: 11px; color: #475569; margin-top: 3px; font-weight: 500;">🏷️ ${trinnDisplay}</div>` : ''}
+    ${sted ? `<div class="print-event-sub" style="font-size: 11px; color: #64748b; margin-top: 1px;">📍 ${sted}</div>` : ''}
+  </div>
+`;
       });
     }
 
