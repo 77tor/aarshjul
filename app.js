@@ -2611,13 +2611,21 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (typeof hideContextMenu === 'function') hideContextMenu();
   if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
 
-  requestAnimationFrame(() => {
-    setTimeout(() => {
-      window.print();
-      
-      calendar.changeView(originalView);
-      calendar.gotoDate(originalDate);
-      updateCalendarEvents(); 
-    }, 400);
-  });
+  // Legg til printing-klasse på body
+  document.body.classList.add('printing-category');
+
+  // Rydd opp tilstand etter at utskriftsdialogen lukkes
+  const cleanupAfterPrint = () => {
+    document.body.classList.remove('printing-category');
+    calendar.changeView(originalView);
+    calendar.gotoDate(originalDate);
+    updateCalendarEvents();
+    window.removeEventListener('afterprint', cleanupAfterPrint);
+  };
+
+  window.addEventListener('afterprint', cleanupAfterPrint);
+
+  setTimeout(() => {
+    window.print();
+  }, 250);
 });
