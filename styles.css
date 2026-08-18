@@ -1,9 +1,16 @@
+/* ==========================================================================
+   SKOLEKALENDER - Hovedstilark (CSS)
+   ========================================================================== */
+
 /* --- 1. GLOBAL & LAYOUT --- */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f8fafc; color: #1e293b; }
 .app-layout { display: flex; height: 100vh; overflow: hidden; }
 .main-content { flex: 1; padding: 20px; overflow-y: auto; }
-@media (max-width: 768px) { .app-layout { flex-direction: column; height: auto; overflow: visible; } .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e2e8f0; } }
+@media (max-width: 768px) { 
+  .app-layout { flex-direction: column; height: auto; overflow: visible; } 
+  .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e2e8f0; } 
+}
 
 /* --- 2. SIDEBAR, AUTH & MINI-KALENDER --- */
 .sidebar { width: 280px; background-color: #ffffff; border-right: 1px solid #e2e8f0; padding: 20px; display: flex; flex-direction: column; gap: 24px; overflow-y: auto; flex-shrink: 0; }
@@ -13,6 +20,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .user-info-text { font-size: 0.75rem !important; color: #475569 !important; font-weight: 600 !important; max-width: 120px !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
 .btn-auth { background-color: #f1f5f9 !important; border: 1px solid #cbd5e1 !important; border-radius: 4px !important; color: #334155 !important; padding: 2px 6px !important; font-size: 0.75rem !important; white-space: nowrap !important; cursor: pointer !important; transition: background-color 0.15s ease !important; }
 .btn-auth:hover { background-color: #e2e8f0 !important; color: #0f172a !important; }
+
 .mini-calendar { background: #f8fafc; border-radius: 8px; padding: 12px; border: 1px solid #e2e8f0; }
 .mini-cal-header { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; }
 .mini-cal-header button { background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
@@ -37,6 +45,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .filter-item-vert:hover { background-color: #f1f5f9; }
 .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
 .filter-label { user-select: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 .fc { background: #ffffff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); height: 100%; }
 .fc .fc-toolbar.fc-header-toolbar { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; justify-content: space-between !important; align-items: center !important; gap: 6px !important; margin-bottom: 0.75rem !important; }
 .fc .fc-toolbar-chunk { display: flex !important; align-items: center !important; gap: 4px !important; flex-shrink: 0 !important; }
@@ -46,6 +55,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .day-off-day { background-color: #f8fafc !important; }
 .fc-school-hours { background-color: rgba(241, 245, 249, 0.5); }
 .selected-highlight-day { background-color: #dbeafe !important; }
+
 .popover { display: none; gap: 8px; background: #ffffff; padding: 6px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; }
 .context-menu { display: none; position: absolute; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; overflow: hidden; }
 .context-menu-item { padding: 8px 16px; font-size: 0.85rem; cursor: pointer; }
@@ -67,6 +77,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .btn-ghost:hover { background-color: #f1f5f9; color: #0f172a; }
 .btn-ghost-danger { background-color: transparent; color: #dc2626; border: 1px solid #fca5a5; }
 .btn-ghost-danger:hover { background-color: #fee2e2; color: #b91c1c; }
+
 .delete-options { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-group label { font-size: 0.85rem; font-weight: 600; color: #475569; }
@@ -116,6 +127,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 #categoryEventsList table { width: 100% !important; table-layout: fixed !important; }
 #categoryEventsList th:first-child, #categoryEventsList td:first-child { width: 60px !important; }
 #categoryEventsList th:not(:first-child), #categoryEventsList td:not(:first-child) { min-width: 0 !important; }
+
 #trinnCalendarModal { display: none; position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background-color: rgba(0, 0, 0, 0.6) !important; z-index: 999999 !important; align-items: center; justify-content: center; padding: 20px !important; }
 #trinnCalendarModal.active, #trinnCalendarModal.show, #trinnCalendarModal[style*="display: flex"] { display: flex !important; }
 #trinnCalendarModal .modal-card { max-height: calc(100vh - 40px) !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; }
@@ -129,6 +141,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 .btn-filter-trinn { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 10px; font-size: 0.8rem; font-weight: 600; color: #334155; cursor: pointer; transition: all 0.15s ease; }
 .btn-filter-trinn:hover { background: #e2e8f0; color: #0f172a; }
 .btn-filter-trinn.active { background: #2563eb; color: #ffffff; border-color: #1d4ed8; }
+
 .a4-print-sheet, #weekPrintSheet { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); min-height: 450px; display: flex; flex-direction: column; gap: 12px; width: 100% !important; box-sizing: border-box; }
 .print-sheet-header { border-bottom: 2px solid #0f172a; padding-bottom: 6px; display: flex; justify-content: space-between; align-items: flex-end; }
 .print-sheet-header h2 { font-size: 1.1rem; font-weight: 800; color: #0f172a; margin: 0; }
@@ -179,7 +192,25 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
   body.printing-category #categoryEventsList > div { border: none !important; background: transparent !important; padding: 0 !important; margin: 0 !important; box-shadow: none !important; }
 
   /* Kort og tabellrader: unngå sideskift og behold rammer kun på kortene */
-  body.printing-category .event-card, body.printing-category .category-event-card { display: block !important; page-break-inside: avoid !important; break-inside: avoid !important; break-inside: avoid-page !important; -webkit-column-break-inside: avoid !important; background: #ffffff !important; border: 1px solid #cbd5e1 !important; border-left-width: 5px !important; border-left-style: solid !important; padding: 8px 12px !important; margin-bottom: 8px !important; border-radius: 4px !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  body.printing-category .event-card, 
+  body.printing-category .category-event-card,
+  body.printing-category .category-detail-card { 
+    display: block !important; 
+    page-break-inside: avoid !important; 
+    break-inside: avoid !important; 
+    break-inside: avoid-page !important; 
+    -webkit-column-break-inside: avoid !important; 
+    background: #ffffff !important; 
+    border: 1px solid #cbd5e1 !important; 
+    border-left-width: 5px !important; 
+    border-left-style: solid !important; 
+    padding: 8px 12px !important; 
+    margin-bottom: 8px !important; 
+    border-radius: 4px !important; 
+    -webkit-print-color-adjust: exact !important; 
+    print-color-adjust: exact !important; 
+  }
+
   body.printing-category #categoryEventsList tr { display: table-row !important; page-break-inside: avoid !important; break-inside: avoid !important; }
   body.printing-category .category-event-card *, body.printing-category #categoryEventsList > div * { page-break-inside: avoid !important; break-inside: avoid !important; }
 

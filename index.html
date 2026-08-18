@@ -33,13 +33,13 @@
     <aside class="sidebar">
       
       <!-- 🔑 SIDEBAR HEADER MED INTEGRERT INNLOGGING -->
-      <div class="sidebar-header-box">
-        <h1 class="sidebar-title">Skolekalender</h1>
+      <div class="sidebar-header">
+        <h2>Skolekalender</h2>
         
         <!-- Innloggingsseksjon -->
-        <div class="auth-compact-container">
+        <div class="auth-container">
           <span id="userInfo" class="user-info-text"></span>
-          <button id="loginBtn" class="login-btn-compact">🔑 Logg inn</button>
+          <button id="loginBtn" class="btn-auth">🔑 Logg inn</button>
         </div>
       </div>
 
@@ -193,122 +193,121 @@
     </div>
   </div>
 
-<!-- Modal for Kategori- og Trinnkalender (Ukeoversikt / Matrise) -->
-<div id="categoryModal" class="modal-overlay">
-  <div class="modal-card modal-large">
-    
-    <!-- HEADER -->
-    <div class="modal-header">
-      <h3 id="categoryModalTitle">📅 Kalender</h3>
-      <button id="categoryModalCloseX" type="button" class="close-btn">&times;</button>
-    </div>
-
-    <!-- BODY -->
-    <div class="modal-body">
-      <div id="categoryEventsList" class="category-events-list">
-        <!-- Innholdet genereres dynamisk av JS -->
+  <!-- Modal for Kategori- og Trinnkalender (Ukeoversikt / Matrise) -->
+  <div id="categoryModal" class="modal-overlay">
+    <div class="modal-card modal-large">
+      
+      <!-- HEADER -->
+      <div class="modal-header">
+        <h3 id="categoryModalTitle">📅 Kalender</h3>
+        <button id="categoryModalCloseX" type="button" class="close-btn">&times;</button>
       </div>
-    </div>
-    
-    <!-- FOOTER -->
-    <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
-      <div style="display: flex; gap: 8px;">
-        <button id="btnPrintCategory" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px;">
-          🖨️ Skriv ut
-        </button>
-        <button id="btnCategoryModalGrid" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px; display: none;">
-          📊 Vis matrise
-        </button>
-      </div>
-      <button id="btnCategoryModalClose" type="button" class="btn btn-secondary" style="font-size: 0.85rem; padding: 6px 12px;">
-        Lukk
-      </button>
-    </div>
 
-  </div>
-</div>
-
-<!-- Modal for Rutenett / Matrisevisning av alle kategorier -->
-<div id="gridOverviewModal" class="modal-overlay">
-  <div class="modal-card modal-large" style="max-width: 95vw; width: 1400px; max-height: 90vh;">
-    <div class="modal-header">
-      <h3 id="gridOverviewTitle">Kategori-matrise</h3>
-      <button id="gridOverviewCloseX" type="button" class="close-btn">&times;</button>
-    </div>
-    <div class="modal-body" style="overflow-x: auto; overflow-y: auto;">
-      <div id="categoryGridContainer" class="category-grid-container">
-        <!-- Rutenett genereres dynamisk av JS -->
+      <!-- BODY -->
+      <div class="modal-body">
+        <div id="categoryEventsList" class="category-events-list">
+          <!-- Innholdet genereres dynamisk av JS -->
+        </div>
       </div>
-    </div>
-    <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
-      <div>
-        <button id="btnPrintGridOverview" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px;" onclick="window.print()">
-          🖨️ Skriv ut
+      
+      <!-- FOOTER -->
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; gap: 8px;">
+          <button id="btnPrintCategory" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px;">
+            🖨️ Skriv ut
+          </button>
+          <button id="btnCategoryModalGrid" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px; display: none;">
+            📊 Vis matrise
+          </button>
+        </div>
+        <button id="btnCategoryModalClose" type="button" class="btn btn-secondary" style="font-size: 0.85rem; padding: 6px 12px;">
+          Lukk
         </button>
       </div>
-      <button id="btnGridOverviewClose" type="button" class="btn btn-secondary">Lukk</button>
+
     </div>
   </div>
-</div>
 
-<!-- Modal for Trinnkalender (Ukeoversikt) -->
-<div id="trinnCalendarModal" class="modal-overlay">
-  <div class="modal-card modal-large" style="max-width: 900px; width: 90vw;">
-    <div class="modal-header">
-      <h3 id="trinnCalendarTitle">📅 Kalender for trinn</h3>
-      <button id="closeTrinnCalModalBtn" type="button" class="close-btn">&times;</button>
-    </div>
-    <div class="modal-body">
-      <div id="trinnCalendarTimeline" class="trinn-timeline-container">
-        <!-- Genereres dynamisk av JS -->
+  <!-- Modal for Rutenett / Matrisevisning av alle kategorier -->
+  <div id="gridOverviewModal" class="modal-overlay">
+    <div class="modal-card modal-large" style="max-width: 95vw; width: 1400px; max-height: 90vh;">
+      <div class="modal-header">
+        <h3 id="gridOverviewTitle">Kategori-matrise</h3>
+        <button id="gridOverviewCloseX" type="button" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body" style="overflow-x: auto; overflow-y: auto;">
+        <div id="categoryGridContainer" class="category-grid-container">
+          <!-- Rutenett genereres dynamisk av JS -->
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <button id="btnPrintGridOverview" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px;" onclick="window.print()">
+            🖨️ Skriv ut
+          </button>
+        </div>
+        <button id="btnGridOverviewClose" type="button" class="btn btn-secondary">Lukk</button>
       </div>
     </div>
-    <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
-      <div class="actions-left">
-        <button id="btnPrintTrinnCal" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px;">
-          🖨️ Skriv ut
+  </div>
+
+  <!-- Modal for Trinnkalender (Ukeoversikt) -->
+  <div id="trinnCalendarModal" class="modal-overlay">
+    <div class="modal-card modal-large" style="max-width: 900px; width: 90vw;">
+      <div class="modal-header">
+        <h3 id="trinnCalendarTitle">📅 Kalender for trinn</h3>
+        <button id="closeTrinnCalModalBtn" type="button" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="trinnCalendarTimeline" class="trinn-timeline-container">
+          <!-- Genereres dynamisk av JS -->
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="actions-left">
+          <button id="closeTrinnCalModalBtn2" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px;">
+            🖨️ Skriv ut
+          </button>
+        </div>
+        <button id="btnTrinnCalClose" type="button" class="btn btn-secondary" style="font-size: 0.85rem; padding: 6px 12px;">
+          Lukk
         </button>
       </div>
-      <button id="btnTrinnCalClose" type="button" class="btn btn-secondary" style="font-size: 0.85rem; padding: 6px 12px;">
-        Lukk
-      </button>
     </div>
   </div>
-</div>
 
-<!-- Modal for ukesutskrift / trinnfiltrering -->
-<div id="weekPrintModal" class="modal-overlay">
-  <div class="modal-card modal-large">
-    <div class="modal-header">
-      <h3 id="weekPrintModalTitle">🖨️ Forhåndsvisning av Uke</h3>
-      <button class="close-btn" onclick="closeWeekPrintModal()">&times;</button>
-    </div>
-    <div class="modal-body">
-      <div class="week-filter-bar">
-        <span class="filter-label">Filter:</span>
-        <button class="btn-filter-trinn active" onclick="filterWeekPrint('alle', this)">Alle trinn</button>
-        <button class="btn-filter-trinn" onclick="filterWeekPrint('1. trinn', this)">1. trinn</button>
-        <button class="btn-filter-trinn" onclick="filterWeekPrint('2. trinn', this)">2. trinn</button>
-        <button class="btn-filter-trinn" onclick="filterWeekPrint('3. trinn', this)">3. trinn</button>
-        <button class="btn-filter-trinn" onclick="filterWeekPrint('4. trinn', this)">4. trinn</button>
-        <button class="btn-filter-trinn" onclick="filterWeekPrint('5. trinn', this)">5. trinn</button>
-        <button class="btn-filter-trinn" onclick="filterWeekPrint('6. trinn', this)">6. trinn</button>
-        <button class="btn-filter-trinn" onclick="filterWeekPrint('7. trinn', this)">7. trinn</button>
+  <!-- Modal for ukesutskrift / trinnfiltrering -->
+  <div id="weekPrintModal" class="modal-overlay">
+    <div class="modal-card modal-large">
+      <div class="modal-header">
+        <h3 id="weekPrintModalTitle">🖨️ Forhåndsvisning av Uke</h3>
+        <button class="close-btn" onclick="closeWeekPrintModal()">&times;</button>
       </div>
-      <div id="weekPrintSheet" class="a4-print-sheet">
-        <!-- Innhold bygges dynamisk via JS -->
+      <div class="modal-body">
+        <div class="week-filter-bar">
+          <span class="filter-label">Filter:</span>
+          <button class="btn-filter-trinn active" onclick="filterWeekPrint('alle', this)">Alle trinn</button>
+          <button class="btn-filter-trinn" onclick="filterWeekPrint('1. trinn', this)">1. trinn</button>
+          <button class="btn-filter-trinn" onclick="filterWeekPrint('2. trinn', this)">2. trinn</button>
+          <button class="btn-filter-trinn" onclick="filterWeekPrint('3. trinn', this)">3. trinn</button>
+          <button class="btn-filter-trinn" onclick="filterWeekPrint('4. trinn', this)">4. trinn</button>
+          <button class="btn-filter-trinn" onclick="filterWeekPrint('5. trinn', this)">5. trinn</button>
+          <button class="btn-filter-trinn" onclick="filterWeekPrint('6. trinn', this)">6. trinn</button>
+          <button class="btn-filter-trinn" onclick="filterWeekPrint('7. trinn', this)">7. trinn</button>
+        </div>
+        <div id="weekPrintSheet" class="a4-print-sheet">
+          <!-- Innhold bygges dynamisk via JS -->
+        </div>
       </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeWeekPrintModal()">Lukk</button>
-      <button class="btn btn-primary" onclick="triggerWeekPrint()">🖨️ Skriv ut (A4)</button>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeWeekPrintModal()">Lukk</button>
+        <button class="btn btn-primary" onclick="triggerWeekPrint()">🖨️ Skriv ut (A4)</button>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Hovedskript -->
-<script type="module" src="app.js"></script>
-
+  <!-- Hovedskript -->
+  <script type="module" src="app.js"></script>
 
 </body>
 </html>
