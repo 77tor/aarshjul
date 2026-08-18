@@ -167,10 +167,10 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
   .print-day-header { background: #1e293b !important; color: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   .print-event-item { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 
-/* --- 7C. KATEGORI OG TRINN UTSKRIFT (STÅENDE A4 & KORTVISNING) --- */
+/* --- 7C. KATEGORI OG TRINN UTSKRIFT (STÅENDE A4) --- */
   body.printing-category, body.printing-trinn-cal { page: category-page; height: auto !important; overflow: visible !important; }
 
-  /* Tving overstyring av modal-overlays */
+  /* Overstyring av modal for kategori og trinn */
   body.printing-category #categoryModal.modal-overlay,
   body.printing-trinn-cal #trinnCalendarModal.modal-overlay { display: block !important; position: static !important; width: 100% !important; height: auto !important; background: #ffffff !important; padding: 0 !important; margin: 0 !important; opacity: 1 !important; visibility: visible !important; }
 
@@ -183,31 +183,21 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
   body.printing-category #categoryModalTitle,
   body.printing-trinn-cal #trinnCalendarTitle { display: block !important; font-size: 16pt !important; font-weight: 800 !important; color: #0f172a !important; margin: 0 !important; padding: 0 !important; }
 
-  body.printing-category .category-events-list, body.printing-category #categoryEventsList,
-  body.printing-trinn-cal .trinn-events-list, body.printing-trinn-cal #trinnCalendarView { display: block !important; max-height: none !important; overflow: visible !important; width: 100% !important; }
+  /* Bevarer matrise-tabellens layout for trinn under utskrift, men tilpasser bredden til A4 */
+  body.printing-trinn-cal #trinnCalendarView { display: block !important; width: 100% !important; max-height: none !important; overflow: visible !important; }
+  body.printing-trinn-cal #trinnCalendarView table { width: 100% !important; table-layout: fixed !important; border-collapse: collapse !important; }
+  body.printing-trinn-cal #trinnCalendarView th, 
+  body.printing-trinn-cal #trinnCalendarView td { page-break-inside: avoid !important; break-inside: avoid !important; word-wrap: break-word !important; }
 
-  /* Gjør om tabellstrukturen i trinn-kalenderen til en ren vertikal liste */
-  body.printing-trinn-cal #trinnCalendarView table,
-  body.printing-trinn-cal #trinnCalendarView thead,
-  body.printing-trinn-cal #trinnCalendarView tbody,
-  body.printing-trinn-cal #trinnCalendarView tr,
-  body.printing-trinn-cal #trinnCalendarView td,
-  body.printing-trinn-cal #trinnCalendarView th { display: block !important; width: 100% !important; border: none !important; padding: 0 !important; margin: 0 !important; }
-  body.printing-trinn-cal #trinnCalendarView thead { display: none !important; } /* Skjuler tabell-overskriftene (Uke, DKS, Kartlegging etc.) */
+  /* Fjern ramme rundt ytterste container */
+  body.printing-category #categoryEventsList > div { border: none !important; background: transparent !important; padding: 0 !important; margin: 0 !important; box-shadow: none !important; }
 
-  /* Fjern ramme rundt ytterste containere */
-  body.printing-category #categoryEventsList > div,
-  body.printing-trinn-cal #trinnCalendarView > div { border: none !important; background: transparent !important; padding: 0 !important; margin: 0 !important; box-shadow: none !important; }
+  /* Kortene i kategoriutskrift: unngå sideskift */
+  body.printing-category .event-card, body.printing-category .category-event-card { display: block !important; page-break-inside: avoid !important; break-inside: avoid !important; break-inside: avoid-page !important; -webkit-column-break-inside: avoid !important; background: #ffffff !important; border: 1px solid #cbd5e1 !important; border-left-width: 5px !important; border-left-style: solid !important; padding: 8px 12px !important; margin-bottom: 8px !important; border-radius: 4px !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  body.printing-category #categoryEventsList tr { display: table-row !important; page-break-inside: avoid !important; break-inside: avoid !important; }
+  body.printing-category .category-event-card *, body.printing-category #categoryEventsList > div * { page-break-inside: avoid !important; break-inside: avoid !important; }
 
-  /* Kortene: Forhindre sideskift og gi dem ryddig visning */
-  body.printing-category .event-card, body.printing-category .category-event-card,
-  body.printing-trinn-cal .event-card, body.printing-trinn-cal .trinn-event-card,
-  body.printing-trinn-cal #trinnCalendarView .event-item { display: block !important; page-break-inside: avoid !important; break-inside: avoid !important; break-inside: avoid-page !important; -webkit-column-break-inside: avoid !important; background: #ffffff !important; border: 1px solid #cbd5e1 !important; border-left-width: 5px !important; border-left-style: solid !important; padding: 8px 12px !important; margin-bottom: 8px !important; border-radius: 4px !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-
-  body.printing-category .category-event-card *, body.printing-category #categoryEventsList > div *,
-  body.printing-trinn-cal #trinnCalendarView * { page-break-inside: avoid !important; break-inside: avoid !important; }
-
-  /* Tekstformatering i kortene */
-  body.printing-category .event-title, body.printing-trinn-cal .event-title { font-size: 10.5pt !important; font-weight: 700 !important; color: #0f172a !important; margin-bottom: 2px !important; display: block !important; }
-  body.printing-category .event-time, body.printing-trinn-cal .event-time { font-size: 9pt !important; font-weight: 600 !important; color: #2563eb !important; margin-bottom: 4px !important; display: block !important; }
-  body.printing-category .event-desc, body.printing-trinn-cal .event-desc { font-size: 8.5pt !important; color: #334155 !important; white-space: pre-wrap !important; word-break: break-word !important; display: block !important; }
+  /* Tekstformatering */
+  body.printing-category .event-title { font-size: 10.5pt !important; font-weight: 700 !important; color: #0f172a !important; margin-bottom: 2px !important; display: block !important; }
+  body.printing-category .event-time { font-size: 9pt !important; font-weight: 600 !important; color: #2563eb !important; margin-bottom: 4px !important; display: block !important; }
+  body.printing-category .event-desc { font-size: 8.5pt !important; color: #334155 !important; white-space: pre-wrap !important; word-break: break-word !important; display: block !important; }
