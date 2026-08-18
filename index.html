@@ -193,89 +193,85 @@
     </div>
   </div>
 
-
 <!-- Modal for Kategori- og Trinnkalender (Ukeoversikt / Matrise) -->
 <div id="categoryModal" class="modal-overlay">
   <div class="modal-card modal-large">
     
     <!-- HEADER -->
     <div class="modal-header">
-      <h3 id="categoryModalTitle">📅 Kalender for 4. trinn</h3>
+      <h3 id="categoryModalTitle">📅 Kalender</h3>
       <button id="categoryModalCloseX" type="button" class="close-btn">&times;</button>
     </div>
 
     <!-- BODY -->
     <div class="modal-body">
       <div id="categoryEventsList" class="category-events-list">
-        <!-- Innholdet (Uke-tabellen) genereres dynamisk av JS -->
+        <!-- Innholdet genereres dynamisk av JS -->
       </div>
     </div>
     
-    <!-- FOOTER (Justert med Utskrift/Matrise til venstre og Lukk til høyre) -->
+    <!-- FOOTER -->
     <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
-      
-      <!-- Knapper til venstre -->
       <div style="display: flex; gap: 8px;">
-
-<button id="btnPrintCategory" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px;">
-  🖨️ Skriv ut
-</button>
-
-        <!-- Vises automatisk kun når et 1.-7. trinn er valgt -->
+        <button id="btnPrintCategory" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px;">
+          🖨️ Skriv ut
+        </button>
         <button id="btnCategoryModalGrid" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px; display: none;">
           📊 Vis matrise
         </button>
       </div>
-
-      <!-- Lukk-knapp til høyre -->
       <button id="btnCategoryModalClose" type="button" class="btn btn-secondary" style="font-size: 0.85rem; padding: 6px 12px;">
         Lukk
       </button>
+    </div>
 
+  </div>
+</div>
+
+<!-- Modal for Rutenett / Matrisevisning av alle kategorier -->
+<div id="gridOverviewModal" class="modal-overlay">
+  <div class="modal-card modal-large" style="max-width: 95vw; width: 1400px; max-height: 90vh;">
+    <div class="modal-header">
+      <h3 id="gridOverviewTitle">Kategori-matrise</h3>
+      <button id="gridOverviewCloseX" type="button" class="close-btn">&times;</button>
+    </div>
+    <div class="modal-body" style="overflow-x: auto; overflow-y: auto;">
+      <div id="categoryGridContainer" class="category-grid-container">
+        <!-- Rutenett genereres dynamisk av JS -->
+      </div>
+    </div>
+    <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <button id="btnPrintGridOverview" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px;" onclick="window.print()">
+          🖨️ Skriv ut
+        </button>
+      </div>
+      <button id="btnGridOverviewClose" type="button" class="btn btn-secondary">Lukk</button>
     </div>
   </div>
 </div>
 
-  <!-- Modal for Rutenett / Matrisevisning av alle kategorier -->
-  <div id="gridOverviewModal" class="modal-overlay">
-    <div class="modal-card modal-large" style="max-width: 95vw; width: 1400px; max-height: 90vh;">
-      <div class="modal-header">
-        <h3 id="gridOverviewTitle">Kategori-matrise</h3>
-        <button id="gridOverviewCloseX" type="button" class="close-btn">&times;</button>
-      </div>
-      <div class="modal-body" style="overflow-x: auto; overflow-y: auto;">
-        <div id="categoryGridContainer" class="category-grid-container">
-          <!-- Rutenett med kolonner genereres dynamisk av JS -->
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button id="btnGridOverviewClose" type="button" class="btn btn-secondary">Lukk</button>
-        
-      </div>
-    </div>
-  </div>
-
 <!-- Modal for Trinnkalender (Ukeoversikt) -->
 <div id="trinnCalendarModal" class="modal-overlay">
   <div class="modal-card modal-large" style="max-width: 900px; width: 90vw;">
-    
     <div class="modal-header">
       <h3 id="trinnCalendarTitle">📅 Kalender for trinn</h3>
       <button id="closeTrinnCalModalBtn" type="button" class="close-btn">&times;</button>
     </div>
-
     <div class="modal-body">
-      <!-- Tidslinje-/Uke-beholder -->
       <div id="trinnCalendarTimeline" class="trinn-timeline-container">
         <!-- Genereres dynamisk av JS -->
       </div>
     </div>
-
-    <div class="modal-footer">
+    <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
       <div class="actions-left">
-        <button id="btnPrintTrinnCal" type="button" class="btn btn-outline">🖨️ Skriv ut</button>
+        <button id="btnPrintTrinnCal" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px;">
+          🖨️ Skriv ut
+        </button>
       </div>
-      <button id="btnTrinnCalClose" type="button" class="btn btn-secondary">Lukk</button>
+      <button id="btnTrinnCalClose" type="button" class="btn btn-secondary" style="font-size: 0.85rem; padding: 6px 12px;">
+        Lukk
+      </button>
     </div>
   </div>
 </div>
@@ -287,9 +283,7 @@
       <h3 id="weekPrintModalTitle">🖨️ Forhåndsvisning av Uke</h3>
       <button class="close-btn" onclick="closeWeekPrintModal()">&times;</button>
     </div>
-    
     <div class="modal-body">
-      <!-- Trinn-knapper for filtrering -->
       <div class="week-filter-bar">
         <span class="filter-label">Filter:</span>
         <button class="btn-filter-trinn active" onclick="filterWeekPrint('alle', this)">Alle trinn</button>
@@ -301,13 +295,10 @@
         <button class="btn-filter-trinn" onclick="filterWeekPrint('6. trinn', this)">6. trinn</button>
         <button class="btn-filter-trinn" onclick="filterWeekPrint('7. trinn', this)">7. trinn</button>
       </div>
-
-      <!-- A4 Utskriftsområde -->
       <div id="weekPrintSheet" class="a4-print-sheet">
         <!-- Innhold bygges dynamisk via JS -->
       </div>
     </div>
-
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeWeekPrintModal()">Lukk</button>
       <button class="btn btn-primary" onclick="triggerWeekPrint()">🖨️ Skriv ut (A4)</button>
@@ -315,7 +306,9 @@
   </div>
 </div>
 
-  <!-- Hovedskript -->
-  <script type="module" src="app.js"></script>
+<!-- Hovedskript -->
+<script type="module" src="app.js"></script>
+
+
 </body>
 </html>
