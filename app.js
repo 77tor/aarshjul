@@ -1511,7 +1511,8 @@ printWeekBtn: {
             openWeekPrintModal();
           }
         }
-      }
+      } // <-- Rettet: Kommaet manglet rett etter denne parantesen
+    },
 
     headerToolbar: {
       left: 'prev,next today toggleWeekend',
