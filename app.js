@@ -2488,105 +2488,109 @@ function checkSingleCategorySelection() {
   }
 }
 
-// --- UTSKRIFT KATEGORI (RETTET) ---
-document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
-  if (selectedCategories.length !== 1) return;
+// --- UTSKRIFT KATEGORI (RETTET MOT DOBBELTUTSKRIFT) ---
+const btnPrintCat = document.getElementById('btnPrintCategory');
 
-  const selectedCategory = selectedCategories[0];
-  const originalDate = calendar ? calendar.getDate() : new Date();
+if (btnPrintCat) {
+  // 1. Fjern eventuelle gamle event-lyttere ved å erstatte knappen med en klon
+  const newBtnPrintCat = btnPrintCat.cloneNode(true);
+  btnPrintCat.parentNode.replaceChild(newBtnPrintCat, btnPrintCat);
 
-  // 1. Hent ALLE aktive hendelser direkte fra kalenderen for å være 100% synkronisert
-  const allCalendarEvents = calendar ? calendar.getEvents() : [];
-  
-  // 2. Filtrer ut hendelser som matcher valgt kategori/trinn
-  const matchingEvents = allCalendarEvents.filter(evt => {
-    const ext = evt.extendedProps || {};
-    const trinnArray = ext.trinn || [];
+  newBtnPrintCat.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (typeof selectedCategories === 'undefined' || selectedCategories.length !== 1) return;
+
+    const selectedCategory = selectedCategories[0];
+    const originalDate = calendar ? calendar.getDate() : new Date();
+
+    // 2. Hent ALLE aktive hendelser direkte fra kalenderen
+    const allCalendarEvents = calendar ? calendar.getEvents() : [];
     
-    if (Array.isArray(trinnArray) && trinnArray.includes(selectedCategory)) {
-      return true;
+    // 3. Filtrer ut hendelser som matcher valgt kategori/trinn
+    const matchingEvents = allCalendarEvents.filter(evt => {
+      const ext = evt.extendedProps || {};
+      const trinnArray = ext.trinn || [];
+      
+      if (Array.isArray(trinnArray) && trinnArray.includes(selectedCategory)) {
+        return true;
+      }
+      return typeof isEventInSelectedCategories === 'function' 
+        ? isEventInSelectedCategories(evt) 
+        : true;
+    });
+
+    // 4. Sorter kronologisk etter startdato
+    const sortedItems = matchingEvents.map(evt => {
+      const start = evt.start ? new Date(evt.start) : new Date();
+      const end = evt.end ? new Date(evt.end) : start;
+      const ext = evt.extendedProps || {};
+
+      return {
+        title: ext.rawTitle || evt.title || 'Uten tittel',
+        start: start,
+        end: end,
+        allDay: evt.allDay,
+        desc: ext.description || '',
+        color: evt.backgroundColor || evt.ui?.color || '#0284c7'
+      };
+    }).sort((a, b) => a.start - b.start);
+
+    // 5. Oppdater DOM i modalen (Uten inline style på selve kortene som ødelegger sideskift)
+    const modalTitle = document.getElementById('categoryModalTitle');
+    const eventsContainer = document.getElementById('categoryEventsList');
+
+    if (modalTitle) {
+      const year = originalDate.getFullYear();
+      modalTitle.textContent = `Oversikt – ${selectedCategory} (${year})`;
     }
-    return typeof isEventInSelectedCategories === 'function' 
-      ? isEventInSelectedCategories(evt) 
-      : true;
-  });
 
-  // 3. Sorter kronologisk etter startdato
-  const sortedItems = matchingEvents.map(evt => {
-    const start = evt.start ? new Date(evt.start) : new Date();
-    const end = evt.end ? new Date(evt.end) : start;
-    const ext = evt.extendedProps || {};
+    if (eventsContainer) {
+      if (sortedItems.length === 0) {
+        eventsContainer.innerHTML = '<div style="padding:20px; text-align:center;">Ingen hendelser funnet for denne kategorien.</div>';
+      } else {
+        eventsContainer.innerHTML = sortedItems.map(item => {
+          const startStr = item.start.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
+          const endStr = item.end.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
+          
+          const isMultiDay = item.start.toDateString() !== item.end.toDateString();
+          const dateLabel = isMultiDay ? `${startStr}. – ${endStr}.` : `${startStr}.`;
 
-    return {
-      title: ext.rawTitle || evt.title || 'Uten tittel',
-      start: start,
-      end: end,
-      allDay: evt.allDay,
-      desc: ext.description || '',
-      color: evt.backgroundColor || evt.ui?.color || '#0284c7'
+          let timeLabel = '';
+          if (!item.allDay) {
+            const startTimeStr = item.start.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+            const endTimeStr = item.end.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+            timeLabel = (startTimeStr !== endTimeStr && item.end) ? ` kl. ${startTimeStr}–${endTimeStr}` : ` kl. ${startTimeStr}`;
+          }
+
+          const descHtml = item.desc ? `<div class="event-desc">${item.desc}</div>` : '';
+
+          return `
+            <div class="category-event-card" style="border-left-color: ${item.color};">
+              <div class="event-title">${item.title}</div>
+              <div class="event-time">📅 ${dateLabel}${timeLabel ? ' | ' + timeLabel : ''}</div>
+              ${descHtml}
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    // 6. Aktiver utskriftsmodus via klasse på body (styres 100% av CSS)
+    document.body.classList.add('printing-category');
+
+    // 7. Rydd opp KUN én gang når dialogen stenger (Uten å røre display: inline-style)
+    const cleanupAfterPrint = () => {
+      document.body.classList.remove('printing-category');
+      window.removeEventListener('afterprint', cleanupAfterPrint);
     };
-  }).sort((a, b) => a.start - b.start);
 
-  // 4. Oppdater DOM i modalen
-  const modalEl = document.getElementById('categoryModal');
-  const modalTitle = document.getElementById('categoryModalTitle');
-  const eventsContainer = document.getElementById('categoryEventsList');
+    window.addEventListener('afterprint', cleanupAfterPrint);
 
-  if (modalTitle) {
-    const year = originalDate.getFullYear();
-    modalTitle.textContent = `Oversikt – ${selectedCategory} (${year})`;
-  }
-
-  if (eventsContainer) {
-    if (sortedItems.length === 0) {
-      eventsContainer.innerHTML = '<div style="padding:20px; text-align:center;">Ingen hendelser funnet for denne kategorien.</div>';
-    } else {
-      eventsContainer.innerHTML = sortedItems.map(item => {
-        const startStr = item.start.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
-        const endStr = item.end.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
-        
-        // Sjekk om det faktiske arrangementet strekker seg over flere dager
-        const isMultiDay = item.start.toDateString() !== item.end.toDateString();
-        const dateLabel = isMultiDay ? `${startStr}. – ${endStr}.` : `${startStr}.`;
-
-        let timeLabel = '';
-        if (!item.allDay) {
-          const startTimeStr = item.start.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
-          const endTimeStr = item.end.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
-          timeLabel = (startTimeStr !== endTimeStr && item.end) ? ` kl. ${startTimeStr}–${endTimeStr}` : ` kl. ${startTimeStr}`;
-        }
-
-        const descHtml = item.desc ? `<div class="event-desc" style="font-size:0.8rem; color:#475569; margin-top:4px;">${item.desc}</div>` : '';
-
-        return `
-          <div class="category-event-card" style="border-left: 4px solid ${item.color}; padding: 8px 12px; margin-bottom: 8px; background: #f8fafc; border-radius: 4px;">
-            <div class="event-title" style="font-weight: 600; color: #0f172a;">${item.title}</div>
-            <div class="event-time" style="font-size: 0.825rem; color: #64748b;">📅 ${dateLabel}${timeLabel ? ' | ' + timeLabel : ''}</div>
-            ${descHtml}
-          </div>
-        `;
-      }).join('');
-    }
-  }
-
-  // 5. Tving modalen til å være synlig under utskrift
-  if (modalEl) modalEl.style.display = 'block';
-  document.body.classList.add('printing-category');
-
-  const cleanupAfterPrint = () => {
-    document.body.classList.remove('printing-category');
-    if (modalEl && typeof closeModal === 'function') {
-      closeModal();
-    } else if (modalEl) {
-      modalEl.style.display = 'none';
-    }
-    window.removeEventListener('afterprint', cleanupAfterPrint);
-  };
-
-  window.addEventListener('afterprint', cleanupAfterPrint);
-
-  // Gi nettleseren et lite øyeblikk til å rendre HTML-en før print-dialogen åpnes
-  setTimeout(() => {
-    window.print();
-  }, 200);
-});
+    // 8. Start utskrift én enkelt gang
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  });
+}

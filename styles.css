@@ -148,13 +148,13 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
 
 /* --- 7. UTSKRIFT (PRINT REGLER) --- */
 @media print {
-  /* Default orientering for ukesutskrift */
+  /* Standard for ukesutskrift */
   @page { 
     size: A4 landscape !important; 
     margin: 6mm !important; 
   }
 
-  /* Egen sidestørrelse kun for kategoriutskrift (stående A4) */
+  /* Stående A4 kun for kategoriutskrift */
   @page category-page {
     size: A4 portrait !important;
     margin: 10mm !important;
@@ -169,12 +169,12 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; 
   }
 
-  /* --- 7A. SKJUL ALT UVIKTIG (FELLES) --- */
+  /* --- 7A. SKJUL ALT UVIKTIG --- */
   .sidebar, .fc-header-toolbar, .popover, .context-menu, 
   #selectionPopover, #contextMenu, .close-btn, .modal-footer, 
   .btn, .modal-backdrop, .week-filter-bar, .app-layout, 
   .main-content, #calendar, .fc, #printHeader, 
-  #gridOverviewModal, #trinnCalendarModal { 
+  #gridOverviewModal, #trinnCalendarModal, #eventModal { 
     display: none !important; 
   }
 
@@ -244,18 +244,19 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     print-color-adjust: exact !important; 
   }
 
-  /* --- 7C. KATEGORI UTSKRIFT (STÅENDE A4) --- */
+  /* --- 7C. KATEGORI UTSKRIFT (STÅENDE A4 & INGEN SIDESKIFT-BRUDD) --- */
   body.printing-category {
     page: category-page;
     height: auto !important;
     overflow: visible !important;
   }
 
-  /* Tving synlighet på kategorimodalen og gjør den fler-siders vennlig */
-  body.printing-category #categoryModal { 
+  /* Tving overstyring av .modal-overlay */
+  body.printing-category #categoryModal.modal-overlay { 
     display: block !important; 
-    position: static !important; /* Static gjør at den kan strekke seg over flere A4-sider uten å bli kuttet */
+    position: static !important; 
     width: 100% !important; 
+    height: auto !important;
     background: #ffffff !important; 
     padding: 0 !important; 
     margin: 0 !important; 
@@ -274,9 +275,10 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     margin: 0 !important;
     background: transparent !important; 
     overflow: visible !important;
+    display: block !important; /* Må være block for at sideskift skal fungere */
+    max-height: none !important;
   }
 
-  /* Tving frem tittel-headeren på kategorimodalen */
   body.printing-category #categoryModal .modal-header { 
     display: block !important; 
     border-bottom: 2px solid #0f172a !important; 
@@ -301,10 +303,12 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     overflow: visible !important; 
   }
 
-  /* Kortene i utskriften */
+  /* KORTENE: Tvinger hendelseskortet til å holdes 100 % samlet på én side */
   body.printing-category .category-event-card { 
+    display: block !important;
     page-break-inside: avoid !important; 
     break-inside: avoid !important; 
+    break-inside: avoid-page !important;
     -webkit-column-break-inside: avoid !important; 
     background: #ffffff !important; 
     border: 1px solid #cbd5e1 !important; 
@@ -312,7 +316,6 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     padding: 8px 12px !important; 
     margin-bottom: 8px !important; 
     border-radius: 4px !important; 
-    display: block !important; 
     -webkit-print-color-adjust: exact !important; 
     print-color-adjust: exact !important;
   }
