@@ -249,7 +249,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     print-color-adjust: exact !important; 
   }
 
-  /* --- 7C. KATEGORI UTSKRIFT (STÅENDE A4 & INGEN SIDESKIFT-BRUDD) --- */
+/* --- 7C. KATEGORI UTSKRIFT (STÅENDE A4 & INGEN SIDESKIFT-BRUDD) --- */
   body.printing-category {
     page: category-page;
     height: auto !important;
@@ -302,13 +302,16 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     padding: 0 !important; 
   }
   
-  body.printing-category .category-events-list { 
+  body.printing-category .category-events-list,
+  body.printing-category #categoryEventsList { 
     display: block !important; 
     max-height: none !important; 
     overflow: visible !important; 
   }
 
-  /* KORTENE: Bevarer dynamisk border-left-color fra JS og forhindrer sideskift-brudd */
+  /* FORHINDRER SPLITTING AV KORT OG TABELLER PÅ TVERS AV SIDER */
+  body.printing-category #categoryEventsList > div,
+  body.printing-category .event-card,
   body.printing-category .category-event-card { 
     display: block !important;
     page-break-inside: avoid !important; 
@@ -326,7 +329,15 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     print-color-adjust: exact !important;
   }
 
-  body.printing-category .category-event-card * { 
+  /* Dersom det skrives ut som uke-tabell */
+  body.printing-category #categoryEventsList tr {
+    display: table-row !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  body.printing-category .category-event-card *,
+  body.printing-category #categoryEventsList > div * { 
     page-break-inside: avoid !important; 
     break-inside: avoid !important; 
   }
@@ -354,4 +365,3 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Robo
     word-break: break-word !important; 
     display: block !important;
   }
-}
