@@ -330,22 +330,35 @@ function renderCategoryFilters() {
   });
 }
 
+
 // Bygger en enkel, kompakt linjeliste for enkeltkategorier (DKS, Fellesaktiviteter osv.)
 function renderCategorySimpleList(categoryName, events) {
   const container = document.getElementById('categoryEventsList');
   if (!container) return;
 
-  // 1. Filtrer ut hendelser som tilhører denne kategorien
   const catLower = categoryName.trim().toLowerCase();
-  
+
+  // 1. Filtrer ut hendelser som tilhører denne kategorien
   let matchedEvents = events.filter(evt => {
+    if (typeof deletedStaticEventIds !== 'undefined' && deletedStaticEventIds && deletedStaticEventIds.has(evt.id)) return false;
+
     const ext = evt.extendedProps || {};
     const grp = (ext.group || evt.group || '').trim().toLowerCase();
     const cat = (ext.category || evt.category || '').trim().toLowerCase();
     const title = (evt.title || ext.rawTitle || '').toLowerCase();
     const desc = (ext.description || '').toLowerCase();
 
-    return grp === catLower || cat === catLower || title.includes(catLower) || desc.includes(catLower);
+    // Sjekk om kategorinavnet matcher enten gruppe, kategori, tittel eller beskrivelse
+    return grp === catLower || cat === catLower || title.includes(catLower) || desc.includes(catLower) ||
+           (catLower === 'fellesaktiviteter' && (grp.includes('felles') || title.includes('felles'))) ||
+           (catLower === 'dks' && (grp.includes('dks') || title.includes('dks'))) ||
+           (catLower === 'kartlegging' && (grp.includes('kartlegg') || title.includes('kartlegg'))) ||
+           (catLower === 'svømming' && (grp.includes('svømm') || title.includes('svømm'))) ||
+           (catLower === 'møter' && (grp.includes('møte') || title.includes('møte'))) ||
+           (catLower === 'uia' && (grp.includes('uia') || title.includes('uia'))) ||
+           (catLower === 'sfo' && (grp.includes('sfo') || title.includes('sfo'))) ||
+           (catLower === 'sosialt' && (grp.includes('sosialt') || title.includes('sosialt'))) ||
+           (catLower === 'bursdag' && (grp.includes('bursdag') || title.includes('bursdag')));
   });
 
   // 2. Sorter kronologisk fra skolestart (august / uke 33 og utover)
@@ -360,7 +373,7 @@ function renderCategorySimpleList(categoryName, events) {
     return;
   }
 
-  // 3. Bygg en ryddig linjebasert oversikt
+  // 3. Bygg linjeliste
   let html = `<div class="category-simple-list" style="display: flex; flex-direction: column; gap: 8px; padding: 4px;">`;
 
   matchedEvents.forEach(evt => {
@@ -385,7 +398,10 @@ function renderCategorySimpleList(categoryName, events) {
 
     const startTime = ext.startTime || (evt.start && String(evt.start).includes('T') ? String(evt.start).split('T')[1].substring(0, 5) : '');
     const titleText = evt.title || ext.rawTitle || 'Uten tittel';
-    const trinnInfo = ext.trinn ? (Array.isArray(ext.trinn) ? ext.trinn.join(', ') : ext.trinn) : (ext.deltakere || '');
+    
+    let trinnInfo = ext.trinn || evt.trinn || ext.trinnOptions || ext.deltakere || ext.participants || '';
+    if (Array.isArray(trinnInfo)) trinnInfo = trinnInfo.join(', ');
+    
     const sted = ext.location || ext.sted || '';
     const ansvar = ext.responsible || ext.ansvar || '';
     const desc = ext.description || evt.description || '';
@@ -400,7 +416,7 @@ function renderCategorySimpleList(categoryName, events) {
           <span style="font-size: 0.8rem; font-weight: 600; color: #475569;">📅 ${dateFormatted} ${startTime ? '⏰ kl. ' + startTime : ''}</span>
         </div>
         <div style="font-size: 0.8rem; color: #334155; display: flex; flex-wrap: wrap; gap: 12px; margin-top: 2px;">
-          ${trinnInfo ? `<span>👥 <strong>Målgruppe:</strong> ${trinnInfo}</span>` : ''}
+          ${trinnInfo ? `<span>👥 <strong>Målgruppe/Trinn:</strong> ${trinnInfo}</span>` : ''}
           ${sted ? `<span>📍 <strong>Sted:</strong> ${sted}</span>` : ''}
           ${ansvar ? `<span>👤 <strong>Ansvar:</strong> ${ansvar}</span>` : ''}
         </div>
@@ -413,7 +429,9 @@ function renderCategorySimpleList(categoryName, events) {
   container.innerHTML = html;
 }
 
-// Åpne kategorimodal og styr visning (Trinn = Uketabell, Aktiviteter = Enkel Linjeliste)
+
+
+// Åpne kategorimodal og hent hendelser fra ALLE JS-kilder
 function openCategoryModal(categoryInput) {
   const modal = document.getElementById('categoryModal');
   const title = document.getElementById('categoryModalTitle');
@@ -421,14 +439,12 @@ function openCategoryModal(categoryInput) {
   if (!modal) return;
 
   const catName = typeof categoryInput === 'object' ? categoryInput.name : categoryInput;
-
-  // Sjekk om det som trykkes på er et trinn (1. trinn, 2. trinn ... 7. trinn)
   const isTrinn = /^([1-7]\.\s*trinn)$/i.test(catName.trim());
 
-  // 1. Oppdater overskrift
-  if (title) title.textContent = isTrinn ? `📅 Kalender for ${catName}` : `📋 Oversikt over ${catName}`;
+  // 1. Sett tittel
+  if (title) title.textContent = isTrinn ? `📅 Kalender for ${catName}` : `📋 Oversikt: ${catName}`;
 
-  // 2. Håndter "Matrise"-knappen (KUN for trinn)
+  // 2. Vis/skjul matriseknapp for trinn
   const gridBtn = document.getElementById('btnCategoryModalGrid');
   if (gridBtn) {
     if (isTrinn) {
@@ -439,30 +455,48 @@ function openCategoryModal(categoryInput) {
         else if (typeof openGridOverview === 'function') openGridOverview(catName);
       };
     } else {
-      gridBtn.style.display = 'none'; // Skjul matriseknappen for DKS, Svømming, Fellesaktiviteter osv.
+      gridBtn.style.display = 'none';
     }
   }
 
-  // 3. VELG VISNING:
+  // 3. VELG VISNING
   if (isTrinn) {
-    // Hvis trinn: Vis uketabellen (den som er på bildet ditt)
+    // Trinn beholder ukeskalenderen / tabellen sin
     if (typeof renderCategoryTimeline === 'function') {
       renderCategoryTimeline(catName);
     } else if (typeof renderTrinnTimeline === 'function') {
       renderTrinnTimeline(catName);
     }
   } else {
-    // Hvis faste aktiviteter (DKS, Svømming, Fellesaktiviteter, Møter osv.): Vis en ren linjeliste
-    const allEvents = typeof allRawEvents !== 'undefined' ? allRawEvents : 
-                     (typeof rawEvents !== 'undefined' ? rawEvents : []);
-                     
-    renderCategorySimpleList(catName, allEvents);
+    // Hent hendelser fra alle .js-kildene dine (samme kilder som i openCategoryGridModal)
+    const moterEvents = typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : [];
+    const uiaEvents = typeof getUiAAktiviteterSomEvents === 'function' ? getUiAAktiviteterSomEvents() : [];
+    const fellesEvents = typeof getFellesaktiviteterSomEvents === 'function' ? getFellesaktiviteterSomEvents('2026-2027') : [];
+    const dksEvents = typeof getDKSAktiviteterSomEvents === 'function' ? getDKSAktiviteterSomEvents() : [];
+    const svommeEvents = typeof getSvommeAktiviteterSomEvents === 'function' ? getSvommeAktiviteterSomEvents('2026-2027') : [];
+    const bursdagEvents = typeof getBirthdayEvents === 'function' ? getBirthdayEvents(2026) : [];
+    const kartleggingEvents = typeof getKartleggingerSomEvents === 'function' ? getKartleggingerSomEvents() : [];
+
+    const allCombinedEvents = [
+      ...fellesEvents,
+      ...dksEvents,
+      ...svommeEvents,
+      ...bursdagEvents,
+      ...kartleggingEvents,
+      ...moterEvents,
+      ...uiaEvents,
+      ...(typeof schoolEventsFromJs !== 'undefined' ? schoolEventsFromJs : []),
+      ...(typeof rawEvents !== 'undefined' ? rawEvents : [])
+    ];
+
+    renderCategorySimpleList(catName, allCombinedEvents);
   }
 
-  // 4. Åpne modalvinduet
+  // 4. Åpne modalen
   modal.style.display = 'flex';
   modal.classList.add('show', 'active');
 }
+
 
 
 // 1. Ny liste med eksakt de 5 faste под-kategoriene (i riktig rekkefølge):
