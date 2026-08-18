@@ -857,6 +857,7 @@ function populateFormFromSelection() {
 
 
 
+
 /* --- VIS UKE --- */
 let currentWeekPrintEvents = [];
 let currentWeekPrintTitle = "";
@@ -883,6 +884,40 @@ function isEventOnDate(evt, targetDate) {
 
   // Sjekk om måldatoen ligger innenfor tidsrommet
   return target >= eventStart && target <= eventEnd;
+}
+
+// Hjelpefunksjon for å samle trinnene til "Alle trinn" eller pen visning
+function formatTrinnDisplay(rawTrinn) {
+  if (!rawTrinn) return '';
+
+  let trinnArray = [];
+
+  if (Array.isArray(rawTrinn)) {
+    trinnArray = rawTrinn.map(t => String(t).trim().toLowerCase());
+  } else if (typeof rawTrinn === 'string') {
+    trinnArray = rawTrinn.split(',').map(t => t.trim().toLowerCase());
+  }
+
+  const rawString = String(rawTrinn).toLowerCase();
+  if (rawString.includes('alle trinn') || rawString.includes('1.-7. trinn') || rawString.includes('1-7')) {
+    return 'Alle trinn';
+  }
+
+  // Trekk ut kun tallene (1, 2, 3, osv.)
+  const numbers = trinnArray
+    .map(t => t.replace(/\D/g, ''))
+    .filter(t => t !== '');
+
+  // Sjekk om alle 7 trinnene er representert
+  const hasAllSeven = [1, 2, 3, 4, 5, 6, 7].every(n => numbers.includes(String(n)));
+  if (hasAllSeven) {
+    return 'Alle trinn';
+  }
+
+  if (Array.isArray(rawTrinn)) {
+    return rawTrinn.join(', ');
+  }
+  return rawTrinn;
 }
 
 // Åpne modalen for ukesutskrift
@@ -936,7 +971,7 @@ function openWeekPrintModal() {
     ...(typeof rawEvents !== 'undefined' ? rawEvents : [])
   ];
 
-  // 1. KORREKSJON: Hent hendelser som har MINST ÉN dag innenfor uken
+  // Hent hendelser som har MINST ÉN dag innenfor uken
   currentWeekPrintEvents = allCombined.filter(evt => {
     if (typeof deletedStaticEventIds !== 'undefined' && deletedStaticEventIds && deletedStaticEventIds.has(evt.id)) return false;
     
@@ -958,7 +993,6 @@ function openWeekPrintModal() {
   modal.classList.add('show', 'active');
 }
 
-
 // Filtrer visningen når brukeren trykker på en trinn-knapp
 function filterWeekPrint(trinnTarget, btnEl) {
   document.querySelectorAll('#weekPrintModal .week-filter-bar button').forEach(b => b.classList.remove('active'));
@@ -973,7 +1007,6 @@ function filterWeekPrint(trinnTarget, btnEl) {
 
   renderWeekPrintSheet(trinnTarget, startOfWeek);
 }
-
 
 // Bygg opp A4-oppsettet fordelt på ukedager (Mandag-Fredag)
 function renderWeekPrintSheet(trinnTarget, startOfWeek) {
@@ -1015,7 +1048,6 @@ function renderWeekPrintSheet(trinnTarget, startOfWeek) {
     dayDate.setDate(startOfWeek.getDate() + i);
     const dayDateStr = dayDate.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
 
-    // 2. KORREKSJON: Bruk isEventOnDate for å sjekke om aktiviteten dekker denne dagen
     const dayEvents = filtered.filter(evt => isEventOnDate(evt, dayDate));
 
     // SORTERING: Heldags/Uten klokkeslett øverst, deretter kronologisk
@@ -1042,18 +1074,13 @@ function renderWeekPrintSheet(trinnTarget, startOfWeek) {
         const ext = evt.extendedProps || {};
         let rawTitle = evt.title || ext.rawTitle || 'Uten tittel';
 
-        // Fjern prefikser som [1. trinn] fra tittelen for renere visning
         let cleanTitle = rawTitle.replace(/^(?:\[.*?\]\s*)+/, '').trim();
         const startTime = ext.startTime || (evt.start && String(evt.start).includes('T') ? String(evt.start).split('T')[1].substring(0, 5) : '');
         const sted = ext.location || ext.sted || '';
         
-        let rawTrinn = ext.trinn || evt.trinn || ext.group || '';
-        let trinnDisplay = '';
-        if (Array.isArray(rawTrinn)) {
-          trinnDisplay = rawTrinn.join(', ');
-        } else if (typeof rawTrinn === 'string') {
-          trinnDisplay = rawTrinn;
-        }
+        // Hent rå-verdi for trinn/deltakere og formater
+        let rawTrinn = ext.trinn || evt.trinn || ext.group || ext.deltakere || '';
+        let trinnDisplay = formatTrinnDisplay(rawTrinn);
 
         const isAllDay = evt.allDay || ext.isAllDay || !startTime;
         const borderStyle = isAllDay ? 'border-left: 3px solid #ea580c; background: #fff7ed;' : 'border-left: 3px solid #0284c7; background: #f8fafc;';
@@ -1095,7 +1122,6 @@ function renderWeekPrintSheet(trinnTarget, startOfWeek) {
     </div>
   `;
 }
-
 
 function closeWeekPrintModal() {
   const modal = document.getElementById('weekPrintModal');
