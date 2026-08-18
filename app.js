@@ -945,6 +945,7 @@ function filterWeekPrint(trinnTarget, btnEl) {
 }
 
 // Bygg opp A4-oppsettet fordelt på ukedager (Mandag-Fredag)
+// Bygg opp A4-oppsettet fordelt på ukedager (Mandag-Fredag)
 function renderWeekPrintSheet(trinnTarget, startOfWeek) {
   const sheet = document.getElementById('weekPrintSheet');
   if (!sheet) return;
@@ -990,8 +991,23 @@ function renderWeekPrintSheet(trinnTarget, startOfWeek) {
       return evtDate.toDateString() === dayDate.toDateString();
     });
 
-    // Sorter hendelser på klokkeslett
-    dayEvents.sort((a,b) => new Date(a.extendedProps?.startDate || a.start) - new Date(b.extendedProps?.startDate || b.start));
+    // 🔑 SORTERING: Heldags/Uten klokkeslett øverst, deretter kronologisk etter klokkeslett
+    dayEvents.sort((a, b) => {
+      const extA = a.extendedProps || {};
+      const extB = b.extendedProps || {};
+
+      const isAllDayA = a.allDay || extA.isAllDay || !extA.startTime;
+      const isAllDayB = b.allDay || extB.isAllDay || !extB.startTime;
+
+      // 1. Heldags/uten klokkeslett prioriteres øverst
+      if (isAllDayA && !isAllDayB) return -1;
+      if (!isAllDayA && isAllDayB) return 1;
+
+      // 2. Sorter etter starttid (f.eks. "08:00" vs "10:30")
+      const timeA = extA.startTime || '00:00';
+      const timeB = extB.startTime || '00:00';
+      return timeA.localeCompare(timeB);
+    });
 
     let eventsHtml = '';
     if (dayEvents.length === 0) {
@@ -1003,13 +1019,28 @@ function renderWeekPrintSheet(trinnTarget, startOfWeek) {
         const startTime = ext.startTime || (evt.start && String(evt.start).includes('T') ? String(evt.start).split('T')[1].substring(0, 5) : '');
         const sted = ext.location || ext.sted || '';
         
+        // 🔑 Hent og formater trinn/deltakere
+        let rawTrinn = ext.trinn || evt.trinn || ext.group || '';
+        let trinnDisplay = '';
+        if (Array.isArray(rawTrinn)) {
+          trinnDisplay = rawTrinn.join(', ');
+        } else if (typeof rawTrinn === 'string') {
+          trinnDisplay = rawTrinn;
+        }
+
+        // Tilpass border-farge og bakgrunn dersom det er en heldagshendelse
+        const isAllDay = evt.allDay || ext.isAllDay || !startTime;
+        const borderStyle = isAllDay ? 'border-left: 3px solid #ea580c; background: #fff7ed;' : 'border-left: 3px solid #0284c7; background: #f8fafc;';
+        
         eventsHtml += `
-          <div class="print-event-item" style="margin-bottom: 8px; padding: 6px; background: #f8fafc; border-left: 3px solid #0284c7; border-radius: 4px;">
-            <div class="print-event-header" style="font-size: 13px;">
-              ${startTime ? `<span class="print-event-time" style="font-weight: bold; color: #0284c7; margin-right: 4px;">${startTime}</span>` : ''}
-              <strong class="print-event-title">${title}</strong>
+          <div class="print-event-item" style="margin-bottom: 8px; padding: 6px 8px; ${borderStyle} border-radius: 4px;">
+            <div class="print-event-header" style="font-size: 13px; font-weight: 600; color: #1e293b;">
+              ${startTime ? `<span class="print-event-time" style="font-weight: 700; color: #0284c7; margin-right: 4px;">${startTime}</span>` : `<span style="font-size: 11px; font-weight: 700; color: #ea580c; margin-right: 4px;">[HELE DAGEN]</span>`}
+              <span class="print-event-title">${title}</span>
             </div>
-            ${sted ? `<div class="print-event-sub" style="font-size: 11px; color: #64748b; margin-top: 2px;">📍 ${sted}</div>` : ''}
+            
+            ${trinnDisplay ? `<div class="print-event-trinn" style="font-size: 11px; color: #475569; margin-top: 3px; font-weight: 500;">🏷️ ${trinnDisplay}</div>` : ''}
+            ${sted ? `<div class="print-event-sub" style="font-size: 11px; color: #64748b; margin-top: 1px;">📍 ${sted}</div>` : ''}
           </div>
         `;
       });
@@ -1038,6 +1069,7 @@ function renderWeekPrintSheet(trinnTarget, startOfWeek) {
     </div>
   `;
 }
+
 
 function closeWeekPrintModal() {
   const modal = document.getElementById('weekPrintModal');
