@@ -468,7 +468,7 @@ function openCategoryModal(categoryInput) {
       renderTrinnTimeline(catName);
     }
   } else {
-    // Hent hendelser fra alle .js-kildene dine (samme kilder som i openCategoryGridModal)
+    // Hent hendelser fra alle .js-kildene dine
     const moterEvents = typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : [];
     const uiaEvents = typeof getUiAAktiviteterSomEvents === 'function' ? getUiAAktiviteterSomEvents() : [];
     const fellesEvents = typeof getFellesaktiviteterSomEvents === 'function' ? getFellesaktiviteterSomEvents('2026-2027') : [];
@@ -495,6 +495,26 @@ function openCategoryModal(categoryInput) {
   // 4. Åpne modalen
   modal.style.display = 'flex';
   modal.classList.add('show', 'active');
+
+  // 5. TVING SKRIV UT-KNAPPEN INN I FOOTEREN (Kjøres uansett visningstype)
+  const modalFooter = modal.querySelector('.modal-footer');
+  if (modalFooter) {
+    modalFooter.style.display = 'flex';
+    modalFooter.style.justifyContent = 'space-between';
+    modalFooter.style.alignItems = 'center';
+
+    modalFooter.innerHTML = `
+      <div style="display: flex; gap: 8px;">
+        <button id="btnPrintCategory" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px;">
+          🖨️ Skriv ut
+        </button>
+        ${isTrinn ? `<button id="btnCategoryModalGrid" type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 6px 12px;">📊 Matrise for ${catName}</button>` : ''}
+      </div>
+      <button id="btnCategoryModalClose" type="button" class="btn btn-secondary" style="font-size: 0.85rem; padding: 6px 12px;">
+        Lukk
+      </button>
+    `;
+  }
 }
 
 
