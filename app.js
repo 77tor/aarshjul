@@ -2488,7 +2488,7 @@ function checkSingleCategorySelection() {
   }
 }
 
-// --- UTSKRIFT KATEGORI (RETTET MOT DOBBELTUTSKRIFT) ---
+// --- UTSKRIFT KATEGORI (RETTET MOT DOBBELTUTSKRIFT & FLERE KATEGORIER) ---
 const btnPrintCat = document.getElementById('btnPrintCategory');
 
 if (btnPrintCat) {
@@ -2500,25 +2500,31 @@ if (btnPrintCat) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (typeof selectedCategories === 'undefined' || selectedCategories.length !== 1) return;
-
-    const selectedCategory = selectedCategories[0];
-    const originalDate = calendar ? calendar.getDate() : new Date();
+    // Sjekk om valgte kategorier finnes, ellers bruk tom liste
+    const activeCategories = (typeof selectedCategories !== 'undefined') ? selectedCategories : [];
+    const originalDate = (typeof calendar !== 'undefined' && calendar) ? calendar.getDate() : new Date();
 
     // 2. Hent ALLE aktive hendelser direkte fra kalenderen
-    const allCalendarEvents = calendar ? calendar.getEvents() : [];
+    const allCalendarEvents = (typeof calendar !== 'undefined' && calendar) ? calendar.getEvents() : [];
     
-    // 3. Filtrer ut hendelser som matcher valgt kategori/trinn
+    // 3. Filtrer ut hendelser som matcher valgte kategorier/trinn
     const matchingEvents = allCalendarEvents.filter(evt => {
       const ext = evt.extendedProps || {};
       const trinnArray = ext.trinn || [];
+      const catGroup = ext.group || ext.category || '';
       
-      if (Array.isArray(trinnArray) && trinnArray.includes(selectedCategory)) {
-        return true;
-      }
+      // Hvis ingen filtre er valgt, vis alt
+      if (activeCategories.length === 0) return true;
+
+      // Sjekk om hendelsens trinn eller kategori treffer de avhukede filtrene
+      const matchesTrinn = Array.isArray(trinnArray) && trinnArray.some(t => activeCategories.includes(t));
+      const matchesCat = activeCategories.includes(catGroup);
+
+      if (matchesTrinn || matchesCat) return true;
+
       return typeof isEventInSelectedCategories === 'function' 
         ? isEventInSelectedCategories(evt) 
-        : true;
+        : false;
     });
 
     // 4. Sorter kronologisk etter startdato
@@ -2537,18 +2543,19 @@ if (btnPrintCat) {
       };
     }).sort((a, b) => a.start - b.start);
 
-    // 5. Oppdater DOM i modalen (Uten inline style på selve kortene som ødelegger sideskift)
+    // 5. Oppdater DOM i modalen
     const modalTitle = document.getElementById('categoryModalTitle');
     const eventsContainer = document.getElementById('categoryEventsList');
 
     if (modalTitle) {
       const year = originalDate.getFullYear();
-      modalTitle.textContent = `Oversikt – ${selectedCategory} (${year})`;
+      const titleText = activeCategories.length === 1 ? activeCategories[0] : 'Valgte aktiviteter';
+      modalTitle.textContent = `Oversikt – ${titleText} (${year})`;
     }
 
     if (eventsContainer) {
       if (sortedItems.length === 0) {
-        eventsContainer.innerHTML = '<div style="padding:20px; text-align:center;">Ingen hendelser funnet for denne kategorien.</div>';
+        eventsContainer.innerHTML = '<div style="padding:20px; text-align:center;">Ingen hendelser funnet for valgte kategorier.</div>';
       } else {
         eventsContainer.innerHTML = sortedItems.map(item => {
           const startStr = item.start.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
@@ -2577,10 +2584,10 @@ if (btnPrintCat) {
       }
     }
 
-    // 6. Aktiver utskriftsmodus via klasse på body (styres 100% av CSS)
+    // 6. Aktiver utskriftsmodus via klasse på body
     document.body.classList.add('printing-category');
 
-    // 7. Rydd opp KUN én gang når dialogen stenger (Uten å røre display: inline-style)
+    // 7. Rydd opp når utskriftsdialogen lukkes/avbrytes
     const cleanupAfterPrint = () => {
       document.body.classList.remove('printing-category');
       window.removeEventListener('afterprint', cleanupAfterPrint);
@@ -2588,7 +2595,7 @@ if (btnPrintCat) {
 
     window.addEventListener('afterprint', cleanupAfterPrint);
 
-    // 8. Start utskrift én enkelt gang
+    // 8. Trigger utskrift
     setTimeout(() => {
       window.print();
     }, 150);
