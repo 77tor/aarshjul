@@ -2603,29 +2603,25 @@ document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   calendar.removeAllEvents();
   calendar.addEventSource(singleRowEvents);
 
-  const titleEl = document.getElementById('printTitle');
-  const subTitleEl = document.getElementById('printSubTitle');
-  if (titleEl) titleEl.textContent = `Oversikt – ${selectedCategory}`;
-  if (subTitleEl) subTitleEl.textContent = `Skoleåret ${startYear}/${startYear + 1}`;
-
   if (typeof hideContextMenu === 'function') hideContextMenu();
   if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
 
-  // Legg til printing-klasse på body
+  // Marker at vi skal skrive ut kategori
   document.body.classList.add('printing-category');
 
-  // Rydd opp tilstand etter at utskriftsdialogen lukkes
-  const cleanupAfterPrint = () => {
+  // Rydd helt opp etter at utskriften enten er gjennomført eller avbrutt
+  const handleCleanup = () => {
     document.body.classList.remove('printing-category');
     calendar.changeView(originalView);
     calendar.gotoDate(originalDate);
     updateCalendarEvents();
-    window.removeEventListener('afterprint', cleanupAfterPrint);
+    window.removeEventListener('afterprint', handleCleanup);
   };
 
-  window.addEventListener('afterprint', cleanupAfterPrint);
+  window.addEventListener('afterprint', handleCleanup);
 
+  // Gi nettleseren et lite øyeblikk til å rendre tabellen før window.print kalles
   setTimeout(() => {
     window.print();
-  }, 250);
+  }, 300);
 });
