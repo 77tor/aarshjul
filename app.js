@@ -1347,9 +1347,17 @@ window.addEventListener('click', (e) => {
     }
   }
 
-  // Skriv ut
-  if (e.target.closest('#btnCategoryModalPrint')) {
-    window.print();
+  // Skriv ut (sjekker nå for BÅDE #btnPrintCategory og #btnCategoryModalPrint)
+  if (e.target.closest('#btnPrintCategory') || e.target.closest('#btnCategoryModalPrint')) {
+    document.body.classList.add('printing-category');
+    
+    const cleanup = () => {
+      document.body.classList.remove('printing-category');
+      window.removeEventListener('afterprint', cleanup);
+    };
+    
+    window.addEventListener('afterprint', cleanup);
+    setTimeout(() => window.print(), 150);
   }
 
   // Matrise-knapp
