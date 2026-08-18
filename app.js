@@ -856,9 +856,34 @@ function populateFormFromSelection() {
 }
 
 
-/* VIS UKE */
+
+/* --- VIS UKE --- */
 let currentWeekPrintEvents = [];
 let currentWeekPrintTitle = "";
+
+// Hjelpefunksjon: Sjekker om en hendelse rammer / gjelder for en spesifikk dato
+function isEventOnDate(evt, targetDate) {
+  const target = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()).getTime();
+
+  // Hent startdato
+  const startRaw = evt.extendedProps?.startDate || evt.start;
+  const startDate = new Date(startRaw);
+  const eventStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()).getTime();
+
+  // Hent sluttdato (fallback til startdato hvis end ikke er definert)
+  const endRaw = evt.extendedProps?.endDate || evt.end || evt.start;
+  const endDate = new Date(endRaw);
+
+  // Korriger for FullCalendar: hvis sluttid er midnatt (00:00:00), er siste gyldige dag dagen før
+  if (endDate.getHours() === 0 && endDate.getMinutes() === 0 && endDate.getSeconds() === 0 && endDate > startDate) {
+    endDate.setDate(endDate.getDate() - 1);
+  }
+
+  const eventEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate()).getTime();
+
+  // Sjekk om måldatoen ligger innenfor tidsrommet
+  return target >= eventStart && target <= eventEnd;
+}
 
 // Åpne modalen for ukesutskrift
 function openWeekPrintModal() {
@@ -868,6 +893,7 @@ function openWeekPrintModal() {
   // Hent aktiv uke og datospenn fra FullCalendar
   const currentDate = calendar.getDate();
   const startOfWeek = new Date(currentDate);
+  
   // Sett til mandag i gjeldende uke
   const day = startOfWeek.getDay();
   const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
@@ -910,11 +936,14 @@ function openWeekPrintModal() {
     ...(typeof rawEvents !== 'undefined' ? rawEvents : [])
   ];
 
-  // Filtrer kun hendelser som faller innenfor denne uken
+  // 1. KORREKSJON: Hent hendelser som har MINST ÉN dag innenfor uken
   currentWeekPrintEvents = allCombined.filter(evt => {
     if (typeof deletedStaticEventIds !== 'undefined' && deletedStaticEventIds && deletedStaticEventIds.has(evt.id)) return false;
+    
     const evtStart = new Date(evt.extendedProps?.startDate || evt.start);
-    return evtStart >= startOfWeek && evtStart <= endOfWeek;
+    const evtEnd = new Date(evt.extendedProps?.endDate || evt.end || evtStart);
+
+    return evtStart <= endOfWeek && evtEnd >= startOfWeek;
   });
 
   // Nullstill filterknappene til "Alle trinn"
@@ -928,6 +957,7 @@ function openWeekPrintModal() {
   modal.style.display = 'flex';
   modal.classList.add('show', 'active');
 }
+
 
 // Filtrer visningen når brukeren trykker på en trinn-knapp
 function filterWeekPrint(trinnTarget, btnEl) {
@@ -985,13 +1015,10 @@ function renderWeekPrintSheet(trinnTarget, startOfWeek) {
     dayDate.setDate(startOfWeek.getDate() + i);
     const dayDateStr = dayDate.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
 
-    // Hent hendelser for denne dagen
-    const dayEvents = filtered.filter(evt => {
-      const evtDate = new Date(evt.extendedProps?.startDate || evt.start);
-      return evtDate.toDateString() === dayDate.toDateString();
-    });
+    // 2. KORREKSJON: Bruk isEventOnDate for å sjekke om aktiviteten dekker denne dagen
+    const dayEvents = filtered.filter(evt => isEventOnDate(evt, dayDate));
 
-    // 🔑 SORTERING: Heldags/Uten klokkeslett øverst, deretter kronologisk etter klokkeslett
+    // SORTERING: Heldags/Uten klokkeslett øverst, deretter kronologisk
     dayEvents.sort((a, b) => {
       const extA = a.extendedProps || {};
       const extB = b.extendedProps || {};
@@ -999,11 +1026,9 @@ function renderWeekPrintSheet(trinnTarget, startOfWeek) {
       const isAllDayA = a.allDay || extA.isAllDay || !extA.startTime;
       const isAllDayB = b.allDay || extB.isAllDay || !extB.startTime;
 
-      // 1. Heldags/uten klokkeslett prioriteres øverst
       if (isAllDayA && !isAllDayB) return -1;
       if (!isAllDayA && isAllDayB) return 1;
 
-      // 2. Sorter etter starttid (f.eks. "08:00" vs "10:30")
       const timeA = extA.startTime || '00:00';
       const timeB = extB.startTime || '00:00';
       return timeA.localeCompare(timeB);
@@ -1015,15 +1040,13 @@ function renderWeekPrintSheet(trinnTarget, startOfWeek) {
     } else {
       dayEvents.forEach(evt => {
         const ext = evt.extendedProps || {};
-// Hent råtittel
-let rawTitle = evt.title || ext.rawTitle || 'Uten tittel';
+        let rawTitle = evt.title || ext.rawTitle || 'Uten tittel';
 
-// Fjern ALLE prefikser i hakeparenteser [trinn/kategori] fremst i tittelen
-let cleanTitle = rawTitle.replace(/^(?:\[.*?\]\s*)+/, '').trim();
+        // Fjern prefikser som [1. trinn] fra tittelen for renere visning
+        let cleanTitle = rawTitle.replace(/^(?:\[.*?\]\s*)+/, '').trim();
         const startTime = ext.startTime || (evt.start && String(evt.start).includes('T') ? String(evt.start).split('T')[1].substring(0, 5) : '');
         const sted = ext.location || ext.sted || '';
         
-        // 🔑 Hent og formater trinn/deltakere
         let rawTrinn = ext.trinn || evt.trinn || ext.group || '';
         let trinnDisplay = '';
         if (Array.isArray(rawTrinn)) {
@@ -1032,21 +1055,20 @@ let cleanTitle = rawTitle.replace(/^(?:\[.*?\]\s*)+/, '').trim();
           trinnDisplay = rawTrinn;
         }
 
-        // Tilpass border-farge og bakgrunn dersom det er en heldagshendelse
         const isAllDay = evt.allDay || ext.isAllDay || !startTime;
         const borderStyle = isAllDay ? 'border-left: 3px solid #ea580c; background: #fff7ed;' : 'border-left: 3px solid #0284c7; background: #f8fafc;';
         
-eventsHtml += `
-  <div class="print-event-item" style="margin-bottom: 8px; padding: 6px 8px; ${borderStyle} border-radius: 4px;">
-    <div class="print-event-header" style="font-size: 13px; font-weight: 600; color: #1e293b;">
-      ${startTime ? `<span class="print-event-time" style="font-weight: 700; color: #0284c7; margin-right: 4px;">${startTime}</span>` : `<span style="font-size: 11px; font-weight: 700; color: #ea580c; margin-right: 4px;">[HELE DAGEN]</span>`}
-      <span class="print-event-title">${cleanTitle}</span>
-    </div>
-    
-    ${trinnDisplay ? `<div class="print-event-trinn" style="font-size: 11px; color: #475569; margin-top: 3px; font-weight: 500;">🏷️ ${trinnDisplay}</div>` : ''}
-    ${sted ? `<div class="print-event-sub" style="font-size: 11px; color: #64748b; margin-top: 1px;">📍 ${sted}</div>` : ''}
-  </div>
-`;
+        eventsHtml += `
+          <div class="print-event-item" style="margin-bottom: 8px; padding: 6px 8px; ${borderStyle} border-radius: 4px;">
+            <div class="print-event-header" style="font-size: 13px; font-weight: 600; color: #1e293b;">
+              ${startTime ? `<span class="print-event-time" style="font-weight: 700; color: #0284c7; margin-right: 4px;">${startTime}</span>` : `<span style="font-size: 11px; font-weight: 700; color: #ea580c; margin-right: 4px;">[HELE DAGEN]</span>`}
+              <span class="print-event-title">${cleanTitle}</span>
+            </div>
+            
+            ${trinnDisplay ? `<div class="print-event-trinn" style="font-size: 11px; color: #475569; margin-top: 3px; font-weight: 500;">🏷️ ${trinnDisplay}</div>` : ''}
+            ${sted ? `<div class="print-event-sub" style="font-size: 11px; color: #64748b; margin-top: 1px;">📍 ${sted}</div>` : ''}
+          </div>
+        `;
       });
     }
 
@@ -1087,12 +1109,11 @@ function triggerWeekPrint() {
   window.print();
 }
 
-// 🔑 KOBLE HENDELSER NÅR SIDEN LASTES
+// Koble hendelser når siden lastes
 document.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('weekPrintModal');
   if (!modal) return;
 
-  // 1. Koble til filterknappene i modalen (Alle trinn, 1. trinn, osv.)
   const filterButtons = modal.querySelectorAll('.week-filter-bar button');
   filterButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -1102,13 +1123,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 2. Koble til Lukk-knapper (både 'Lukk' og kryss-knappen '×')
   const closeButtons = modal.querySelectorAll('.btn-close, .btn-secondary, [data-bs-dismiss="modal"]');
   closeButtons.forEach(btn => {
     btn.addEventListener('click', closeWeekPrintModal);
   });
 
-  // 3. Koble til "Skriv ut (A4)"-knappen
   const printBtn = modal.querySelector('.btn-primary, #btnPrintA4Modal');
   if (printBtn) {
     printBtn.addEventListener('click', triggerWeekPrint);
