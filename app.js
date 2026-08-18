@@ -430,7 +430,6 @@ function renderCategorySimpleList(categoryName, events) {
 }
 
 
-
 // Åpne kategorimodal og hent hendelser fra ALLE JS-kilder
 function openCategoryModal(categoryInput) {
   const modal = document.getElementById('categoryModal');
@@ -444,22 +443,7 @@ function openCategoryModal(categoryInput) {
   // 1. Sett tittel
   if (title) title.textContent = isTrinn ? `📅 Kalender for ${catName}` : `📋 Oversikt: ${catName}`;
 
-  // 2. Vis/skjul matriseknapp for trinn
-  const gridBtn = document.getElementById('btnCategoryModalGrid');
-  if (gridBtn) {
-    if (isTrinn) {
-      gridBtn.style.display = 'inline-block';
-      gridBtn.textContent = `📊 Matrise for ${catName}`;
-      gridBtn.onclick = () => {
-        if (typeof openCategoryGridModal === 'function') openCategoryGridModal(catName);
-        else if (typeof openGridOverview === 'function') openGridOverview(catName);
-      };
-    } else {
-      gridBtn.style.display = 'none';
-    }
-  }
-
-  // 3. VELG VISNING
+  // 2. VELG VISNING
   if (isTrinn) {
     // Trinn beholder ukeskalenderen / tabellen sin
     if (typeof renderCategoryTimeline === 'function') {
@@ -492,11 +476,7 @@ function openCategoryModal(categoryInput) {
     renderCategorySimpleList(catName, allCombinedEvents);
   }
 
-  // 4. Åpne modalen
-  modal.style.display = 'flex';
-  modal.classList.add('show', 'active');
-
-  // 5. TVING SKRIV UT-KNAPPEN INN I FOOTEREN (Kjøres uansett visningstype)
+  // 3. GENERER FOOTER OG KOBLE KNAPPER RIKTIG
   const modalFooter = modal.querySelector('.modal-footer');
   if (modalFooter) {
     modalFooter.style.display = 'flex';
@@ -514,10 +494,33 @@ function openCategoryModal(categoryInput) {
         Lukk
       </button>
     `;
+
+    // Koble til hendelser ETTER at HTML er satt inn
+    const printBtn = document.getElementById('btnPrintCategory');
+    if (printBtn) {
+      printBtn.onclick = () => {
+        document.body.classList.add('printing-category');
+        window.print();
+        setTimeout(() => { document.body.classList.remove('printing-category'); }, 500);
+      };
+    }
+
+    const gridBtn = document.getElementById('btnCategoryModalGrid');
+    if (gridBtn && isTrinn) {
+      gridBtn.onclick = () => {
+        if (typeof openCategoryGridModal === 'function') openCategoryGridModal(catName);
+        else if (typeof openGridOverview === 'function') openGridOverview(catName);
+      };
+    }
+
+    const closeBtn = document.getElementById('btnCategoryModalClose');
+    if (closeBtn) closeBtn.onclick = closeCategoryModal;
   }
+
+  // 4. Åpne modalen
+  modal.style.display = 'flex';
+  modal.classList.add('show', 'active');
 }
-
-
 
 // 1. Ny liste med eksakt de 5 faste под-kategoriene (i riktig rekkefølge):
 const TRINN_SUB_CATEGORIES = [
