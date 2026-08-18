@@ -711,28 +711,10 @@ function closeCategoryModal() {
   if (modal) modal.style.display = 'none';
 }
 
-// Event-lyttere for lukking og utskrift i kategorimodalen
+// Event-lyttere for lukking i kategorimodalen
 document.addEventListener('DOMContentLoaded', () => {
   const closeX = document.getElementById('categoryModalCloseX');
-  const closeBtn = document.getElementById('btnCategoryModalClose');
-  const printBtn = document.getElementById('btnCategoryModalPrint');
-
   if (closeX) closeX.addEventListener('click', closeCategoryModal);
-  if (closeBtn) closeBtn.addEventListener('click', closeCategoryModal);
-
-  if (printBtn) {
-    printBtn.addEventListener('click', () => {
-      // Legger til utskriftsklasse slik at CSS vet at det er modalen som skal skrives ut
-      document.body.classList.add('printing-category');
-      
-      window.print();
-
-      // Fjerner klassen igjen rett etter utskriftsdialogen lukkes/skrives ut
-      setTimeout(() => {
-        document.body.classList.remove('printing-category');
-      }, 500);
-    });
-  }
 });
 
 function populateGroupDropdown() {
