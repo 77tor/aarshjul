@@ -855,6 +855,196 @@ function populateFormFromSelection() {
   }
 }
 
+/* VIS UKE */
+let currentWeekPrintEvents = [];
+let currentWeekPrintTitle = "";
+
+// Åpne modalen for ukesutskrift
+function openWeekPrintModal() {
+  const modal = document.getElementById('weekPrintModal');
+  if (!modal || typeof calendar === 'undefined') return;
+
+  // Hent aktiv uke og datospenn fra FullCalendar
+  const currentDate = calendar.getDate();
+  const startOfWeek = new Date(currentDate);
+  // Sett til mandag i gjeldende uke
+  const day = startOfWeek.getDay();
+  const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+  startOfWeek.setDate(diff);
+  startOfWeek.setHours(0,0,0,0);
+
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  endOfWeek.setHours(23,59,59,999);
+
+  // Beregn ukenummer
+  const d = new Date(Date.UTC(startOfWeek.getFullYear(), startOfWeek.getMonth(), startOfWeek.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNum = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+
+  const dateStartStr = startOfWeek.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
+  const dateEndStr = endOfWeek.toLocaleDateString('no-NO', { day: 'numeric', month: 'short', year: 'numeric' });
+  
+  currentWeekPrintTitle = `Uke ${weekNum} (${dateStartStr} - ${dateEndStr})`;
+  document.getElementById('weekPrintModalTitle').textContent = `🖨️ ${currentWeekPrintTitle}`;
+
+  // Hent alle hendelser fra alle kilder
+  const moterEvents = typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : [];
+  const uiaEvents = typeof getUiAAktiviteterSomEvents === 'function' ? getUiAAktiviteterSomEvents() : [];
+  const fellesEvents = typeof getFellesaktiviteterSomEvents === 'function' ? getFellesaktiviteterSomEvents('2026-2027') : [];
+  const dksEvents = typeof getDKSAktiviteterSomEvents === 'function' ? getDKSAktiviteterSomEvents() : [];
+  const svommeEvents = typeof getSvommeAktiviteterSomEvents === 'function' ? getSvommeAktiviteterSomEvents('2026-2027') : [];
+  const bursdagEvents = typeof getBirthdayEvents === 'function' ? getBirthdayEvents(2026) : [];
+  const kartleggingEvents = typeof getKartleggingerSomEvents === 'function' ? getKartleggingerSomEvents() : [];
+
+  const allCombined = [
+    ...fellesEvents, ...dksEvents, ...svommeEvents, ...bursdagEvents,
+    ...kartleggingEvents, ...moterEvents, ...uiaEvents,
+    ...(typeof schoolEventsFromJs !== 'undefined' ? schoolEventsFromJs : []),
+    ...(typeof rawEvents !== 'undefined' ? rawEvents : [])
+  ];
+
+  // Filtrer kun hendelser som faller innenfor denne uken
+  currentWeekPrintEvents = allCombined.filter(evt => {
+    if (typeof deletedStaticEventIds !== 'undefined' && deletedStaticEventIds && deletedStaticEventIds.has(evt.id)) return false;
+    const evtStart = new Date(evt.extendedProps?.startDate || evt.start);
+    return evtStart >= startOfWeek && evtStart <= endOfWeek;
+  });
+
+  // Nullstill filterknappene til "Alle trinn"
+  document.querySelectorAll('.week-filter-bar .btn-filter-trinn').forEach(btn => btn.classList.remove('active'));
+  const allBtn = document.querySelector('.week-filter-bar .btn-filter-trinn');
+  if (allBtn) allBtn.classList.add('active');
+
+  // Generer A4-arket for alle trinn som standard
+  renderWeekPrintSheet('alle', startOfWeek);
+
+  modal.style.display = 'flex';
+  modal.classList.add('show', 'active');
+}
+
+// Filtrer visningen når brukeren trykker på en trinn-knapp
+function filterWeekPrint(trinnTarget, btnEl) {
+  document.querySelectorAll('.week-filter-bar .btn-filter-trinn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+
+  const currentDate = calendar.getDate();
+  const startOfWeek = new Date(currentDate);
+  const day = startOfWeek.getDay();
+  const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+  startOfWeek.setDate(diff);
+  startOfWeek.setHours(0,0,0,0);
+
+  renderWeekPrintSheet(trinnTarget, startOfWeek);
+}
+
+// Bygg opp A4-oppsettet fordelt på ukedager (Mandag-Fredag)
+function renderWeekPrintSheet(trinnTarget, startOfWeek) {
+  const sheet = document.getElementById('weekPrintSheet');
+  if (!sheet) return;
+
+  const trinnLower = trinnTarget.toLowerCase().trim();
+
+  // Filtrer på valgt trinn
+  let filtered = currentWeekPrintEvents.filter(evt => {
+    if (trinnTarget === 'alle') return true;
+    
+    const ext = evt.extendedProps || {};
+    const grp = (ext.group || evt.group || '').toLowerCase();
+    const title = (evt.title || ext.rawTitle || '').toLowerCase();
+    const desc = (ext.description || '').toLowerCase();
+    const deltakere = (ext.deltakere || ext.participants || '').toLowerCase();
+    
+    let trinnList = ext.trinn || evt.trinn || ext.trinnOptions || [];
+    if (typeof trinnList === 'string') trinnList = trinnList.split(',').map(s => s.trim().toLowerCase());
+    else if (Array.isArray(trinnList)) trinnList = trinnList.map(s => String(s).trim().toLowerCase());
+
+    const trinnNum = trinnTarget.replace(/\D/g, '');
+
+    const isMatch = grp.includes(trinnLower) || 
+                    trinnList.some(t => t.includes(trinnLower) || (trinnNum && t.includes(`${trinnNum}.`))) ||
+                    deltakere.includes(trinnLower) || title.includes(trinnLower) || desc.includes(trinnLower) ||
+                    deltakere.includes('alle trinn') || desc.includes('alle trinn') || desc.includes('1.-7. trinn');
+
+    return isMatch;
+  });
+
+  // Bygg 5 dager (Mandag - Fredag)
+  const days = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag'];
+  let daysHtml = '';
+
+  for (let i = 0; i < 5; i++) {
+    const dayDate = new Date(startOfWeek);
+    dayDate.setDate(startOfWeek.getDate() + i);
+    const dayDateStr = dayDate.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
+
+    // Hent hendelser for denne dagen
+    const dayEvents = filtered.filter(evt => {
+      const evtDate = new Date(evt.extendedProps?.startDate || evt.start);
+      return evtDate.toDateString() === dayDate.toDateString();
+    });
+
+    // Sorter hendelser på klokkeslett
+    dayEvents.sort((a,b) => new Date(a.extendedProps?.startDate || a.start) - new Date(b.extendedProps?.startDate || b.start));
+
+    let eventsHtml = '';
+    if (dayEvents.length === 0) {
+      eventsHtml = `<div class="print-empty-day">Ingen planer</div>`;
+    } else {
+      dayEvents.forEach(evt => {
+        const ext = evt.extendedProps || {};
+        const title = evt.title || ext.rawTitle || 'Uten tittel';
+        const startTime = ext.startTime || (evt.start && String(evt.start).includes('T') ? String(evt.start).split('T')[1].substring(0, 5) : '');
+        const sted = ext.location || ext.sted || '';
+        
+        eventsHtml += `
+          <div class="print-event-item">
+            <div class="print-event-header">
+              ${startTime ? `<span class="print-event-time">${startTime}</span>` : ''}
+              <strong class="print-event-title">${title}</strong>
+            </div>
+            ${sted ? `<div class="print-event-sub">📍 ${sted}</div>` : ''}
+          </div>
+        `;
+      });
+    }
+
+    daysHtml += `
+      <div class="print-day-column">
+        <div class="print-day-header">
+          <strong>${days[i]}</strong>
+          <span>${dayDateStr}</span>
+        </div>
+        <div class="print-day-body">
+          ${eventsHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  sheet.innerHTML = `
+    <div class="print-sheet-header">
+      <h2>Skolekalender - ${currentWeekPrintTitle}</h2>
+      <span class="print-sheet-subtitle">Visning: ${trinnTarget === 'alle' ? 'Alle trinn' : trinnTarget}</span>
+    </div>
+    <div class="print-days-grid">
+      ${daysHtml}
+    </div>
+  `;
+}
+
+function closeWeekPrintModal() {
+  const modal = document.getElementById('weekPrintModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function triggerWeekPrint() {
+  window.print();
+}
+
+
+
 /* Mini-kalender */
 const monthNamesNorwegian = [
   "Januar", "Februar", "Mars", "April", "Mai", "Juni", 

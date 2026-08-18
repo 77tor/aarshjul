@@ -279,6 +279,41 @@
   </div>
 </div>
 
+<!-- Modal for ukesutskrift / trinnfiltrering -->
+<div id="weekPrintModal" class="modal-overlay">
+  <div class="modal-card modal-large">
+    <div class="modal-header">
+      <h3 id="weekPrintModalTitle">🖨️ Forhåndsvisning av Uke</h3>
+      <button class="close-btn" onclick="closeWeekPrintModal()">&times;</button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Trinn-knapper for filtrering -->
+      <div class="week-filter-bar">
+        <span class="filter-label">Filter:</span>
+        <button class="btn-filter-trinn active" onclick="filterWeekPrint('alle', this)">Alle trinn</button>
+        <button class="btn-filter-trinn" onclick="filterWeekPrint('1. trinn', this)">1. trinn</button>
+        <button class="btn-filter-trinn" onclick="filterWeekPrint('2. trinn', this)">2. trinn</button>
+        <button class="btn-filter-trinn" onclick="filterWeekPrint('3. trinn', this)">3. trinn</button>
+        <button class="btn-filter-trinn" onclick="filterWeekPrint('4. trinn', this)">4. trinn</button>
+        <button class="btn-filter-trinn" onclick="filterWeekPrint('5. trinn', this)">5. trinn</button>
+        <button class="btn-filter-trinn" onclick="filterWeekPrint('6. trinn', this)">6. trinn</button>
+        <button class="btn-filter-trinn" onclick="filterWeekPrint('7. trinn', this)">7. trinn</button>
+      </div>
+
+      <!-- A4 Utskriftsområde -->
+      <div id="weekPrintSheet" class="a4-print-sheet">
+        <!-- Innhold bygges dynamisk via JS -->
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeWeekPrintModal()">Lukk</button>
+      <button class="btn btn-primary" onclick="triggerWeekPrint()">🖨️ Skriv ut (A4)</button>
+    </div>
+  </div>
+</div>
+
   <!-- Hovedskript -->
   <script type="module" src="app.js"></script>
 </body>
