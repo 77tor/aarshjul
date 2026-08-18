@@ -2488,139 +2488,105 @@ function checkSingleCategorySelection() {
   }
 }
 
-// --- UTSKRIFT KATEGORI ---
+// --- UTSKRIFT KATEGORI (RETTET) ---
 document.getElementById('btnPrintCategory')?.addEventListener('click', () => {
   if (selectedCategories.length !== 1) return;
 
   const selectedCategory = selectedCategories[0];
   const originalDate = calendar ? calendar.getDate() : new Date();
 
-  const currentMonth = originalDate.getMonth();
-  const startYear = currentMonth >= 7 ? originalDate.getFullYear() : originalDate.getFullYear() - 1;
-
-  const shouldIncludeEvent = (evt) => {
-    const trinnArray = evt.extendedProps?.trinn || [];
+  // 1. Hent ALLE aktive hendelser direkte fra kalenderen for å være 100% synkronisert
+  const allCalendarEvents = calendar ? calendar.getEvents() : [];
+  
+  // 2. Filtrer ut hendelser som matcher valgt kategori/trinn
+  const matchingEvents = allCalendarEvents.filter(evt => {
+    const ext = evt.extendedProps || {};
+    const trinnArray = ext.trinn || [];
+    
     if (Array.isArray(trinnArray) && trinnArray.includes(selectedCategory)) {
       return true;
     }
-    return isEventInSelectedCategories(evt);
-  };
-
-  const getFelles = typeof getFellesAktiviteterSomEvents === 'function' ? getFellesAktiviteterSomEvents() : (typeof fellesEventsFromJs !== 'undefined' ? fellesEventsFromJs : []);
-  const getDks = typeof getDksAktiviteterSomEvents === 'function' ? getDksAktiviteterSomEvents() : (typeof dksEventsFromJs !== 'undefined' ? dksEventsFromJs : []);
-  const getSvomme = typeof getSvommeAktiviteterSomEvents === 'function' ? getSvommeAktiviteterSomEvents() : (typeof svommeEventsFromJs !== 'undefined' ? svommeEventsFromJs : []);
-  const getMoter = typeof getMoteAktiviteterSomEvents === 'function' ? getMoteAktiviteterSomEvents() : (typeof moterEventsFromJs !== 'undefined' ? moterEventsFromJs : []);
-  const getUia = typeof getUiAAktiviteterSomEvents === 'function' ? getUiAAktiviteterSomEvents() : (typeof uiaEventsFromJs !== 'undefined' ? uiaEventsFromJs : []);
-  const getKartlegging = typeof getKartleggingerSomEvents === 'function' ? getKartleggingerSomEvents() : (typeof kartleggingEventsFromJs !== 'undefined' ? kartleggingEventsFromJs : []);
-
-  const filteredUserEvents = rawEvents.filter(shouldIncludeEvent);
-  const filteredFellesEvents = getFelles.filter(shouldIncludeEvent);
-  const filteredDksEvents = getDks.filter(shouldIncludeEvent);
-  const filteredSvommeEvents = getSvomme.filter(shouldIncludeEvent);
-  const filteredMoteEvents = getMoter.filter(shouldIncludeEvent);
-  const filteredUiaEvents = getUia.filter(shouldIncludeEvent);
-  const filteredKartleggingEvents = getKartlegging.filter(shouldIncludeEvent);
-  
-  let filteredBursdager = [];
-  if (typeof getBirthdayEvents === 'function' && calendar) {
-    filteredBursdager = getBirthdayEvents(startYear).filter(shouldIncludeEvent);
-  }
-
-  const allRawEvents = [
-    ...filteredFellesEvents, 
-    ...filteredDksEvents, 
-    ...filteredSvommeEvents, 
-    ...filteredMoteEvents, 
-    ...filteredUiaEvents,
-    ...filteredKartleggingEvents,
-    ...filteredBursdager,
-    ...filteredUserEvents
-  ];
-
-  const isOnlyFelles = selectedCategory.toLowerCase().includes('felles');
-  const consolidatedMap = new Map();
-
-  allRawEvents.forEach((evt, idx) => {
-    const rawTitle = (evt.title || evt.extendedProps?.rawTitle || '').trim();
-    if (!rawTitle) return;
-
-    const evtStart = new Date(evt.start);
-    const evtEnd = evt.end ? new Date(evt.end) : evtStart;
-
-    const key = isOnlyFelles 
-      ? rawTitle.toLowerCase().replace(/^\[.*?\]\s*/, '')
-      : `${rawTitle}_${evtStart.getTime()}_${idx}`;
-
-    if (!consolidatedMap.has(key)) {
-      consolidatedMap.set(key, {
-        displayTitle: rawTitle,
-        minStart: evtStart,
-        maxEnd: evtEnd,
-        allDay: evt.allDay || false,
-        desc: evt.extendedProps?.description || evt.description || '',
-        color: evt.color || evt.backgroundColor || '#2563eb'
-      });
-    } else {
-      const existing = consolidatedMap.get(key);
-      if (evtStart < existing.minStart) existing.minStart = evtStart;
-      if (evtEnd > existing.maxEnd) existing.maxEnd = evtEnd;
-    }
+    return typeof isEventInSelectedCategories === 'function' 
+      ? isEventInSelectedCategories(evt) 
+      : true;
   });
 
-  const sortedItems = Array.from(consolidatedMap.values()).sort((a, b) => a.minStart - b.minStart);
+  // 3. Sorter kronologisk etter startdato
+  const sortedItems = matchingEvents.map(evt => {
+    const start = evt.start ? new Date(evt.start) : new Date();
+    const end = evt.end ? new Date(evt.end) : start;
+    const ext = evt.extendedProps || {};
 
-  // Bygg HTML direkte inn i categoryModal
+    return {
+      title: ext.rawTitle || evt.title || 'Uten tittel',
+      start: start,
+      end: end,
+      allDay: evt.allDay,
+      desc: ext.description || '',
+      color: evt.backgroundColor || evt.ui?.color || '#0284c7'
+    };
+  }).sort((a, b) => a.start - b.start);
+
+  // 4. Oppdater DOM i modalen
+  const modalEl = document.getElementById('categoryModal');
   const modalTitle = document.getElementById('categoryModalTitle');
   const eventsContainer = document.getElementById('categoryEventsList');
 
   if (modalTitle) {
-    modalTitle.textContent = `Oversikt – ${selectedCategory} (${startYear}/${startYear + 1})`;
+    const year = originalDate.getFullYear();
+    modalTitle.textContent = `Oversikt – ${selectedCategory} (${year})`;
   }
 
   if (eventsContainer) {
-    eventsContainer.className = 'category-events-list';
-    eventsContainer.innerHTML = sortedItems.map(item => {
-      const startStr = item.minStart.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
-      const endStr = item.maxEnd.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
-      const isMultiDay = item.minStart.toDateString() !== item.maxEnd.toDateString();
-      const dateLabel = isMultiDay ? `${startStr}. – ${endStr}.` : `${startStr}.`;
+    if (sortedItems.length === 0) {
+      eventsContainer.innerHTML = '<div style="padding:20px; text-align:center;">Ingen hendelser funnet for denne kategorien.</div>';
+    } else {
+      eventsContainer.innerHTML = sortedItems.map(item => {
+        const startStr = item.start.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
+        const endStr = item.end.toLocaleDateString('no-NO', { day: 'numeric', month: 'short' });
+        
+        // Sjekk om det faktiske arrangementet strekker seg over flere dager
+        const isMultiDay = item.start.toDateString() !== item.end.toDateString();
+        const dateLabel = isMultiDay ? `${startStr}. – ${endStr}.` : `${startStr}.`;
 
-      let timeLabel = '';
-      const hours = item.minStart.getHours();
-      const isRealTime = !item.allDay && hours >= 7 && hours <= 20;
+        let timeLabel = '';
+        if (!item.allDay) {
+          const startTimeStr = item.start.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+          const endTimeStr = item.end.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+          timeLabel = (startTimeStr !== endTimeStr && item.end) ? ` kl. ${startTimeStr}–${endTimeStr}` : ` kl. ${startTimeStr}`;
+        }
 
-      if (isRealTime) {
-        const startTimeStr = item.minStart.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
-        const endTimeStr = item.maxEnd.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
-        timeLabel = item.maxEnd && startTimeStr !== endTimeStr ? ` kl. ${startTimeStr}–${endTimeStr}` : ` kl. ${startTimeStr}`;
-      }
+        const descHtml = item.desc ? `<div class="event-desc" style="font-size:0.8rem; color:#475569; margin-top:4px;">${item.desc}</div>` : '';
 
-      const descHtml = item.desc ? `<div class="event-desc">${item.desc}</div>` : '';
-
-      return `
-        <div class="category-event-card" style="border-left-color: ${item.color} !important;">
-          <div class="event-title">${item.displayTitle}</div>
-          <div class="event-time">📅 ${dateLabel}${timeLabel ? ' | ' + timeLabel : ''}</div>
-          ${descHtml}
-        </div>
-      `;
-    }).join('');
+        return `
+          <div class="category-event-card" style="border-left: 4px solid ${item.color}; padding: 8px 12px; margin-bottom: 8px; background: #f8fafc; border-radius: 4px;">
+            <div class="event-title" style="font-weight: 600; color: #0f172a;">${item.title}</div>
+            <div class="event-time" style="font-size: 0.825rem; color: #64748b;">📅 ${dateLabel}${timeLabel ? ' | ' + timeLabel : ''}</div>
+            ${descHtml}
+          </div>
+        `;
+      }).join('');
+    }
   }
 
-  if (typeof hideContextMenu === 'function') hideContextMenu();
-  if (typeof hideSelectionPopover === 'function') hideSelectionPopover();
-
-  // Aktiver utskriftsmodus
+  // 5. Tving modalen til å være synlig under utskrift
+  if (modalEl) modalEl.style.display = 'block';
   document.body.classList.add('printing-category');
 
   const cleanupAfterPrint = () => {
     document.body.classList.remove('printing-category');
+    if (modalEl && typeof closeModal === 'function') {
+      closeModal();
+    } else if (modalEl) {
+      modalEl.style.display = 'none';
+    }
     window.removeEventListener('afterprint', cleanupAfterPrint);
   };
 
   window.addEventListener('afterprint', cleanupAfterPrint);
 
+  // Gi nettleseren et lite øyeblikk til å rendre HTML-en før print-dialogen åpnes
   setTimeout(() => {
     window.print();
-  }, 150);
+  }, 200);
 });
